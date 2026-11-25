@@ -1,7 +1,7 @@
 import type { AgentState, OfficeAgent } from '@shared/types'
 import { useCallback } from 'react'
 import type { Mode, World } from '@/lib/theme'
-import { HOTSPOTS, type Hotspot, type HotspotId } from './office-hotspots'
+import { HOTSPOTS, type Hotspot, type HotspotId } from './scene/hotspots'
 import { useOfficeCanvas, type AgentLocator } from './use-office-canvas'
 
 type OfficeCanvasProps = {

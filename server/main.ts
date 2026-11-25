@@ -1,9 +1,9 @@
 import { join, normalize } from 'node:path'
 import type { CommandAction, CommandRequest, OfficeAgent } from '@shared/types'
-import { board } from './board-feed'
-import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './demo'
-import { currentSnapshot, subscribe } from './office-feed'
-import { readSession, sendCommand } from './orca'
+import { board } from './feeds/board'
+import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
+import { currentSnapshot, subscribe } from './feeds/office'
+import { readSession, sendCommand } from './sources/orca'
 import { isAllowedRequest } from './guard'
 
 const PORT = Number(process.env.PORT ?? 4300)

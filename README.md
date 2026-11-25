@@ -1,10 +1,12 @@
 # Isekai Office
 
-![status](https://img.shields.io/badge/status-WIP-orange) ![bun](https://img.shields.io/badge/runtime-Bun-black) ![react](https://img.shields.io/badge/ui-React%2019-blue)
+![status](https://img.shields.io/badge/status-WIP-orange) ![memory](https://img.shields.io/badge/server%20memory-~16%20MB-brightgreen) ![bun](https://img.shields.io/badge/runtime-Bun-black) ![react](https://img.shields.io/badge/ui-React%2019-blue)
 
 > **Work in progress.** Things move and break. The UI text is in Thai.
 
 A pixel-art guild hall that shows your AI coding agent sessions as characters. Each session walks to the station that matches what it is doing, raises a `!` when it needs you, and you answer it from the room.
+
+It is built to sit open all day next to the agents it watches, so it stays small: the whole server runs in about **16 MB** of memory.
 
 ![The guild tavern with agents at their stations](docs/screenshots/tavern.jpg)
 
@@ -33,6 +35,29 @@ All screenshots use the built-in demo data.
 - **Quest board.** An inbox of what waits for you, the stages of an agent loop, and a release checklist.
 - **Four worlds**, each with a day and a night.
 
+## Light on memory
+
+Agent sessions already use most of the machine. This should not add to it.
+
+| What | Measured |
+|---|---|
+| Server memory, live (5 sessions, 60 board cards) | 16 MB |
+| Server memory, demo mode | 9 MB |
+| Server memory, peak at startup | 57 MB |
+| JavaScript sent to the browser | 145 KB gzipped |
+| CSS | 21 KB gzipped |
+| All four room backdrops | 300 KB |
+
+Memory is the physical footprint reported by macOS `footprint` for the Bun 1.4 process, on an Apple Silicon Mac. Your numbers will differ with the number of sessions.
+
+How it stays small:
+
+- **One Bun process.** No database, no queue, no Electron. State lives in the tools it reads from.
+- **It only works while you look.** The server polls for sessions only while a browser tab is connected, and stops when the last one closes.
+- **The canvas sleeps.** Drawing stops when the tab is hidden or the quest board covers the room.
+- **Transcripts are read once.** A session file is parsed again only when its size or modified time changes, and at most 200 entries are kept.
+- **Rooms are pictures.** Each world is one 640x384 PNG drawn ahead of time, not a scene built at run time.
+
 ## Try it
 
 You need [Bun](https://bun.sh).
@@ -54,6 +79,32 @@ bun run dev
 ```
 
 `.env.local` holds `WORKSPACE_URL` (your tracker) and `BOARD_SPACES` (the project keys to show). Without them the room still works and the board shows an error.
+
+## Project layout
+
+```
+server/            Bun HTTP server, one process
+  main.ts            routes and static files
+  guard.ts           only local requests get in
+  feeds/             what the browser asks for: office, board, demo data
+  sources/           where the data comes from: Orca, transcripts, tracker, GitLab
+shared/types.ts    types used by both sides
+web/src/
+  App.tsx            wires the room, the panels and the route together
+  office/            the room on a canvas
+    scene/             what is where: layout, hotspots, actors, pathfinding
+    draw/              how it is painted: backdrop, sprites, effects, labels
+  agent/             command panel, chat history, quick reply
+  alerts/            tab title count and browser notifications
+  board/             quest board
+  room-panels/       panels opened by objects in the room
+  components/        shared UI pieces
+  lib/               api client, route, theme
+design/            room art scripts and the visual philosophy
+scripts/           dev server and launchd install
+```
+
+Tests sit next to the file they test (`*.test.ts`).
 
 ## Checks
 

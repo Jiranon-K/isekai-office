@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { createOfficeEngine, type OfficeEngine, type OfficeInput } from './office-engine'
-import { hotspotBounds, hotspotById, type HotspotId } from './office-hotspots'
-import { computeView, scrollToShow, toScreenBox } from './office-view'
+import { createOfficeEngine, type OfficeEngine, type OfficeInput } from './scene/engine'
+import { hotspotBounds, hotspotById, type HotspotId } from './scene/hotspots'
+import { computeView, scrollToShow, toScreenBox } from './scene/view'
 
 const SEEN_KEY = 'isekai-office-hotspots-seen'
 

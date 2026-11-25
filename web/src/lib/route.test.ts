@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { HOTSPOTS } from '@/office/office-hotspots'
+import { HOTSPOTS } from '@/office/scene/hotspots'
 import { closePanel, formatRoute, isPanelId, mergeQuery, parseRoute, selectAgent, togglePanel, type Route } from './route'
 
 const EMPTY: Route = { open: null, agentId: null }

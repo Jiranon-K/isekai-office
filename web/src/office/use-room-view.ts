@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { computeView, toScreenBox, type ScreenBox } from './office-view'
+import { computeView, toScreenBox, type ScreenBox } from './scene/view'
 
 type RoomFrame = { left: number; top: number; width: number; height: number }
 

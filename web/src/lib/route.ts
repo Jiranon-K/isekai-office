@@ -1,4 +1,4 @@
-import { HOTSPOTS, type HotspotId } from '@/office/office-hotspots'
+import { HOTSPOTS, type HotspotId } from '@/office/scene/hotspots'
 
 export type PanelId = Exclude<HotspotId, 'windows'>
 

@@ -1,7 +1,7 @@
 import type { AgentState, OfficeAgent } from '@shared/types'
 import { AgentIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { STATE_LABELS } from '@/panel/panel-logic'
+import { STATE_LABELS } from '@/agent/panel-logic'
 import { formatTokenCount } from './board-logic'
 
 type AgentChipProps = { agent: OfficeAgent; onOpen(agentId: string): void }

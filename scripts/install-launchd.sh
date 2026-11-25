@@ -6,7 +6,7 @@ label="com.jiranon.isekai-office"
 target="$HOME/Library/LaunchAgents/$label.plist"
 
 bun --cwd="$project" run build
-cp "$project/launchd/$label.plist" "$target"
+cp "$project/scripts/launchd/$label.plist" "$target"
 launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$target"
 launchctl kickstart -k "gui/$(id -u)/$label"

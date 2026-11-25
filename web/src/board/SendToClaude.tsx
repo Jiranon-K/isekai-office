@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { sendCommand } from '@/lib/api'
-import { describeResult, STATE_LABELS } from '@/panel/panel-logic'
+import { describeResult, STATE_LABELS } from '@/agent/panel-logic'
 import { loopStartPrompt, sendableAgents } from './board-logic'
 
 type SendStatus = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; agentTitle: string } | { kind: 'failed'; reason: string }
