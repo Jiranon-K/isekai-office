@@ -1,0 +1,708 @@
+{
+ "tileSize": 16,
+ "columns": 40,
+ "rows": 24,
+ "width": 640,
+ "height": 384,
+ "wallRows": 3,
+ "doorColumns": [
+  19,
+  20
+ ],
+ "props": [
+  {
+   "kind": "rug",
+   "x": 16,
+   "y": 6,
+   "width": 8,
+   "height": 4,
+   "blocks": false
+  },
+  {
+   "kind": "rug",
+   "x": 3,
+   "y": 14,
+   "width": 5,
+   "height": 4,
+   "blocks": false
+  },
+  {
+   "kind": "window",
+   "x": 3,
+   "y": 0,
+   "width": 2,
+   "height": 2,
+   "blocks": false
+  },
+  {
+   "kind": "window",
+   "x": 8,
+   "y": 0,
+   "width": 2,
+   "height": 2,
+   "blocks": false
+  },
+  {
+   "kind": "banner",
+   "x": 13,
+   "y": 0,
+   "width": 2,
+   "height": 3,
+   "blocks": false
+  },
+  {
+   "kind": "banner",
+   "x": 25,
+   "y": 0,
+   "width": 2,
+   "height": 3,
+   "blocks": false
+  },
+  {
+   "kind": "banner",
+   "x": 35,
+   "y": 0,
+   "width": 2,
+   "height": 3,
+   "blocks": false
+  },
+  {
+   "kind": "questBoard",
+   "x": 17,
+   "y": 0,
+   "width": 6,
+   "height": 3,
+   "blocks": false
+  },
+  {
+   "kind": "fireplace",
+   "x": 27,
+   "y": 0,
+   "width": 4,
+   "height": 4,
+   "blocks": true
+  },
+  {
+   "kind": "door",
+   "x": 19,
+   "y": 23,
+   "width": 2,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "lantern",
+   "x": 15,
+   "y": 1,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "lantern",
+   "x": 23,
+   "y": 1,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "bookshelves",
+   "x": 2,
+   "y": 3,
+   "width": 10,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "forge",
+   "x": 31,
+   "y": 3,
+   "width": 8,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "desk",
+   "x": 2,
+   "y": 9,
+   "width": 8,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "crystalTable",
+   "x": 31,
+   "y": 9,
+   "width": 7,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "receptionCounter",
+   "x": 16,
+   "y": 5,
+   "width": 8,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barShelf",
+   "x": 25,
+   "y": 13,
+   "width": 10,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "barCounter",
+   "x": 24,
+   "y": 16,
+   "width": 12,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "stool",
+   "x": 25,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "stool",
+   "x": 27,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "stool",
+   "x": 29,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "stool",
+   "x": 31,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "stool",
+   "x": 33,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "stool",
+   "x": 35,
+   "y": 17,
+   "width": 1,
+   "height": 1,
+   "blocks": false
+  },
+  {
+   "kind": "table",
+   "x": 4,
+   "y": 15,
+   "width": 3,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "table",
+   "x": 10,
+   "y": 18,
+   "width": 3,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "table",
+   "x": 14,
+   "y": 13,
+   "width": 3,
+   "height": 2,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 1,
+   "y": 20,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 1,
+   "y": 21,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 2,
+   "y": 21,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 37,
+   "y": 20,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 38,
+   "y": 20,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "barrel",
+   "x": 38,
+   "y": 21,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 1,
+   "y": 3,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 13,
+   "y": 3,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 38,
+   "y": 6,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 1,
+   "y": 13,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 38,
+   "y": 14,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "plant",
+   "x": 22,
+   "y": 21,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "lamp",
+   "x": 17,
+   "y": 22,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  },
+  {
+   "kind": "lamp",
+   "x": 22,
+   "y": 22,
+   "width": 1,
+   "height": 1,
+   "blocks": true
+  }
+ ],
+ "npcSpots": {
+  "bartender": {
+   "x": 29,
+   "y": 15,
+   "facing": "down",
+   "seated": false
+  },
+  "receptionist": {
+   "x": 19,
+   "y": 4,
+   "facing": "down",
+   "seated": false
+  }
+ },
+ "characterSpots": {
+  "desk": [
+   {
+    "x": 3,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 5,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 7,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 9,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   }
+  ],
+  "archive": [
+   {
+    "x": 3,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 5,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 7,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 9,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 11,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   }
+  ],
+  "crystal": [
+   {
+    "x": 32,
+    "y": 8,
+    "facing": "down",
+    "seated": false
+   },
+   {
+    "x": 34,
+    "y": 8,
+    "facing": "down",
+    "seated": false
+   },
+   {
+    "x": 36,
+    "y": 8,
+    "facing": "down",
+    "seated": false
+   },
+   {
+    "x": 32,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 34,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 36,
+    "y": 11,
+    "facing": "up",
+    "seated": false
+   }
+  ],
+  "forge": [
+   {
+    "x": 32,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 34,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 36,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 38,
+    "y": 5,
+    "facing": "up",
+    "seated": false
+   }
+  ],
+  "queue": [
+   {
+    "x": 17,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 18,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 19,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 20,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 21,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 22,
+    "y": 6,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 17,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 18,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 19,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 20,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 21,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 22,
+    "y": 9,
+    "facing": "up",
+    "seated": false
+   }
+  ],
+  "bar": [
+   {
+    "x": 25,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 27,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 29,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 31,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 33,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 35,
+    "y": 17,
+    "facing": "up",
+    "seated": true
+   },
+   {
+    "x": 24,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 26,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 28,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 30,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 32,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   },
+   {
+    "x": 34,
+    "y": 20,
+    "facing": "up",
+    "seated": false
+   }
+  ]
+ },
+ "lights": [
+  {
+   "x": 464,
+   "y": 56,
+   "radius": 120
+  },
+  {
+   "x": 544,
+   "y": 72,
+   "radius": 92
+  },
+  {
+   "x": 552,
+   "y": 152,
+   "radius": 76
+  },
+  {
+   "x": 248,
+   "y": 32,
+   "radius": 72
+  },
+  {
+   "x": 376,
+   "y": 32,
+   "radius": 72
+  },
+  {
+   "x": 280,
+   "y": 352,
+   "radius": 64
+  },
+  {
+   "x": 360,
+   "y": 352,
+   "radius": 64
+  },
+  {
+   "x": 480,
+   "y": 224,
+   "radius": 92
+  },
+  {
+   "x": 88,
+   "y": 248,
+   "radius": 52
+  },
+  {
+   "x": 184,
+   "y": 296,
+   "radius": 52
+  },
+  {
+   "x": 248,
+   "y": 216,
+   "radius": 52
+  },
+  {
+   "x": 112,
+   "y": 72,
+   "radius": 64
+  },
+  {
+   "x": 96,
+   "y": 160,
+   "radius": 56
+  },
+  {
+   "x": 320,
+   "y": 80,
+   "radius": 76
+  }
+ ]
+}

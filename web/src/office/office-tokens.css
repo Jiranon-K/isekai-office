@@ -1,0 +1,126 @@
+:root {
+  --office-font: var(--font-pixel, "Pixelify Sans", "Anuphan Variable", ui-monospace, monospace);
+  --office-floor-a: var(--terracotta-800);
+  --office-floor-b: var(--terracotta-700);
+  --office-floor-line: var(--terracotta-900);
+  --office-wall-top: var(--sand-200);
+  --office-wall-face: var(--sand-300);
+  --office-wall-base: var(--terracotta-900);
+  --office-wall-line: var(--sand-500);
+  --office-rug-a: var(--red-800);
+  --office-rug-b: var(--amber-400);
+  --office-accent: var(--world-accent);
+  --office-accent-dark: var(--world-accent-foreground);
+  --office-glow: var(--world-glow);
+  --office-wood-light: var(--amber-500);
+  --office-wood-mid: var(--amber-700);
+  --office-wood-dark: var(--amber-900);
+  --office-stone-light: var(--sand-400);
+  --office-stone-mid: var(--sand-600);
+  --office-stone-dark: var(--sand-800);
+  --office-metal: var(--sand-300);
+  --office-iron: var(--sand-700);
+  --office-fire-a: var(--amber-400);
+  --office-fire-b: var(--red-500);
+  --office-fire-core: var(--yellow-200);
+  --office-ember: var(--yellow-300);
+  --office-crystal-a: var(--blue-300);
+  --office-crystal-b: var(--violet-400);
+  --office-paper: var(--sand-50);
+  --office-ink: var(--sand-950);
+  --office-book-red: var(--red-600);
+  --office-book-teal: var(--teal-600);
+  --office-book-amber: var(--amber-300);
+  --office-book-violet: var(--violet-600);
+  --office-leaf-light: var(--green-500);
+  --office-leaf-dark: var(--green-700);
+  --office-pot: var(--terracotta-600);
+  --office-glass: var(--blue-200);
+  --office-shade: transparent;
+  --office-shadow: color-mix(in oklab, var(--sand-950) 35%, transparent);
+  --office-bubble: var(--sand-50);
+  --office-bubble-edge: var(--sand-950);
+  --office-alert-waiting: var(--amber-500);
+  --office-alert-blocked: var(--red-500);
+  --office-mana-low: var(--office-crystal-a);
+  --office-mana-warn: var(--office-alert-waiting);
+  --office-mana-high: var(--office-alert-blocked);
+  --office-mana-empty: var(--office-plate);
+  --office-sweat: var(--blue-300);
+  --office-plate: color-mix(in oklab, var(--sand-950) 72%, transparent);
+  --office-plate-text: var(--sand-50);
+  --office-plate-muted: var(--sand-400);
+  --office-outline: var(--sand-950);
+  --office-boots: var(--sand-900);
+  --office-skin-1: var(--terracotta-100);
+  --office-skin-2: var(--terracotta-300);
+  --office-skin-3: var(--terracotta-500);
+  --office-hair-1: var(--sand-950);
+  --office-hair-2: var(--terracotta-900);
+  --office-hair-3: var(--amber-600);
+  --office-hair-4: var(--red-700);
+  --office-knight-body: var(--sand-400);
+  --office-knight-trim: var(--sand-600);
+  --office-knight-accent: var(--red-500);
+  --office-knight-legs: var(--sand-700);
+  --office-mage-body: var(--violet-600);
+  --office-mage-trim: var(--violet-300);
+  --office-mage-accent: var(--violet-800);
+  --office-mage-legs: var(--violet-900);
+  --office-ranger-body: var(--green-700);
+  --office-ranger-trim: var(--terracotta-500);
+  --office-ranger-accent: var(--green-900);
+  --office-ranger-legs: var(--terracotta-800);
+  --office-alchemist-body: var(--teal-600);
+  --office-alchemist-trim: var(--amber-300);
+  --office-alchemist-accent: var(--amber-500);
+  --office-alchemist-legs: var(--sand-800);
+  --office-bartender-body: var(--sand-100);
+  --office-bartender-trim: var(--terracotta-600);
+  --office-bartender-accent: var(--terracotta-800);
+  --office-bartender-legs: var(--sand-800);
+  --office-receptionist-body: var(--blue-600);
+  --office-receptionist-trim: var(--amber-300);
+  --office-receptionist-accent: var(--yellow-400);
+  --office-receptionist-legs: var(--blue-900);
+}
+
+:root.dark {
+  --office-shade: color-mix(in oklab, var(--blue-950) 66%, transparent);
+}
+
+:root[data-world="grove"] {
+  --office-floor-a: var(--green-800);
+  --office-floor-b: var(--green-700);
+  --office-floor-line: var(--green-900);
+  --office-wall-top: var(--teal-200);
+  --office-wall-face: var(--teal-300);
+  --office-wall-base: var(--teal-900);
+  --office-wall-line: var(--teal-600);
+  --office-rug-a: var(--teal-700);
+  --office-rug-b: var(--yellow-300);
+}
+
+:root[data-world="keep"] {
+  --office-floor-a: var(--violet-800);
+  --office-floor-b: var(--violet-700);
+  --office-floor-line: var(--violet-900);
+  --office-wall-top: var(--sand-300);
+  --office-wall-face: var(--sand-400);
+  --office-wall-base: var(--violet-900);
+  --office-wall-line: var(--sand-600);
+  --office-rug-a: var(--red-800);
+  --office-rug-b: var(--pink-300);
+}
+
+:root[data-world="meadow"] {
+  --office-floor-a: var(--sand-300);
+  --office-floor-b: var(--sand-200);
+  --office-floor-line: var(--sand-500);
+  --office-wall-top: var(--blue-100);
+  --office-wall-face: var(--blue-200);
+  --office-wall-base: var(--sand-700);
+  --office-wall-line: var(--blue-400);
+  --office-rug-a: var(--blue-300);
+  --office-rug-b: var(--yellow-200);
+}

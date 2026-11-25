@@ -1,0 +1,80 @@
+import { useState } from 'react'
+import { SendIcon, StopIcon2 } from '@/components/icons'
+import { Spinner } from '@/components/spinner'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import type { CommandStatus } from './use-command'
+import { shouldSubmitOnKey } from './panel-logic'
+
+type CommandComposerProps = {
+  disabled: boolean
+  status: CommandStatus
+  onPrompt(text: string): Promise<boolean>
+  onEscape(): void
+}
+
+function StatusLine({ status }: { status: CommandStatus }): React.JSX.Element | null {
+  if (status.kind === 'sending') {
+    return (
+      <p role="status" className="flex items-center gap-1.5 text-caption text-muted-foreground">
+        <Spinner className="size-3" />
+        กำลังส่ง
+      </p>
+    )
+  }
+  if (status.kind === 'sent') {
+    return <p role="status" className="text-caption text-tint-green-fg">ส่งคำสั่งแล้ว</p>
+  }
+  if (status.kind === 'failed') {
+    return <p role="alert" className="text-caption text-tint-red-fg">ส่งไม่สำเร็จ ({status.reason}) ลองใหม่อีกครั้ง</p>
+  }
+  return null
+}
+
+export function CommandComposer({ disabled, status, onPrompt, onEscape }: CommandComposerProps): React.JSX.Element {
+  const [text, setText] = useState('')
+  const sending = status.kind === 'sending'
+  const canSend = !disabled && !sending && text.trim().length > 0
+
+  async function submit(): Promise<void> {
+    if (!canSend) {
+      return
+    }
+    const sent = await onPrompt(text.trim())
+    if (sent) {
+      setText('')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        value={text}
+        disabled={disabled}
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={(event) => {
+          if (!shouldSubmitOnKey(event.key, event.shiftKey, event.nativeEvent.isComposing)) {
+            return
+          }
+          event.preventDefault()
+          void submit()
+        }}
+        placeholder="พิมพ์ prompt หรือ slash command…"
+        aria-label="prompt ถึง session นี้"
+        className="min-h-16"
+        rows={2}
+      />
+      <div className="flex items-center gap-2">
+        <StatusLine status={status} />
+        <Button variant="outline" size="sm" className="ml-auto" disabled={disabled || sending} onClick={onEscape}>
+          <StopIcon2 />
+          หยุด (Esc)
+        </Button>
+        <Button size="sm" disabled={!canSend} onClick={() => void submit()}>
+          {sending ? <Spinner /> : <SendIcon />}
+          ส่ง
+        </Button>
+      </div>
+    </div>
+  )
+}

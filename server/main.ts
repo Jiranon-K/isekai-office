@@ -1,0 +1,124 @@
+import { join, normalize } from 'node:path'
+import type { CommandAction, CommandRequest, OfficeAgent } from '@shared/types'
+import { board } from './board-feed'
+import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './demo'
+import { currentSnapshot, subscribe } from './office-feed'
+import { readSession, sendCommand } from './orca'
+import { isAllowedRequest } from './guard'
+
+const PORT = Number(process.env.PORT ?? 4300)
+const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
+const PORTS = { serverPort: PORT, publicPort: PUBLIC_PORT }
+const DIST = join(import.meta.dir, '..', 'dist')
+const DEV = process.argv.includes('--dev')
+const DEMO = process.env.DEMO === '1'
+const feeds = DEMO
+  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, session: demoSession, command: demoCommand }
+  : { subscribe, snapshot: currentSnapshot, board, session: readSession, command: sendCommand }
+const ACTIONS: CommandAction[] = ['prompt', 'escape', 'allow', 'deny']
+const encoder = new TextEncoder()
+
+function json(body: unknown, status = 200): Response {
+  return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
+}
+
+function officeEvents(request: Request): Response {
+  let unsubscribe = (): void => {}
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      unsubscribe = feeds.subscribe((snapshot) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(snapshot)}\n\n`))
+      })
+      request.signal.addEventListener('abort', () => {
+        unsubscribe()
+        controller.close()
+      })
+    },
+    cancel() {
+      unsubscribe()
+    }
+  })
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }
+  })
+}
+
+function toCommand(body: unknown): CommandRequest | null {
+  if (typeof body !== 'object' || body === null) {
+    return null
+  }
+  const agentId = Reflect.get(body, 'agentId')
+  const action = ACTIONS.find((known) => known === Reflect.get(body, 'action'))
+  const text = Reflect.get(body, 'text')
+  if (typeof agentId !== 'string' || !action) {
+    return null
+  }
+  return { agentId, action, text: typeof text === 'string' ? text : undefined }
+}
+
+function agentFor(agentId: string): OfficeAgent | null {
+  return feeds.snapshot().agents.find((agent) => agent.id === agentId) ?? null
+}
+
+function terminalFor(agentId: string): string | null {
+  return agentFor(agentId)?.terminal ?? null
+}
+
+async function command(request: Request): Promise<Response> {
+  const parsed = toCommand(await request.json().catch(() => null))
+  if (!parsed) {
+    return json({ ok: false, error: 'bad_request' }, 400)
+  }
+  const terminal = terminalFor(parsed.agentId)
+  if (!terminal) {
+    return json({ ok: false, error: 'no_terminal' }, 409)
+  }
+  return json(await feeds.command(terminal, parsed))
+}
+
+async function session(id: string): Promise<Response> {
+  try {
+    return json(await feeds.session(id, agentFor(id)))
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : String(error) }, 502)
+  }
+}
+
+async function staticFile(pathname: string): Promise<Response> {
+  const safe = normalize(pathname).replace(/^(\.\.[/\\])+/, '')
+  const file = Bun.file(join(DIST, safe))
+  if (safe !== '/' && (await file.exists())) {
+    return new Response(file, { headers: { 'Cache-Control': safe.startsWith('/assets/') ? 'max-age=31536000, immutable' : 'no-cache' } })
+  }
+  return new Response(Bun.file(join(DIST, 'index.html')), { headers: { 'Cache-Control': 'no-cache' } })
+}
+
+async function route(request: Request): Promise<Response> {
+  const url = new URL(request.url)
+  if (!isAllowedRequest(request, PORTS)) {
+    return json({ error: 'forbidden' }, 403)
+  }
+  if (url.pathname === '/api/office/events') {
+    return officeEvents(request)
+  }
+  if (url.pathname === '/api/board') {
+    return json(await feeds.board(url.searchParams.has('refresh')))
+  }
+  if (url.pathname.startsWith('/api/session/')) {
+    return session(decodeURIComponent(url.pathname.slice('/api/session/'.length)))
+  }
+  if (url.pathname === '/api/command' && request.method === 'POST') {
+    return command(request)
+  }
+  if (url.pathname.startsWith('/api/')) {
+    return json({ error: 'not_found' }, 404)
+  }
+  if (DEV) {
+    return new Response('Open http://localhost:4300 (Vite dev server)', { status: 404 })
+  }
+  return staticFile(url.pathname)
+}
+
+Bun.serve({ hostname: '127.0.0.1', port: PORT, idleTimeout: 0, fetch: route })
+
+console.log(`isekai-office${DEMO ? ' (demo data)' : ''} on http://localhost:${PORT}`)

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jiranon.isekai-office</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/bun</string>
+    <string>run</string>
+    <string>server/main.ts</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/jiranon/Home/personal/isekai-office</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key>
+    <string>/Users/jiranon</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>/Users/jiranon/Library/Logs/isekai-office.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/jiranon/Library/Logs/isekai-office.log</string>
+</dict>
+</plist>
