@@ -44,8 +44,8 @@ describe('card helpers', () => {
     expect(visibleLabels(['type:bug', 'agent', 'risk:low'])).toEqual(['type:bug', 'risk:low'])
   })
 
-  test('builds the loop-start prompt', () => {
-    expect(loopStartPrompt('OPS-541')).toBe('/loop-start OPS-541')
+  test('builds the jk-loop:start prompt', () => {
+    expect(loopStartPrompt('OPS-541')).toBe('/jk-loop:start OPS-541')
   })
 })
 

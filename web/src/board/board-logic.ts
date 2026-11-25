@@ -52,7 +52,7 @@ export function sendableAgents(agents: OfficeAgent[]): OfficeAgent[] {
 }
 
 export function loopStartPrompt(cardKey: string): string {
-  return `/loop-start ${cardKey}`
+  return `/jk-loop:start ${cardKey}`
 }
 
 export type BoardErrorKind = 'missing_token' | 'unauthorized' | 'unreachable' | 'generic'

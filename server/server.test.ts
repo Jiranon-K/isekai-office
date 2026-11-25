@@ -34,8 +34,8 @@ describe('guard', () => {
 
 describe('orca commands', () => {
   test('a prompt is pasted with enter and an empty prompt is not sent', () => {
-    expect(sendArgs('term_1', { agentId: 'a', action: 'prompt', text: ' /loop-start OPS-1 ' })).toEqual([
-      'terminal', 'send', '--terminal', 'term_1', '--text', '/loop-start OPS-1', '--enter', '--wait-submit', '5'
+    expect(sendArgs('term_1', { agentId: 'a', action: 'prompt', text: ' /jk-loop:start OPS-1 ' })).toEqual([
+      'terminal', 'send', '--terminal', 'term_1', '--text', '/jk-loop:start OPS-1', '--enter', '--wait-submit', '5'
     ])
     expect(sendArgs('term_1', { agentId: 'a', action: 'prompt', text: '   ' })).toBeNull()
   })

@@ -19,7 +19,7 @@ type SendToClaudeProps = {
 
 function disabledReason(card: QuestCard, candidates: OfficeAgent[]): string | null {
   if (card.key === null) {
-    return 'card นี้ไม่มี key จึงสั่ง /loop-start ไม่ได้'
+    return 'card นี้ไม่มี key จึงสั่ง /jk-loop:start ไม่ได้'
   }
   if (candidates.length === 0) {
     return 'ไม่มี session ที่มี terminal ให้ส่งคำสั่ง'
@@ -90,7 +90,7 @@ export function SendToClaude({ card, agents, onSendToAgent }: SendToClaudeProps)
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="flex w-72 flex-col gap-1 p-1.5">
-          <p className="px-2 py-1 text-caption text-muted-foreground">เลือก session ที่จะรับ /loop-start {card.key}</p>
+          <p className="px-2 py-1 text-caption text-muted-foreground">เลือก session ที่จะรับ /jk-loop:start {card.key}</p>
           {candidates.map((agent) => (
             <button
               key={agent.id}
