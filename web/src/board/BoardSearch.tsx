@@ -1,11 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Kbd } from '@/components/kbd'
+import { isTyping } from '@/lib/keyboard'
 
 type BoardSearchProps = { value: string; onChange(value: string): void }
-
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && (target.isContentEditable || target.matches('input, textarea, select'))
-}
 
 export function BoardSearch({ value, onChange }: BoardSearchProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)

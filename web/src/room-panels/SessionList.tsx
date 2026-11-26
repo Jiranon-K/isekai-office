@@ -5,6 +5,7 @@ import { needsDecision, STATE_LABELS } from '@/agent/panel-logic'
 type SessionListProps = {
   agents: OfficeAgent[]
   empty: string
+  quiet?: ReadonlyMap<string, number>
   onSelect(agentId: string): void
   detail?(agent: OfficeAgent): React.ReactNode
 }
@@ -17,7 +18,11 @@ function StateBadge({ agent }: { agent: OfficeAgent }): React.JSX.Element {
   return <Badge variant={needsDecision(agent.state) ? 'amber' : 'muted'}>{STATE_LABELS[agent.state]}</Badge>
 }
 
-export function SessionList({ agents, empty, onSelect, detail }: SessionListProps): React.JSX.Element {
+function QuietBadge({ minutes }: { minutes: number | undefined }): React.JSX.Element | null {
+  return minutes === undefined ? null : <Badge variant="blue">เงียบ {minutes} นาที</Badge>
+}
+
+export function SessionList({ agents, empty, quiet, onSelect, detail }: SessionListProps): React.JSX.Element {
   if (agents.length === 0) {
     return <PanelNote>{empty}</PanelNote>
   }
@@ -32,6 +37,7 @@ export function SessionList({ agents, empty, onSelect, detail }: SessionListProp
           >
             <span className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate text-small font-medium">{agent.title}</span>
+              <QuietBadge minutes={quiet?.get(agent.id)} />
               <StateBadge agent={agent} />
             </span>
             {detail ? detail(agent) : agent.repo ? <span className="truncate text-caption text-muted-foreground">{agent.repo}</span> : null}

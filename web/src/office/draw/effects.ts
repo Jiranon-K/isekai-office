@@ -122,7 +122,22 @@ export function drawStationEffects(
   }
 }
 
+function drawQuietMark(context: CanvasRenderingContext2D, palette: OfficePalette, actor: Actor): void {
+  const x = Math.round(actor.x - 5)
+  const y = Math.round(actor.y - 38)
+  fill(context, palette, 'bubble-edge', x, y, 11, 11)
+  fill(context, palette, 'bubble', x + 1, y + 1, 9, 8)
+  fill(context, palette, 'bubble-edge', x + 4, y + 11, 3, 2)
+  for (const dx of [2, 5, 8]) {
+    fill(context, palette, 'quiet', x + dx, y + 4, 2, 2)
+  }
+}
+
 export function drawBubble(context: CanvasRenderingContext2D, palette: OfficePalette, actor: Actor, seconds: number): void {
+  if (actor.kind === 'agent' && actor.quiet && actor.state === 'working' && actor.path.length === 0) {
+    drawQuietMark(context, palette, actor)
+    return
+  }
   if (actor.kind !== 'agent' || (actor.state !== 'waiting' && actor.state !== 'blocked') || actor.path.length > 0) {
     return
   }

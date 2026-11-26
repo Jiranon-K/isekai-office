@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test'
+import { toCommand } from './command'
+import { demoLog } from './feeds/demo'
 import { isAllowedRequest } from './guard'
 import { parseLoopState } from './sources/loop-state'
-import { cleanTitle, lastTool, sendArgs, toState } from './sources/orca'
+import { cleanTitle, lastTool, sendArgs, spawnArgs, toState } from './sources/orca'
 import { columnFor, parseRpcBody } from './sources/workspace'
 
 const PORT = 4300
@@ -46,6 +48,14 @@ describe('orca commands', () => {
     expect(sendArgs('t', { agentId: 'a', action: 'escape' })).toEqual(['terminal', 'send', '--terminal', 't', '--text', '\x1b'])
   })
 
+  test('choose presses the digit of the choice without enter', () => {
+    expect(sendArgs('t', { agentId: 'a', action: 'choose', choice: 3 })).toEqual(['terminal', 'send', '--terminal', 't', '--text', '3'])
+  })
+
+  test('choose without a choice is not sent', () => {
+    expect(sendArgs('t', { agentId: 'a', action: 'choose' })).toBeNull()
+  })
+
   test('a title made of a command caveat falls back to the workspace name', () => {
     expect(cleanTitle('<local-command-caveat>Caveat: the messages below</local-command-caveat>', 'main')).toBe('main')
     expect(cleanTitle('<command-name>/clear</command-name> Fix login', 'main')).toBe('Fix login')
@@ -56,6 +66,37 @@ describe('orca commands', () => {
     expect(toState('sleeping')).toBe('done')
     expect(lastTool([{ tools: [{ name: 'Read' }] }, { tools: [{ name: 'Bash' }] }])).toBe('Bash')
     expect(lastTool([{ text: 'hi' }])).toBeNull()
+  })
+})
+
+describe('spawn', () => {
+  test('the minimal request creates a worktree with a claude terminal and nothing else', () => {
+    expect(spawnArgs({ repoId: 'r1', name: 'fix-login' })).toEqual([
+      'worktree', 'create', '--repo', 'id:r1', '--name', 'fix-login', '--agent', 'claude', '--surface', 'terminal'
+    ])
+  })
+
+  test('a request with every field adds the base branch and the prompt', () => {
+    expect(spawnArgs({ repoId: 'r1', name: 'fix-login', baseBranch: 'origin/main', prompt: 'go' })).toEqual([
+      'worktree', 'create', '--repo', 'id:r1', '--name', 'fix-login', '--agent', 'claude', '--surface', 'terminal',
+      '--base-branch', 'origin/main', '--prompt', 'go'
+    ])
+  })
+
+  test('a prompt with quotes, a command substitution and newlines is one unchanged argument', () => {
+    const prompt = 'say "hi" and \'bye\'\n$(touch /tmp/x) `id` ; rm -rf *\nlast'
+    const args = spawnArgs({ repoId: 'r1', name: 'n', prompt })
+    expect(args.at(-2)).toBe('--prompt')
+    expect(args.at(-1)).toBe(prompt)
+    expect(args.filter((arg) => arg === prompt)).toHaveLength(1)
+  })
+
+  test('a spawn post from another origin is refused by the guard', () => {
+    const post = new Request(`http://localhost:${PORT}/api/spawn`, {
+      method: 'POST',
+      headers: { host: 'localhost:4300', origin: 'https://evil.example', 'content-type': 'application/json' }
+    })
+    expect(isAllowedRequest(post, PORTS)).toBe(false)
   })
 })
 
@@ -79,5 +120,38 @@ describe('board', () => {
     const stages = parseLoopState('OPS-541 status=merged repo=web mr=https://x/1 ui=yes session=abc\nAPP-9 status=working repo=ui wt=/tmp/wt\n\n')
     expect(stages.get('OPS-541')).toEqual({ status: 'merged', mr: 'https://x/1', worktree: null, session: 'abc' })
     expect(stages.get('APP-9')).toEqual({ status: 'working', mr: null, worktree: '/tmp/wt', session: null })
+  })
+})
+
+describe('command body', () => {
+  test('choose with a choice from 1 to 9 is accepted', () => {
+    expect(toCommand({ agentId: 'a', action: 'choose', choice: 1 })).toEqual({ agentId: 'a', action: 'choose', text: undefined, choice: 1 })
+    expect(toCommand({ agentId: 'a', action: 'choose', choice: 9 })?.choice).toBe(9)
+  })
+
+  test('choose with 0, 10, 1.5, a string or nothing is refused', () => {
+    for (const choice of [0, 10, 1.5, '2', null, undefined]) {
+      expect(toCommand({ agentId: 'a', action: 'choose', choice })).toBeNull()
+    }
+  })
+
+  test('the other actions ignore a choice', () => {
+    expect(toCommand({ agentId: 'a', action: 'allow', choice: 99 })?.choice).toBeUndefined()
+  })
+
+  test('an unknown action or a missing agent is refused', () => {
+    expect(toCommand({ agentId: 'a', action: 'explode' })).toBeNull()
+    expect(toCommand({ action: 'allow' })).toBeNull()
+    expect(toCommand(null)).toBeNull()
+  })
+})
+
+describe('guild log', () => {
+  test('the log body is a newest-first events list of about eight events', async () => {
+    const { events } = await demoLog()
+    const times = events.map((event) => event.at)
+    expect(events).toHaveLength(8)
+    expect(times).toEqual([...times].sort((first, second) => second - first))
+    expect(Object.keys(events[0] ?? {}).sort()).toEqual(['agentId', 'at', 'from', 'title', 'to'])
   })
 })

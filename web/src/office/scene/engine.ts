@@ -1,5 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
-import { createNpcActors, syncActors, updateActors, type Actor } from './actors'
+import { createNpcActors, markQuiet, syncActors, updateActors, type Actor } from './actors'
 import type { Mode, World } from '@/lib/theme'
 import { backdropLayer, loadBackdrop } from '../draw/backdrop'
 import { countAgents } from '@/lib/agent-counts'
@@ -27,6 +27,7 @@ export type OfficeInput = {
   agents: readonly OfficeAgent[]
   orcaRunning: boolean
   contextWindow: number
+  quiet: ReadonlyMap<string, number>
   selectedId: string | null
   world: World
   mode: Mode
@@ -177,6 +178,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       paletteDirty = true
     }
     syncActors(actors, next.orcaRunning ? next.agents : [], grid, reducedQuery.matches, next.contextWindow)
+    markQuiet(actors, next.quiet)
     requestFrame()
   }
 

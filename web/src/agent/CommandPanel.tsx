@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Badge } from '@/components/badge'
 import { AllowIcon, DenyIcon, TerminalIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
 import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
 import { Transcript } from './Transcript'
@@ -65,6 +66,7 @@ function PanelHeader({ agent, contextWindow, onClose }: CommandPanelProps): Reac
               {contextLoad}
             </Badge>
           ) : null}
+          <CompactButton agent={agent} contextWindow={contextWindow} />
         </div>
       </div>
       <Button variant="ghost" size="icon-sm" aria-label="ปิดแผงคำสั่ง" onClick={onClose}>

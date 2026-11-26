@@ -15,6 +15,7 @@ function agent(id: string, state: AgentState, lastMessage: string | null = null)
     tool: null,
     lastMessage,
     updatedAt: 0,
+    activeAt: 0,
     terminal: null
   }
 }

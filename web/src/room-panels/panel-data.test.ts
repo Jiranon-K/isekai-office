@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import type { AgentState, BoardSnapshot, OfficeAgent, QuestCard } from '@shared/types'
-import { cardsToVerify, doneSessions, loadRows, loopHistory, rosterOrder, waitingCount } from './panel-data'
+import type { AgentState, BoardSnapshot, OfficeAgent, PipelineStatus, QuestCard } from '@shared/types'
+import { cardsToVerify, doneSessions, failedPipelineCount, loadRows, loopHistory, questBoardMark, rosterOrder, waitingCount } from './panel-data'
 
 function agentWith(id: string, state: AgentState, contextTokens: number | null = null, updatedAt = 0): OfficeAgent {
-  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens, state, tool: null, lastMessage: null, updatedAt, terminal: null }
+  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens, state, tool: null, lastMessage: null, updatedAt, activeAt: updatedAt, terminal: null }
 }
 
 function cardWith(id: string, loopStatus: string | null, column: QuestCard['column'] = 'doing'): QuestCard {
@@ -83,5 +83,43 @@ describe('waiting count', () => {
 
   test('is zero before the board loads', () => {
     expect(waitingCount(null, [])).toBe(0)
+  })
+})
+
+function cardWithPipeline(id: string, pipeline: PipelineStatus | null, loopStatus: string | null = null): QuestCard {
+  const card = cardWith(id, loopStatus)
+  return { ...card, mergeRequest: pipeline === null ? null : { iid: 1, url: '', state: 'opened', pipeline, tags: [] } }
+}
+
+describe('failed pipeline count', () => {
+  test('counts cards whose pipeline is failed', () => {
+    const cards = [cardWithPipeline('A', 'failed'), cardWithPipeline('B', 'success'), cardWithPipeline('C', 'failed'), cardWithPipeline('D', null)]
+    expect(failedPipelineCount(snapshotOf(cards))).toBe(2)
+  })
+
+  test('is zero before the board loads', () => {
+    expect(failedPipelineCount(null)).toBe(0)
+  })
+})
+
+describe('quest board mark', () => {
+  test('adds failed pipelines to the cards that wait for the owner', () => {
+    const cards = [cardWithPipeline('A', null, 'design_ready'), cardWithPipeline('B', 'failed', 'working'), cardWithPipeline('C', 'running', 'working')]
+    expect(questBoardMark(snapshotOf(cards), [])).toBe(2)
+  })
+
+  test('counts a card that waits and has a failed pipeline once', () => {
+    const cards = [cardWithPipeline('A', 'failed', 'design_ready')]
+    expect(questBoardMark(snapshotOf(cards), [])).toBe(1)
+  })
+
+  test('leaves out a failed pipeline on a merged merge request', () => {
+    const merged = cardWithPipeline('A', 'failed', 'working')
+    const cards = [{ ...merged, mergeRequest: { iid: 1, url: '', state: 'merged' as const, pipeline: 'failed' as const, tags: [] } }]
+    expect(questBoardMark(snapshotOf(cards), [])).toBe(0)
+  })
+
+  test('is zero before the board loads', () => {
+    expect(questBoardMark(null, [])).toBe(0)
   })
 })

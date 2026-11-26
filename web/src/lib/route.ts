@@ -50,6 +50,10 @@ export function togglePanel(route: Route, id: PanelId): Route {
   return { open: id, agentId: null }
 }
 
+export function openPanel(route: Route, id: PanelId): Route {
+  return route.open === id ? route : { open: id, agentId: null }
+}
+
 export function closePanel(route: Route): Route {
   return { ...route, open: null }
 }

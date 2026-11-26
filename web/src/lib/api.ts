@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { BoardSnapshot, CommandRequest, CommandResult, OfficeSnapshot, SessionDetail } from '@shared/types'
+import { shouldPoll } from '@/alerts/pipeline-logic'
+import type {
+  BoardSnapshot,
+  CommandRequest,
+  CommandResult,
+  GuildLog,
+  OfficeSnapshot,
+  OrcaRepo,
+  SessionDetail,
+  SpawnRequest,
+  SpawnResult
+} from '@shared/types'
 
 const BOARD_REFRESH_MS = 60_000
 
@@ -16,7 +27,7 @@ export function useOfficeFeed(): Loadable<OfficeSnapshot> {
   return state
 }
 
-export function useBoard(active: boolean): Loadable<BoardSnapshot> & { refresh: () => void } {
+export function useBoard(active: boolean, keepPolling = false): Loadable<BoardSnapshot> & { refresh: () => void } {
   const [state, setState] = useState<Loadable<BoardSnapshot>>({ data: null, error: null, loading: true })
   const load = useCallback(async (force: boolean) => {
     setState((previous) => ({ ...previous, loading: true }))
@@ -34,13 +45,31 @@ export function useBoard(active: boolean): Loadable<BoardSnapshot> & { refresh: 
     }
     void load(false)
     const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (shouldPoll(keepPolling, document.visibilityState)) {
         void load(false)
       }
     }, BOARD_REFRESH_MS)
     return () => clearInterval(timer)
-  }, [active, load])
+  }, [active, keepPolling, load])
   return { ...state, refresh: () => void load(true) }
+}
+
+export function useGuildLog(active: boolean, revision: number): Loadable<GuildLog> {
+  const [state, setState] = useState<Loadable<GuildLog>>({ data: null, error: null, loading: true })
+  useEffect(() => {
+    if (!active) {
+      return
+    }
+    let current = true
+    fetch('/api/log')
+      .then((response) => response.json())
+      .then((data: GuildLog) => current && setState({ data, error: null, loading: false }))
+      .catch(() => current && setState((previous) => ({ ...previous, error: 'server_unreachable', loading: false })))
+    return () => {
+      current = false
+    }
+  }, [active, revision])
+  return state
 }
 
 export async function fetchSession(id: string): Promise<SessionDetail> {
@@ -58,4 +87,32 @@ export async function sendCommand(request: CommandRequest): Promise<CommandResul
     body: JSON.stringify(request)
   })
   return response.json()
+}
+
+export function useRepos(): Loadable<OrcaRepo[]> {
+  const [state, setState] = useState<Loadable<OrcaRepo[]>>({ data: null, error: null, loading: true })
+  useEffect(() => {
+    let current = true
+    fetch('/api/repos')
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('repos_unavailable'))))
+      .then((body: { repos: OrcaRepo[] }) => current && setState({ data: body.repos, error: null, loading: false }))
+      .catch(() => current && setState({ data: null, error: 'repos_unavailable', loading: false }))
+    return () => {
+      current = false
+    }
+  }, [])
+  return state
+}
+
+export async function sendSpawn(request: SpawnRequest): Promise<SpawnResult> {
+  try {
+    const response = await fetch('/api/spawn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request)
+    })
+    return await response.json()
+  } catch {
+    return { ok: false, error: 'server_unreachable' }
+  }
 }

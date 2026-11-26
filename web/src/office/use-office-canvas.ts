@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { isRevealKey, isTyping } from '@/lib/keyboard'
 import { createOfficeEngine, type OfficeEngine, type OfficeInput } from './scene/engine'
 import { hotspotBounds, hotspotById, type HotspotId } from './scene/hotspots'
 import { computeView, scrollToShow, toScreenBox } from './scene/view'
@@ -11,14 +12,6 @@ type CanvasHandlers = {
   onSelect: (id: string | null) => void
   onHotspot: (id: HotspotId) => void
   locateRef: React.RefObject<AgentLocator | null>
-}
-
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && (target.isContentEditable || target.matches('input, textarea, select'))
-}
-
-function isRevealKey(event: KeyboardEvent): boolean {
-  return event.key === '?' || (event.code === 'Slash' && event.shiftKey)
 }
 
 function pulseOnFirstVisit(engine: OfficeEngine): void {
@@ -103,10 +96,10 @@ export function useOfficeCanvas(input: OfficeInput, { onSelect, onHotspot, locat
 
   useRevealKey(engineRef)
 
-  const { agents, orcaRunning, contextWindow, selectedId, world, mode, paused, boardWaiting, openHotspot } = input
+  const { agents, orcaRunning, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot } = input
   useEffect(() => {
-    engineRef.current?.update({ agents, orcaRunning, contextWindow, selectedId, world, mode, paused, boardWaiting, openHotspot })
-  }, [agents, orcaRunning, contextWindow, selectedId, world, mode, paused, boardWaiting, openHotspot])
+    engineRef.current?.update({ agents, orcaRunning, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot })
+  }, [agents, orcaRunning, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot])
 
   useEffect(() => {
     if (openHotspot && canvasRef.current) {

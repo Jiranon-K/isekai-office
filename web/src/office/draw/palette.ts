@@ -41,6 +41,7 @@ export const COLOR_NAMES = [
   'bubble-edge',
   'alert-waiting',
   'alert-blocked',
+  'quiet',
   'mana-low',
   'mana-warn',
   'mana-high',

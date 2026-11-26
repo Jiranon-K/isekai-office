@@ -9,13 +9,14 @@ import { HearthPanel } from './HearthPanel'
 import { HotspotPopover, type PanelSide } from './HotspotPopover'
 import { OrbPanel } from './OrbPanel'
 import { RosterPanel } from './RosterPanel'
-import { WorldPanel } from './WorldPanel'
+import { DoorPanel } from './DoorPanel'
 
 type PopoverPanelId = Exclude<PanelId, 'questBoard'>
 
 type HotspotPanelsProps = {
   open: PanelId | null
   office: Loadable<OfficeSnapshot>
+  quiet: ReadonlyMap<string, number>
   board: Loadable<BoardSnapshot>
   theme: Theme
   onThemeChange(theme: Theme): void
@@ -35,10 +36,10 @@ const SIDES: Record<PopoverPanelId, PanelSide> = {
 function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }): React.JSX.Element {
   const agents = props.office.data?.agents ?? []
   if (id === 'reception') {
-    return <RosterPanel office={props.office} onSelect={props.onSelectAgent} />
+    return <RosterPanel office={props.office} quiet={props.quiet} onSelect={props.onSelectAgent} />
   }
   if (id === 'door') {
-    return <WorldPanel theme={props.theme} onThemeChange={props.onThemeChange} />
+    return <DoorPanel theme={props.theme} onThemeChange={props.onThemeChange} />
   }
   if (id === 'orb') {
     return <OrbPanel agents={agents} contextWindow={props.office.data?.contextWindow ?? 0} onSelect={props.onSelectAgent} />
@@ -47,7 +48,7 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <BarPanel agents={agents} board={props.board.data} onSelect={props.onSelectAgent} />
   }
   if (id === 'hearth') {
-    return <HearthPanel office={props.office} />
+    return <HearthPanel office={props.office} onSelect={props.onSelectAgent} />
   }
   return <ArchivePanel board={props.board} />
 }

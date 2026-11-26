@@ -23,6 +23,7 @@ export type Actor = {
   spotIndex: number
   state: AgentState | null
   mana: number | null
+  quiet: boolean
   npcMode: 'idle' | 'work'
   leaving: boolean
   walked: number
@@ -54,6 +55,7 @@ function createActor(id: string, kind: Actor['kind'], label: string, look: Look,
     spotIndex: -1,
     state: null,
     mana: null,
+    quiet: false,
     npcMode: 'idle',
     leaving: false,
     walked: 0,
@@ -197,6 +199,12 @@ export function syncActors(
   }
   for (const { actor, groupId } of pending) {
     assignSpot(actor, groupId, occupancy, grid, snap)
+  }
+}
+
+export function markQuiet(actors: Map<string, Actor>, quiet: ReadonlyMap<string, number>): void {
+  for (const actor of actors.values()) {
+    actor.quiet = actor.kind === 'agent' && quiet.has(actor.id)
   }
 }
 

@@ -12,6 +12,7 @@ export type OfficeAgent = {
   tool: string | null
   lastMessage: string | null
   updatedAt: number
+  activeAt: number
   terminal: string | null
 }
 
@@ -19,9 +20,20 @@ export type OfficeSnapshot = {
   orcaRunning: boolean
   agents: OfficeAgent[]
   contextWindow: number
+  quietAfterMs: number
   error: string | null
   at: number
 }
+
+export type LogEvent = {
+  at: number
+  agentId: string
+  title: string
+  from: AgentState | null
+  to: AgentState | null
+}
+
+export type GuildLog = { events: LogEvent[] }
 
 export type BoardColumn = 'todo' | 'doing' | 'review' | 'done'
 
@@ -88,15 +100,29 @@ export type SessionDetail = {
   screen: string | null
 }
 
-export type CommandAction = 'prompt' | 'escape' | 'allow' | 'deny'
+export type Choice = { number: number; label: string; selected: boolean }
+
+export type CommandAction = 'prompt' | 'escape' | 'allow' | 'deny' | 'choose'
 
 export type CommandRequest = {
   agentId: string
   action: CommandAction
   text?: string
+  choice?: number
 }
 
 export type CommandResult = {
   ok: boolean
   error: string | null
 }
+
+export type OrcaRepo = { id: string; name: string }
+
+export type SpawnRequest = {
+  repoId: string
+  name: string
+  baseBranch?: string
+  prompt?: string
+}
+
+export type SpawnResult = { ok: boolean; error: string | null }

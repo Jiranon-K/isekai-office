@@ -42,6 +42,7 @@
   --office-bubble-edge: var(--sand-950);
   --office-alert-waiting: var(--amber-500);
   --office-alert-blocked: var(--red-500);
+  --office-quiet: var(--blue-500);
   --office-mana-low: var(--office-crystal-a);
   --office-mana-warn: var(--office-alert-waiting);
   --office-mana-high: var(--office-alert-blocked);

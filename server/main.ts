@@ -1,9 +1,11 @@
 import { join, normalize } from 'node:path'
-import type { CommandAction, CommandRequest, OfficeAgent } from '@shared/types'
+import type { OfficeAgent } from '@shared/types'
+import { toCommand } from './command'
 import { board } from './feeds/board'
-import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
-import { currentSnapshot, subscribe } from './feeds/office'
-import { readSession, sendCommand } from './sources/orca'
+import { demoBoard, demoCommand, demoLog, demoRepos, demoSession, demoSnapshot, demoSpawn, demoSubscribe } from './feeds/demo'
+import { currentLog, currentSnapshot, subscribe } from './feeds/office'
+import { createWorktree, listRepos, readSession, sendCommand } from './sources/orca'
+import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
 
 const PORT = Number(process.env.PORT ?? 4300)
@@ -13,9 +15,8 @@ const DIST = join(import.meta.dir, '..', 'dist')
 const DEV = process.argv.includes('--dev')
 const DEMO = process.env.DEMO === '1'
 const feeds = DEMO
-  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, session: demoSession, command: demoCommand }
-  : { subscribe, snapshot: currentSnapshot, board, session: readSession, command: sendCommand }
-const ACTIONS: CommandAction[] = ['prompt', 'escape', 'allow', 'deny']
+  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand, repos: demoRepos, spawn: demoSpawn }
+  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
 const encoder = new TextEncoder()
 
 function json(body: unknown, status = 200): Response {
@@ -43,19 +44,6 @@ function officeEvents(request: Request): Response {
   })
 }
 
-function toCommand(body: unknown): CommandRequest | null {
-  if (typeof body !== 'object' || body === null) {
-    return null
-  }
-  const agentId = Reflect.get(body, 'agentId')
-  const action = ACTIONS.find((known) => known === Reflect.get(body, 'action'))
-  const text = Reflect.get(body, 'text')
-  if (typeof agentId !== 'string' || !action) {
-    return null
-  }
-  return { agentId, action, text: typeof text === 'string' ? text : undefined }
-}
-
 function agentFor(agentId: string): OfficeAgent | null {
   return feeds.snapshot().agents.find((agent) => agent.id === agentId) ?? null
 }
@@ -74,6 +62,20 @@ async function command(request: Request): Promise<Response> {
     return json({ ok: false, error: 'no_terminal' }, 409)
   }
   return json(await feeds.command(terminal, parsed))
+}
+
+async function repos(): Promise<Response> {
+  try {
+    return json({ repos: await feeds.repos() })
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : String(error) }, 502)
+  }
+}
+
+async function spawn(request: Request): Promise<Response> {
+  const body = await request.json().catch(() => null)
+  const reply = await handleSpawn(body, { repos: feeds.repos, spawn: feeds.spawn })
+  return json(reply.result, reply.status)
 }
 
 async function session(id: string): Promise<Response> {
@@ -101,6 +103,9 @@ async function route(request: Request): Promise<Response> {
   if (url.pathname === '/api/office/events') {
     return officeEvents(request)
   }
+  if (url.pathname === '/api/log') {
+    return json(await feeds.log())
+  }
   if (url.pathname === '/api/board') {
     return json(await feeds.board(url.searchParams.has('refresh')))
   }
@@ -109,6 +114,12 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/command' && request.method === 'POST') {
     return command(request)
+  }
+  if (url.pathname === '/api/repos') {
+    return repos()
+  }
+  if (url.pathname === '/api/spawn' && request.method === 'POST') {
+    return spawn(request)
   }
   if (url.pathname.startsWith('/api/')) {
     return json({ error: 'not_found' }, 404)

@@ -1,20 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { QuestBoard } from '@/board/QuestBoard'
 import { HotspotPanels } from '@/room-panels/HotspotPanels'
-import { waitingCount } from '@/room-panels/panel-data'
+import { questBoardMark } from '@/room-panels/panel-data'
 import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
+import { useRecordHidden } from '@/room-panels/use-last-hidden'
 import { useBoard, useOfficeFeed } from '@/lib/api'
-import { closePanel, mergeQuery, parseRoute, selectAgent, togglePanel } from '@/lib/route'
+import { closePanel, mergeQuery, openPanel, parseRoute, selectAgent, togglePanel } from '@/lib/route'
 import { toggleMode, useTheme } from '@/lib/theme'
 import { replyMode } from '@/alerts/alert-logic'
 import { useAlertSetting } from '@/alerts/use-alert-setting'
+import { useJumpKey } from '@/alerts/use-jump-key'
+import { useNow } from '@/alerts/use-now'
+import { useLoadAlerts } from '@/alerts/use-load-alerts'
+import { usePipelineAlerts } from '@/alerts/use-pipeline-alerts'
+import { useQuietAlerts } from '@/alerts/use-quiet-alerts'
+import { quietMinutesById } from '@/alerts/quiet-logic'
 import { useWaitingAlerts } from '@/alerts/use-waiting-alerts'
+import { KeyHints } from '@/room-panels/KeyHints'
 import type { HotspotId } from '@/office/scene/hotspots'
 import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { CommandPanel } from '@/agent/CommandPanel'
 import { QuickReply } from '@/agent/QuickReply'
+
+const CLOCK_MS = 30_000
 
 function useEscape(active: boolean, onEscape: () => void): void {
   useEffect(() => {
@@ -35,7 +45,9 @@ export function App(): React.JSX.Element {
   const [theme, setTheme] = useTheme()
   const [route, setRoute] = useState(() => parseRoute(location.search))
   const office = useOfficeFeed()
-  const questBoard = useBoard(true)
+  const alerts = useAlertSetting()
+  const questBoard = useBoard(true, alerts.enabled)
+  useRecordHidden()
 
   useEffect(() => history.replaceState(null, '', mergeQuery(location.search, route) || location.pathname), [route])
 
@@ -45,14 +57,21 @@ export function App(): React.JSX.Element {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
   const boardOpen = route.open === 'questBoard'
-  const boardWaiting = useMemo(() => waitingCount(questBoard.data, agents), [questBoard.data, agents])
+  const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
   const pickAgent = useCallback((agentId: string | null) => {
     setExpandedId(null)
     setRoute((current) => selectAgent(current, agentId))
   }, [])
-  const alerts = useAlertSetting()
   const alertAgents = office.data?.orcaRunning ? office.data.agents : null
   useWaitingAlerts(alertAgents, alerts.enabled, pickAgent)
+  const now = useNow(CLOCK_MS, alerts.enabled)
+  const quietAfterMs = office.data?.quietAfterMs ?? Number.POSITIVE_INFINITY
+  const quiet = useMemo(() => quietMinutesById(agents, now, quietAfterMs), [agents, now, quietAfterMs])
+  useQuietAlerts(alertAgents, now, quietAfterMs, alerts.enabled, pickAgent)
+  useLoadAlerts(alertAgents, contextWindow, alerts.enabled, pickAgent)
+  const showBoard = useCallback(() => setRoute((current) => openPanel(current, 'questBoard')), [])
+  usePipelineAlerts(questBoard.data, alerts.enabled, showBoard)
+  useJumpKey({ agents, currentId: route.agentId, boardOpen, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
   const openHotspot = useCallback(
@@ -75,6 +94,7 @@ export function App(): React.JSX.Element {
         agents={agents}
         orcaRunning={office.data?.orcaRunning ?? false}
         contextWindow={contextWindow}
+        quiet={quiet}
         selectedId={selected?.id ?? null}
         onSelect={pickAgent}
         onHotspot={openHotspot}
@@ -86,11 +106,13 @@ export function App(): React.JSX.Element {
         locateRef={locateRef}
       />
       {boardOpen ? <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} /> : null}
+      <KeyHints />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
       <HotspotPanels
         open={route.open}
         office={office}
+        quiet={quiet}
         board={questBoard}
         theme={theme}
         onThemeChange={setTheme}

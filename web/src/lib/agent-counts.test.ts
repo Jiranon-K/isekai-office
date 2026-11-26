@@ -3,7 +3,7 @@ import type { AgentState, OfficeAgent } from '@shared/types'
 import { countAgents } from './agent-counts'
 
 function agentWith(state: AgentState): OfficeAgent {
-  return { id: state, title: state, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, terminal: null }
+  return { id: state, title: state, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
 }
 
 describe('countAgents', () => {

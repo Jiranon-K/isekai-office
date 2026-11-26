@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { contextWindowFrom } from '../feeds/office'
+import { contextWindowFrom, quietAfterMsFrom } from '../feeds/office'
 import { worktreeFromId } from './orca'
 import { parseTranscriptTail, pickTranscript, sessionContext, transcriptFolder } from './transcripts'
 
@@ -111,7 +111,14 @@ describe('sessionContext', () => {
       'aaa.jsonl': [titleLine('Other'), assistantLine(1, 1, 1)].join('\n'),
       'bbb.jsonl': [titleLine('Mine'), assistantLine(10, 20, 30)].join('\n')
     })
-    expect(await sessionContext(worktree, 'Mine', projectsDir)).toEqual({ session: 'bbb', contextTokens: 60 })
+    expect(await sessionContext(worktree, 'Mine', projectsDir)).toMatchObject({ session: 'bbb', contextTokens: 60 })
+  })
+
+  test('the modified time of the picked transcript is returned', async () => {
+    const worktree = await worktreeWith({ 'ddd.jsonl': [titleLine('Mine'), assistantLine(1, 1, 1)].join('\n') })
+    const modified = new Date(Math.floor(Date.now() / 1000) * 1000 - 5 * HOUR_MS)
+    await utimes(join(transcriptFolder(worktree, projectsDir), 'ddd.jsonl'), modified, modified)
+    expect((await sessionContext(worktree, 'Mine', projectsDir))?.modifiedAt).toBe(modified.getTime())
   })
 
   test('a changed transcript is read again', async () => {
@@ -135,6 +142,19 @@ describe('orca worktree id', () => {
   test('a folder id without a path gives null', () => {
     expect(worktreeFromId('folder:6cd3011d')).toBeNull()
     expect(worktreeFromId(undefined)).toBeNull()
+  })
+})
+
+describe('quiet threshold setting', () => {
+  test('minutes become milliseconds', () => {
+    expect(quietAfterMsFrom('1')).toBe(60_000)
+    expect(quietAfterMsFrom('0.5')).toBe(30_000)
+  })
+
+  test('a missing or invalid value gives ten minutes', () => {
+    for (const value of [undefined, 'abc', '0', '-3', '']) {
+      expect(quietAfterMsFrom(value)).toBe(600_000)
+    }
   })
 })
 

@@ -2,10 +2,14 @@ import type {
   AgentState,
   BoardSnapshot,
   CommandResult,
+  GuildLog,
+  LogEvent,
   LoopStage,
   MergeRequestFacts,
   OfficeAgent,
   OfficeSnapshot,
+  OrcaRepo,
+  SpawnResult,
   QuestCard,
   SessionDetail,
   SessionEntry
@@ -24,9 +28,11 @@ const AGENT_SEEDS: AgentSeed[] = [
   ['a4', 'Research rate limit options', 'api', 'working', 'WebSearch', 64_000, null],
   ['a5', 'APP-18 onboarding checklist', 'web-app', 'waiting', 'Bash', 238_000, 'Allow Bash: bun run db:migrate?'],
   ['a6', 'OPS-9 rotate signing keys', 'infra', 'blocked', null, 705_000, 'I need the staging vault path before I can continue.'],
-  ['a7', 'APP-9 empty states', 'web-app', 'done', null, 301_000, 'Opened the merge request and all checks pass.'],
+  ['a7', 'APP-9 empty states', 'web-app', 'done', null, 452_000, 'Opened the merge request and all checks pass.'],
   ['a8', 'Write API changelog', 'docs', 'done', null, 48_000, 'Changelog drafted for 2.4.0.']
 ]
+
+const QUIET_DEMO_MINUTES: Record<string, number> = { a4: 14 }
 
 function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now: number): OfficeAgent {
   return {
@@ -41,13 +47,14 @@ function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now:
     tool,
     lastMessage: last,
     updatedAt: now - MINUTE,
-    terminal: state === 'done' ? null : `demo-${id}`
+    activeAt: now - (QUIET_DEMO_MINUTES[id] ?? 1) * MINUTE,
+    terminal: id === 'a8' ? null : `demo-${id}`
   }
 }
 
 function officeSnapshot(): OfficeSnapshot {
   const now = Date.now()
-  return { orcaRunning: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, error: null, at: now }
+  return { orcaRunning: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, quietAfterMs: 10 * MINUTE, error: null, at: now }
 }
 
 type CardSeed = [key: string, title: string, column: QuestCard['column'], route: string, loop: string | null, extra?: Partial<QuestCard>]
@@ -125,6 +132,23 @@ const SCREEN = [
   '   3. No, and tell Claude what to do differently (esc)'
 ].join('\n')
 
+const QUESTION_SCREEN = [
+  ' Which store should hold the vault paths?',
+  '',
+  ' ❯ 1. Environment variables',
+  '      Simple, read at start up',
+  '   2. Vault agent sidecar',
+  '      Rotates without a restart',
+  '   3. Config file in the repo',
+  '      Easy to review',
+  '   4. Other',
+  '      Say it in the full panel'
+].join('\n')
+
+function screenFor(id: string): string {
+  return id === 'a6' ? QUESTION_SCREEN : SCREEN
+}
+
 function chat(now: number): SessionEntry[] {
   const at = (minutesAgo: number): number => now - minutesAgo * MINUTE
   return [
@@ -147,14 +171,62 @@ export function demoSnapshot(): OfficeSnapshot {
   return officeSnapshot()
 }
 
+const PIPELINE_FLIP_MS = 20_000
+let firstBoardAt: number | null = null
+
+function withFlippedPipeline(snapshot: BoardSnapshot, flipped: boolean): BoardSnapshot {
+  if (!flipped) {
+    return snapshot
+  }
+  const cards = snapshot.cards.map((card) =>
+    card.key === 'OPS-11' && card.mergeRequest ? { ...card, mergeRequest: { ...card.mergeRequest, pipeline: 'failed' as const } } : card
+  )
+  return { ...snapshot, cards }
+}
+
 export async function demoBoard(): Promise<BoardSnapshot> {
-  return boardSnapshot()
+  firstBoardAt ??= Date.now()
+  return withFlippedPipeline(boardSnapshot(), Date.now() - firstBoardAt >= PIPELINE_FLIP_MS)
 }
 
 export async function demoSession(id: string, agent: OfficeAgent | null): Promise<SessionDetail> {
-  return { id, entries: chat(Date.now()), screen: agent?.terminal ? SCREEN : null }
+  return { id, entries: chat(Date.now()), screen: agent?.terminal ? screenFor(id) : null }
 }
 
 export async function demoCommand(): Promise<CommandResult> {
   return { ok: true, error: null }
+}
+
+export async function demoRepos(): Promise<OrcaRepo[]> {
+  return [
+    { id: 'demo-repo-1', name: 'tavern-api' },
+    { id: 'demo-repo-2', name: 'tavern-web' }
+  ]
+}
+
+export async function demoSpawn(): Promise<SpawnResult> {
+  return { ok: true, error: null }
+}
+
+type LogSeed = [minutesAgo: number, id: string, from: AgentState | null, to: AgentState | null]
+
+const LOG_SEEDS: LogSeed[] = [
+  [95, 'a8', null, 'working'],
+  [80, 'a5', 'working', 'waiting'],
+  [58, 'a7', 'working', 'done'],
+  [52, 'a6', 'working', 'blocked'],
+  [41, 'a5', 'waiting', 'working'],
+  [30, 'a8', 'working', 'done'],
+  [12, 'a5', 'working', 'waiting'],
+  [4, 'a3', null, 'working']
+]
+
+function titleOf(id: string): string {
+  return AGENT_SEEDS.find(([seedId]) => seedId === id)?.[1] ?? id
+}
+
+export async function demoLog(): Promise<GuildLog> {
+  const now = Date.now()
+  const events = LOG_SEEDS.map(([minutes, id, from, to]): LogEvent => ({ at: now - minutes * MINUTE, agentId: id, title: titleOf(id), from, to }))
+  return { events: events.reverse() }
 }

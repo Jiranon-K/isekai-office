@@ -9,7 +9,7 @@ export type CommandStatus =
   | { kind: 'sent'; action: CommandAction }
   | { kind: 'failed'; reason: string }
 
-export function useCommand(agentId: string): { status: CommandStatus; run(action: CommandAction, text?: string): Promise<boolean> } {
+export function useCommand(agentId: string): { status: CommandStatus; run(action: CommandAction, text?: string, choice?: number): Promise<boolean> } {
   const [status, setStatus] = useState<CommandStatus>({ kind: 'idle' })
 
   useEffect(() => {
@@ -17,10 +17,10 @@ export function useCommand(agentId: string): { status: CommandStatus; run(action
   }, [agentId])
 
   const run = useCallback(
-    async (action: CommandAction, text?: string): Promise<boolean> => {
+    async (action: CommandAction, text?: string, choice?: number): Promise<boolean> => {
       setStatus({ kind: 'sending' })
       try {
-        const result = await sendCommand({ agentId, action, text })
+        const result = await sendCommand({ agentId, action, text, choice })
         const failure = describeResult(result)
         if (failure) {
           setStatus({ kind: 'failed', reason: failure })
