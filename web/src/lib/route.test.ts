@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { HOTSPOTS } from '@/office/scene/hotspots'
-import { closePanel, formatRoute, isPanelId, mergeQuery, parseRoute, selectAgent, togglePanel, type Route } from './route'
+import { closePanel, formatRoute, isPanelId, mergeQuery, openPanel, parseRoute, selectAgent, togglePanel, type Route } from './route'
 
 const EMPTY: Route = { open: null, agentId: null }
 
@@ -80,6 +80,14 @@ describe('route moves', () => {
 
   test('opening the open panel again closes it', () => {
     expect(togglePanel({ open: 'orb', agentId: null }, 'orb')).toEqual(EMPTY)
+  })
+
+  test('showing a panel that is already open keeps it open', () => {
+    expect(openPanel({ open: 'questBoard', agentId: null }, 'questBoard')).toEqual({ open: 'questBoard', agentId: null })
+  })
+
+  test('showing a panel opens it and closes the agent panel', () => {
+    expect(openPanel({ open: 'orb', agentId: 'abc' }, 'questBoard')).toEqual({ open: 'questBoard', agentId: null })
   })
 
   test('selecting an agent closes a hotspot panel', () => {

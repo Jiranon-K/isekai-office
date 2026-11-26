@@ -169,8 +169,22 @@ export function demoSnapshot(): OfficeSnapshot {
   return officeSnapshot()
 }
 
+const PIPELINE_FLIP_MS = 20_000
+let firstBoardAt: number | null = null
+
+function withFlippedPipeline(snapshot: BoardSnapshot, flipped: boolean): BoardSnapshot {
+  if (!flipped) {
+    return snapshot
+  }
+  const cards = snapshot.cards.map((card) =>
+    card.key === 'OPS-11' && card.mergeRequest ? { ...card, mergeRequest: { ...card.mergeRequest, pipeline: 'failed' as const } } : card
+  )
+  return { ...snapshot, cards }
+}
+
 export async function demoBoard(): Promise<BoardSnapshot> {
-  return boardSnapshot()
+  firstBoardAt ??= Date.now()
+  return withFlippedPipeline(boardSnapshot(), Date.now() - firstBoardAt >= PIPELINE_FLIP_MS)
 }
 
 export async function demoSession(id: string, agent: OfficeAgent | null): Promise<SessionDetail> {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { shouldPoll } from '@/alerts/pipeline-logic'
 import type { BoardSnapshot, CommandRequest, CommandResult, GuildLog, OfficeSnapshot, SessionDetail } from '@shared/types'
 
 const BOARD_REFRESH_MS = 60_000
@@ -16,7 +17,7 @@ export function useOfficeFeed(): Loadable<OfficeSnapshot> {
   return state
 }
 
-export function useBoard(active: boolean): Loadable<BoardSnapshot> & { refresh: () => void } {
+export function useBoard(active: boolean, keepPolling = false): Loadable<BoardSnapshot> & { refresh: () => void } {
   const [state, setState] = useState<Loadable<BoardSnapshot>>({ data: null, error: null, loading: true })
   const load = useCallback(async (force: boolean) => {
     setState((previous) => ({ ...previous, loading: true }))
@@ -34,12 +35,12 @@ export function useBoard(active: boolean): Loadable<BoardSnapshot> & { refresh: 
     }
     void load(false)
     const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (shouldPoll(keepPolling, document.visibilityState)) {
         void load(false)
       }
     }, BOARD_REFRESH_MS)
     return () => clearInterval(timer)
-  }, [active, load])
+  }, [active, keepPolling, load])
   return { ...state, refresh: () => void load(true) }
 }
 

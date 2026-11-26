@@ -42,3 +42,11 @@ export function loopHistory(snapshot: BoardSnapshot | null): QuestCard[] {
 export function waitingCount(snapshot: BoardSnapshot | null, agents: OfficeAgent[]): number {
   return snapshot ? boardView(snapshot, agents, DEFAULT_FILTER).waiting.length : 0
 }
+
+export function failedPipelineCount(snapshot: BoardSnapshot | null): number {
+  return (snapshot?.cards ?? []).filter((card) => card.mergeRequest?.pipeline === 'failed').length
+}
+
+export function questBoardMark(snapshot: BoardSnapshot | null, agents: OfficeAgent[]): number {
+  return waitingCount(snapshot, agents) + failedPipelineCount(snapshot)
+}
