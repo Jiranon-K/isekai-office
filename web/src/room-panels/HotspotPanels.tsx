@@ -9,7 +9,7 @@ import { HearthPanel } from './HearthPanel'
 import { HotspotPopover, type PanelSide } from './HotspotPopover'
 import { OrbPanel } from './OrbPanel'
 import { RosterPanel } from './RosterPanel'
-import { WorldPanel } from './WorldPanel'
+import { DoorPanel } from './DoorPanel'
 
 type PopoverPanelId = Exclude<PanelId, 'questBoard'>
 
@@ -39,7 +39,7 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <RosterPanel office={props.office} quiet={props.quiet} onSelect={props.onSelectAgent} />
   }
   if (id === 'door') {
-    return <WorldPanel theme={props.theme} onThemeChange={props.onThemeChange} />
+    return <DoorPanel theme={props.theme} onThemeChange={props.onThemeChange} />
   }
   if (id === 'orb') {
     return <OrbPanel agents={agents} contextWindow={props.office.data?.contextWindow ?? 0} onSelect={props.onSelectAgent} />

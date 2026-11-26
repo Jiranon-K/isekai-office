@@ -1,4 +1,14 @@
-import type { AgentState, CommandRequest, CommandResult, OfficeAgent, SessionDetail, SessionEntry } from '@shared/types'
+import type {
+  AgentState,
+  CommandRequest,
+  CommandResult,
+  OfficeAgent,
+  OrcaRepo,
+  SessionDetail,
+  SessionEntry,
+  SpawnRequest,
+  SpawnResult
+} from '@shared/types'
 import { mergeToolRuns, sessionHistory } from './history'
 import { runJson } from '../run'
 import { sessionContext } from './transcripts'
@@ -8,6 +18,7 @@ const ESCAPE = '\x1b'
 const ALLOW_KEY = '1'
 const SCREEN_LINES = 24
 const READ_LIMIT = 100
+const SPAWN_TIMEOUT_MS = 120_000
 
 type RawAgent = {
   orcaSessionId: string
@@ -31,8 +42,8 @@ type Envelope<T> = { ok: boolean; result?: T; error?: { message?: string } }
 
 const STATES: AgentState[] = ['working', 'waiting', 'blocked', 'done']
 
-function orca<T>(args: string[]): Promise<T> {
-  return runJson<Envelope<T>>([ORCA, ...args, '--json']).then((envelope) => {
+function orca<T>(args: string[], timeout?: number): Promise<T> {
+  return runJson<Envelope<T>>([ORCA, ...args, '--json'], timeout).then((envelope) => {
     if (!envelope.ok || !envelope.result) {
       throw new Error(envelope.error?.message ?? `orca ${args[0]} failed`)
     }
@@ -183,6 +194,32 @@ export async function sendCommand(terminal: string, request: CommandRequest): Pr
   }
   try {
     await orca(args)
+    return { ok: true, error: null }
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+export async function listRepos(): Promise<OrcaRepo[]> {
+  const result = await orca<{ repos: { id: string; displayName: string }[] }>(['repo', 'list'])
+  return result.repos.map((repo) => ({ id: repo.id, name: repo.displayName }))
+}
+
+export function spawnArgs(request: SpawnRequest): string[] {
+  return [
+    'worktree', 'create',
+    '--repo', `id:${request.repoId}`,
+    '--name', request.name,
+    '--agent', 'claude',
+    '--surface', 'terminal',
+    ...(request.baseBranch ? ['--base-branch', request.baseBranch] : []),
+    ...(request.prompt ? ['--prompt', request.prompt] : [])
+  ]
+}
+
+export async function createWorktree(request: SpawnRequest): Promise<SpawnResult> {
+  try {
+    await orca(spawnArgs(request), SPAWN_TIMEOUT_MS)
     return { ok: true, error: null }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }

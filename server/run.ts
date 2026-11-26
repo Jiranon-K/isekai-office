@@ -1,7 +1,7 @@
 const TIMEOUT_MS = 15_000
 
-export async function runText(command: string[]): Promise<string> {
-  const child = Bun.spawn(command, { stdout: 'pipe', stderr: 'pipe', timeout: TIMEOUT_MS })
+export async function runText(command: string[], timeout = TIMEOUT_MS): Promise<string> {
+  const child = Bun.spawn(command, { stdout: 'pipe', stderr: 'pipe', timeout })
   const [stdout, stderr, code] = await Promise.all([
     new Response(child.stdout).text(),
     new Response(child.stderr).text(),
@@ -13,6 +13,6 @@ export async function runText(command: string[]): Promise<string> {
   return stdout
 }
 
-export async function runJson<T>(command: string[]): Promise<T> {
-  return JSON.parse(await runText(command))
+export async function runJson<T>(command: string[], timeout = TIMEOUT_MS): Promise<T> {
+  return JSON.parse(await runText(command, timeout))
 }

@@ -8,6 +8,8 @@ import type {
   MergeRequestFacts,
   OfficeAgent,
   OfficeSnapshot,
+  OrcaRepo,
+  SpawnResult,
   QuestCard,
   SessionDetail,
   SessionEntry
@@ -192,6 +194,17 @@ export async function demoSession(id: string, agent: OfficeAgent | null): Promis
 }
 
 export async function demoCommand(): Promise<CommandResult> {
+  return { ok: true, error: null }
+}
+
+export async function demoRepos(): Promise<OrcaRepo[]> {
+  return [
+    { id: 'demo-repo-1', name: 'tavern-api' },
+    { id: 'demo-repo-2', name: 'tavern-web' }
+  ]
+}
+
+export async function demoSpawn(): Promise<SpawnResult> {
   return { ok: true, error: null }
 }
 

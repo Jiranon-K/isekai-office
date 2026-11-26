@@ -2,9 +2,10 @@ import { join, normalize } from 'node:path'
 import type { OfficeAgent } from '@shared/types'
 import { toCommand } from './command'
 import { board } from './feeds/board'
-import { demoBoard, demoCommand, demoLog, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
+import { demoBoard, demoCommand, demoLog, demoRepos, demoSession, demoSnapshot, demoSpawn, demoSubscribe } from './feeds/demo'
 import { currentLog, currentSnapshot, subscribe } from './feeds/office'
-import { readSession, sendCommand } from './sources/orca'
+import { createWorktree, listRepos, readSession, sendCommand } from './sources/orca'
+import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
 
 const PORT = Number(process.env.PORT ?? 4300)
@@ -14,8 +15,8 @@ const DIST = join(import.meta.dir, '..', 'dist')
 const DEV = process.argv.includes('--dev')
 const DEMO = process.env.DEMO === '1'
 const feeds = DEMO
-  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand }
-  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: readSession, command: sendCommand }
+  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand, repos: demoRepos, spawn: demoSpawn }
+  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
 const encoder = new TextEncoder()
 
 function json(body: unknown, status = 200): Response {
@@ -63,6 +64,20 @@ async function command(request: Request): Promise<Response> {
   return json(await feeds.command(terminal, parsed))
 }
 
+async function repos(): Promise<Response> {
+  try {
+    return json({ repos: await feeds.repos() })
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : String(error) }, 502)
+  }
+}
+
+async function spawn(request: Request): Promise<Response> {
+  const body = await request.json().catch(() => null)
+  const reply = await handleSpawn(body, { repos: feeds.repos, spawn: feeds.spawn })
+  return json(reply.result, reply.status)
+}
+
 async function session(id: string): Promise<Response> {
   try {
     return json(await feeds.session(id, agentFor(id)))
@@ -99,6 +114,12 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/command' && request.method === 'POST') {
     return command(request)
+  }
+  if (url.pathname === '/api/repos') {
+    return repos()
+  }
+  if (url.pathname === '/api/spawn' && request.method === 'POST') {
+    return spawn(request)
   }
   if (url.pathname.startsWith('/api/')) {
     return json({ error: 'not_found' }, 404)

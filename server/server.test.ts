@@ -3,7 +3,7 @@ import { toCommand } from './command'
 import { demoLog } from './feeds/demo'
 import { isAllowedRequest } from './guard'
 import { parseLoopState } from './sources/loop-state'
-import { cleanTitle, lastTool, sendArgs, toState } from './sources/orca'
+import { cleanTitle, lastTool, sendArgs, spawnArgs, toState } from './sources/orca'
 import { columnFor, parseRpcBody } from './sources/workspace'
 
 const PORT = 4300
@@ -66,6 +66,37 @@ describe('orca commands', () => {
     expect(toState('sleeping')).toBe('done')
     expect(lastTool([{ tools: [{ name: 'Read' }] }, { tools: [{ name: 'Bash' }] }])).toBe('Bash')
     expect(lastTool([{ text: 'hi' }])).toBeNull()
+  })
+})
+
+describe('spawn', () => {
+  test('the minimal request creates a worktree with a claude terminal and nothing else', () => {
+    expect(spawnArgs({ repoId: 'r1', name: 'fix-login' })).toEqual([
+      'worktree', 'create', '--repo', 'id:r1', '--name', 'fix-login', '--agent', 'claude', '--surface', 'terminal'
+    ])
+  })
+
+  test('a request with every field adds the base branch and the prompt', () => {
+    expect(spawnArgs({ repoId: 'r1', name: 'fix-login', baseBranch: 'origin/main', prompt: 'go' })).toEqual([
+      'worktree', 'create', '--repo', 'id:r1', '--name', 'fix-login', '--agent', 'claude', '--surface', 'terminal',
+      '--base-branch', 'origin/main', '--prompt', 'go'
+    ])
+  })
+
+  test('a prompt with quotes, a command substitution and newlines is one unchanged argument', () => {
+    const prompt = 'say "hi" and \'bye\'\n$(touch /tmp/x) `id` ; rm -rf *\nlast'
+    const args = spawnArgs({ repoId: 'r1', name: 'n', prompt })
+    expect(args.at(-2)).toBe('--prompt')
+    expect(args.at(-1)).toBe(prompt)
+    expect(args.filter((arg) => arg === prompt)).toHaveLength(1)
+  })
+
+  test('a spawn post from another origin is refused by the guard', () => {
+    const post = new Request(`http://localhost:${PORT}/api/spawn`, {
+      method: 'POST',
+      headers: { host: 'localhost:4300', origin: 'https://evil.example', 'content-type': 'application/json' }
+    })
+    expect(isAllowedRequest(post, PORTS)).toBe(false)
   })
 })
 

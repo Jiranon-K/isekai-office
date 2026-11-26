@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { shouldPoll } from '@/alerts/pipeline-logic'
-import type { BoardSnapshot, CommandRequest, CommandResult, GuildLog, OfficeSnapshot, SessionDetail } from '@shared/types'
+import type {
+  BoardSnapshot,
+  CommandRequest,
+  CommandResult,
+  GuildLog,
+  OfficeSnapshot,
+  OrcaRepo,
+  SessionDetail,
+  SpawnRequest,
+  SpawnResult
+} from '@shared/types'
 
 const BOARD_REFRESH_MS = 60_000
 
@@ -77,4 +87,32 @@ export async function sendCommand(request: CommandRequest): Promise<CommandResul
     body: JSON.stringify(request)
   })
   return response.json()
+}
+
+export function useRepos(): Loadable<OrcaRepo[]> {
+  const [state, setState] = useState<Loadable<OrcaRepo[]>>({ data: null, error: null, loading: true })
+  useEffect(() => {
+    let current = true
+    fetch('/api/repos')
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('repos_unavailable'))))
+      .then((body: { repos: OrcaRepo[] }) => current && setState({ data: body.repos, error: null, loading: false }))
+      .catch(() => current && setState({ data: null, error: 'repos_unavailable', loading: false }))
+    return () => {
+      current = false
+    }
+  }, [])
+  return state
+}
+
+export async function sendSpawn(request: SpawnRequest): Promise<SpawnResult> {
+  try {
+    const response = await fetch('/api/spawn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request)
+    })
+    return await response.json()
+  } catch {
+    return { ok: false, error: 'server_unreachable' }
+  }
 }

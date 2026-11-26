@@ -115,3 +115,14 @@ export type CommandResult = {
   ok: boolean
   error: string | null
 }
+
+export type OrcaRepo = { id: string; name: string }
+
+export type SpawnRequest = {
+  repoId: string
+  name: string
+  baseBranch?: string
+  prompt?: string
+}
+
+export type SpawnResult = { ok: boolean; error: string | null }
