@@ -1,6 +1,8 @@
 import type { OfficeSnapshot } from '@shared/types'
 import { Badge } from '@/components/badge'
-import type { Loadable } from '@/lib/api'
+import { useGuildLog, type Loadable } from '@/lib/api'
+import { GuildLogSection } from './GuildLogSection'
+import { useLastHidden } from './use-last-hidden'
 
 type Health = { label: string; ok: boolean }
 
@@ -33,7 +35,10 @@ function formatTime(at: number): string {
   return new Date(at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-export function HearthPanel({ office }: { office: Loadable<OfficeSnapshot> }): React.JSX.Element {
+export function HearthPanel({ office, onSelect }: { office: Loadable<OfficeSnapshot>; onSelect(agentId: string): void }): React.JSX.Element {
+  const log = useGuildLog(true, office.data?.at ?? 0)
+  const lastHidden = useLastHidden()
+  const present = new Set((office.data?.agents ?? []).map((agent) => agent.id))
   return (
     <>
       <dl className="flex flex-col gap-2">
@@ -50,6 +55,7 @@ export function HearthPanel({ office }: { office: Loadable<OfficeSnapshot> }): R
           ข้อมูลล่าสุด {formatTime(office.data.at)} · {office.data.agents.length} session
         </p>
       ) : null}
+      <GuildLogSection log={log} lastHidden={lastHidden} present={present} onSelect={onSelect} />
     </>
   )
 }

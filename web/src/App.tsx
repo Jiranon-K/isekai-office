@@ -4,6 +4,7 @@ import { HotspotPanels } from '@/room-panels/HotspotPanels'
 import { waitingCount } from '@/room-panels/panel-data'
 import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
+import { useRecordHidden } from '@/room-panels/use-last-hidden'
 import { useBoard, useOfficeFeed } from '@/lib/api'
 import { closePanel, mergeQuery, parseRoute, selectAgent, togglePanel } from '@/lib/route'
 import { toggleMode, useTheme } from '@/lib/theme'
@@ -44,6 +45,7 @@ export function App(): React.JSX.Element {
   const [route, setRoute] = useState(() => parseRoute(location.search))
   const office = useOfficeFeed()
   const questBoard = useBoard(true)
+  useRecordHidden()
 
   useEffect(() => history.replaceState(null, '', mergeQuery(location.search, route) || location.pathname), [route])
 

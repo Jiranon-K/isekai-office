@@ -2,8 +2,8 @@ import { join, normalize } from 'node:path'
 import type { OfficeAgent } from '@shared/types'
 import { toCommand } from './command'
 import { board } from './feeds/board'
-import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
-import { currentSnapshot, subscribe } from './feeds/office'
+import { demoBoard, demoCommand, demoLog, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
+import { currentLog, currentSnapshot, subscribe } from './feeds/office'
 import { readSession, sendCommand } from './sources/orca'
 import { isAllowedRequest } from './guard'
 
@@ -14,8 +14,8 @@ const DIST = join(import.meta.dir, '..', 'dist')
 const DEV = process.argv.includes('--dev')
 const DEMO = process.env.DEMO === '1'
 const feeds = DEMO
-  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, session: demoSession, command: demoCommand }
-  : { subscribe, snapshot: currentSnapshot, board, session: readSession, command: sendCommand }
+  ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand }
+  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: readSession, command: sendCommand }
 const encoder = new TextEncoder()
 
 function json(body: unknown, status = 200): Response {
@@ -87,6 +87,9 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/office/events') {
     return officeEvents(request)
+  }
+  if (url.pathname === '/api/log') {
+    return json(await feeds.log())
   }
   if (url.pathname === '/api/board') {
     return json(await feeds.board(url.searchParams.has('refresh')))

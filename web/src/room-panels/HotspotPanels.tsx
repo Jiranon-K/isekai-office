@@ -48,7 +48,7 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <BarPanel agents={agents} board={props.board.data} onSelect={props.onSelectAgent} />
   }
   if (id === 'hearth') {
-    return <HearthPanel office={props.office} />
+    return <HearthPanel office={props.office} onSelect={props.onSelectAgent} />
   }
   return <ArchivePanel board={props.board} />
 }

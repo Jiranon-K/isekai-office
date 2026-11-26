@@ -1,5 +1,6 @@
-import type { OfficeSnapshot } from '@shared/types'
+import type { GuildLog, OfficeSnapshot } from '@shared/types'
 import { listAgents, orcaRunning } from '../sources/orca'
+import { EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
 
 const POLL_MS = 2_000
 
@@ -26,6 +27,7 @@ const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
 const quietAfterMs = quietAfterMsFrom(process.env.QUIET_AFTER_MINUTES)
 
 let latest: OfficeSnapshot = { orcaRunning: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
+let logState = EMPTY_LOG_STATE
 let polling = false
 let lastPayload = ''
 
@@ -42,6 +44,7 @@ async function takeSnapshot(): Promise<OfficeSnapshot> {
 
 async function tick(): Promise<void> {
   latest = await takeSnapshot()
+  logState = recordSnapshot(logState, latest)
   const payload = JSON.stringify({ ...latest, at: 0 })
   if (payload !== lastPayload) {
     lastPayload = payload
@@ -72,4 +75,8 @@ export function subscribe(listener: Listener): () => void {
 
 export function currentSnapshot(): OfficeSnapshot {
   return latest
+}
+
+export function currentLog(): GuildLog {
+  return guildLog(logState.events)
 }

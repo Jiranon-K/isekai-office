@@ -25,6 +25,16 @@ export type OfficeSnapshot = {
   at: number
 }
 
+export type LogEvent = {
+  at: number
+  agentId: string
+  title: string
+  from: AgentState | null
+  to: AgentState | null
+}
+
+export type GuildLog = { events: LogEvent[] }
+
 export type BoardColumn = 'todo' | 'doing' | 'review' | 'done'
 
 export type LoopStage = {

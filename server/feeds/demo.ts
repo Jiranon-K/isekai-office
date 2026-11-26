@@ -2,6 +2,8 @@ import type {
   AgentState,
   BoardSnapshot,
   CommandResult,
+  GuildLog,
+  LogEvent,
   LoopStage,
   MergeRequestFacts,
   OfficeAgent,
@@ -177,4 +179,27 @@ export async function demoSession(id: string, agent: OfficeAgent | null): Promis
 
 export async function demoCommand(): Promise<CommandResult> {
   return { ok: true, error: null }
+}
+
+type LogSeed = [minutesAgo: number, id: string, from: AgentState | null, to: AgentState | null]
+
+const LOG_SEEDS: LogSeed[] = [
+  [95, 'a8', null, 'working'],
+  [80, 'a5', 'working', 'waiting'],
+  [58, 'a7', 'working', 'done'],
+  [52, 'a6', 'working', 'blocked'],
+  [41, 'a5', 'waiting', 'working'],
+  [30, 'a8', 'working', 'done'],
+  [12, 'a5', 'working', 'waiting'],
+  [4, 'a3', null, 'working']
+]
+
+function titleOf(id: string): string {
+  return AGENT_SEEDS.find(([seedId]) => seedId === id)?.[1] ?? id
+}
+
+export async function demoLog(): Promise<GuildLog> {
+  const now = Date.now()
+  const events = LOG_SEEDS.map(([minutes, id, from, to]): LogEvent => ({ at: now - minutes * MINUTE, agentId: id, title: titleOf(id), from, to }))
+  return { events: events.reverse() }
 }

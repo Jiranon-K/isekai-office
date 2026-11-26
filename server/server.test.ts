@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { toCommand } from './command'
+import { demoLog } from './feeds/demo'
 import { isAllowedRequest } from './guard'
 import { parseLoopState } from './sources/loop-state'
 import { cleanTitle, lastTool, sendArgs, toState } from './sources/orca'
@@ -111,5 +112,15 @@ describe('command body', () => {
     expect(toCommand({ agentId: 'a', action: 'explode' })).toBeNull()
     expect(toCommand({ action: 'allow' })).toBeNull()
     expect(toCommand(null)).toBeNull()
+  })
+})
+
+describe('guild log', () => {
+  test('the log body is a newest-first events list of about eight events', async () => {
+    const { events } = await demoLog()
+    const times = events.map((event) => event.at)
+    expect(events).toHaveLength(8)
+    expect(times).toEqual([...times].sort((first, second) => second - first))
+    expect(Object.keys(events[0] ?? {}).sort()).toEqual(['agentId', 'at', 'from', 'title', 'to'])
   })
 })

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { BoardSnapshot, CommandRequest, CommandResult, OfficeSnapshot, SessionDetail } from '@shared/types'
+import type { BoardSnapshot, CommandRequest, CommandResult, GuildLog, OfficeSnapshot, SessionDetail } from '@shared/types'
 
 const BOARD_REFRESH_MS = 60_000
 
@@ -41,6 +41,24 @@ export function useBoard(active: boolean): Loadable<BoardSnapshot> & { refresh: 
     return () => clearInterval(timer)
   }, [active, load])
   return { ...state, refresh: () => void load(true) }
+}
+
+export function useGuildLog(active: boolean, revision: number): Loadable<GuildLog> {
+  const [state, setState] = useState<Loadable<GuildLog>>({ data: null, error: null, loading: true })
+  useEffect(() => {
+    if (!active) {
+      return
+    }
+    let current = true
+    fetch('/api/log')
+      .then((response) => response.json())
+      .then((data: GuildLog) => current && setState({ data, error: null, loading: false }))
+      .catch(() => current && setState((previous) => ({ ...previous, error: 'server_unreachable', loading: false })))
+    return () => {
+      current = false
+    }
+  }, [active, revision])
+  return state
 }
 
 export async function fetchSession(id: string): Promise<SessionDetail> {
