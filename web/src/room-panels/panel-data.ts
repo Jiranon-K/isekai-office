@@ -39,14 +39,27 @@ export function loopHistory(snapshot: BoardSnapshot | null): QuestCard[] {
   return cards.sort((first, second) => stageRank(first) - stageRank(second) || second.updatedAt.localeCompare(first.updatedAt))
 }
 
+function waitingCards(snapshot: BoardSnapshot | null, agents: OfficeAgent[]): QuestCard[] {
+  return snapshot ? boardView(snapshot, agents, DEFAULT_FILTER).waiting.map((item) => item.card) : []
+}
+
 export function waitingCount(snapshot: BoardSnapshot | null, agents: OfficeAgent[]): number {
-  return snapshot ? boardView(snapshot, agents, DEFAULT_FILTER).waiting.length : 0
+  return waitingCards(snapshot, agents).length
+}
+
+function hasOpenFailedPipeline(card: QuestCard): boolean {
+  return card.mergeRequest?.pipeline === 'failed' && card.mergeRequest.state === 'opened'
+}
+
+export function failedPipelineCards(snapshot: BoardSnapshot | null): QuestCard[] {
+  return (snapshot?.cards ?? []).filter(hasOpenFailedPipeline)
 }
 
 export function failedPipelineCount(snapshot: BoardSnapshot | null): number {
-  return (snapshot?.cards ?? []).filter((card) => card.mergeRequest?.pipeline === 'failed').length
+  return failedPipelineCards(snapshot).length
 }
 
 export function questBoardMark(snapshot: BoardSnapshot | null, agents: OfficeAgent[]): number {
-  return waitingCount(snapshot, agents) + failedPipelineCount(snapshot)
+  const marked = [...waitingCards(snapshot, agents), ...failedPipelineCards(snapshot)]
+  return new Set(marked.map((card) => card.id)).size
 }

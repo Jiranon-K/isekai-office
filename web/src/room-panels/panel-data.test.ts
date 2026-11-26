@@ -108,6 +108,17 @@ describe('quest board mark', () => {
     expect(questBoardMark(snapshotOf(cards), [])).toBe(2)
   })
 
+  test('counts a card that waits and has a failed pipeline once', () => {
+    const cards = [cardWithPipeline('A', 'failed', 'design_ready')]
+    expect(questBoardMark(snapshotOf(cards), [])).toBe(1)
+  })
+
+  test('leaves out a failed pipeline on a merged merge request', () => {
+    const merged = cardWithPipeline('A', 'failed', 'working')
+    const cards = [{ ...merged, mergeRequest: { iid: 1, url: '', state: 'merged' as const, pipeline: 'failed' as const, tags: [] } }]
+    expect(questBoardMark(snapshotOf(cards), [])).toBe(0)
+  })
+
   test('is zero before the board loads', () => {
     expect(questBoardMark(null, [])).toBe(0)
   })
