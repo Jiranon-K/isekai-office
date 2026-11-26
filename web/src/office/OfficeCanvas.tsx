@@ -8,6 +8,7 @@ type OfficeCanvasProps = {
   agents: OfficeAgent[]
   orcaRunning: boolean
   contextWindow: number
+  quiet: ReadonlyMap<string, number>
   selectedId: string | null
   onSelect: (id: string | null) => void
   onHotspot: (id: HotspotId) => void

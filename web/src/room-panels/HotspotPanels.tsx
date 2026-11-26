@@ -16,6 +16,7 @@ type PopoverPanelId = Exclude<PanelId, 'questBoard'>
 type HotspotPanelsProps = {
   open: PanelId | null
   office: Loadable<OfficeSnapshot>
+  quiet: ReadonlyMap<string, number>
   board: Loadable<BoardSnapshot>
   theme: Theme
   onThemeChange(theme: Theme): void
@@ -35,7 +36,7 @@ const SIDES: Record<PopoverPanelId, PanelSide> = {
 function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }): React.JSX.Element {
   const agents = props.office.data?.agents ?? []
   if (id === 'reception') {
-    return <RosterPanel office={props.office} onSelect={props.onSelectAgent} />
+    return <RosterPanel office={props.office} quiet={props.quiet} onSelect={props.onSelectAgent} />
   }
   if (id === 'door') {
     return <WorldPanel theme={props.theme} onThemeChange={props.onThemeChange} />

@@ -10,6 +10,9 @@ import { toggleMode, useTheme } from '@/lib/theme'
 import { replyMode } from '@/alerts/alert-logic'
 import { useAlertSetting } from '@/alerts/use-alert-setting'
 import { useJumpKey } from '@/alerts/use-jump-key'
+import { useNow } from '@/alerts/use-now'
+import { useQuietAlerts } from '@/alerts/use-quiet-alerts'
+import { quietMinutesById } from '@/alerts/quiet-logic'
 import { useWaitingAlerts } from '@/alerts/use-waiting-alerts'
 import { KeyHints } from '@/room-panels/KeyHints'
 import type { HotspotId } from '@/office/scene/hotspots'
@@ -17,6 +20,8 @@ import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { CommandPanel } from '@/agent/CommandPanel'
 import { QuickReply } from '@/agent/QuickReply'
+
+const CLOCK_MS = 30_000
 
 function useEscape(active: boolean, onEscape: () => void): void {
   useEffect(() => {
@@ -55,6 +60,10 @@ export function App(): React.JSX.Element {
   const alerts = useAlertSetting()
   const alertAgents = office.data?.orcaRunning ? office.data.agents : null
   useWaitingAlerts(alertAgents, alerts.enabled, pickAgent)
+  const now = useNow(CLOCK_MS, alerts.enabled)
+  const quietAfterMs = office.data?.quietAfterMs ?? Number.POSITIVE_INFINITY
+  const quiet = useMemo(() => quietMinutesById(agents, now, quietAfterMs), [agents, now, quietAfterMs])
+  useQuietAlerts(alertAgents, now, quietAfterMs, alerts.enabled, pickAgent)
   useJumpKey({ agents, currentId: route.agentId, boardOpen, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
@@ -78,6 +87,7 @@ export function App(): React.JSX.Element {
         agents={agents}
         orcaRunning={office.data?.orcaRunning ?? false}
         contextWindow={contextWindow}
+        quiet={quiet}
         selectedId={selected?.id ?? null}
         onSelect={pickAgent}
         onHotspot={openHotspot}
@@ -95,6 +105,7 @@ export function App(): React.JSX.Element {
       <HotspotPanels
         open={route.open}
         office={office}
+        quiet={quiet}
         board={questBoard}
         theme={theme}
         onThemeChange={setTheme}

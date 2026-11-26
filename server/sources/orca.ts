@@ -120,6 +120,7 @@ export async function listAgents(): Promise<OfficeAgent[]> {
         tool: state === 'working' ? await currentTool(agent.orcaSessionId) : null,
         lastMessage: agent.lastAssistantMessage ?? null,
         updatedAt: agent.updatedAt ?? 0,
+        activeAt: Math.max(agent.updatedAt ?? 0, context?.modifiedAt ?? 0),
         terminal: agent.kind === 'terminal' && agent.paneKey ? (panes.get(agent.paneKey) ?? null) : null
       }
     })

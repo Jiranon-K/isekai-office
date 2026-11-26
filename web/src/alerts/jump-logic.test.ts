@@ -15,6 +15,7 @@ function agent(id: string, state: AgentState, updatedAt: number): OfficeAgent {
     tool: null,
     lastMessage: null,
     updatedAt,
+    activeAt: updatedAt,
     terminal: null
   }
 }

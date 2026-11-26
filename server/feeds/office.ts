@@ -13,20 +13,30 @@ export function contextWindowFrom(value: string | undefined): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_CONTEXT_WINDOW
 }
 
-const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
+const DEFAULT_QUIET_MINUTES = 10
+const MINUTE_MS = 60_000
 
-let latest: OfficeSnapshot = { orcaRunning: false, agents: [], contextWindow, error: null, at: 0 }
+export function quietAfterMsFrom(value: string | undefined): number {
+  const parsed = Number(value)
+  const minutes = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_QUIET_MINUTES
+  return Math.floor(minutes * MINUTE_MS)
+}
+
+const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
+const quietAfterMs = quietAfterMsFrom(process.env.QUIET_AFTER_MINUTES)
+
+let latest: OfficeSnapshot = { orcaRunning: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
 let polling = false
 let lastPayload = ''
 
 async function takeSnapshot(): Promise<OfficeSnapshot> {
   if (!(await orcaRunning())) {
-    return { orcaRunning: false, agents: [], contextWindow, error: null, at: Date.now() }
+    return { orcaRunning: false, agents: [], contextWindow, quietAfterMs, error: null, at: Date.now() }
   }
   try {
-    return { orcaRunning: true, agents: await listAgents(), contextWindow, error: null, at: Date.now() }
+    return { orcaRunning: true, agents: await listAgents(), contextWindow, quietAfterMs, error: null, at: Date.now() }
   } catch (error) {
-    return { orcaRunning: true, agents: latest.agents, contextWindow, error: error instanceof Error ? error.message : String(error), at: Date.now() }
+    return { orcaRunning: true, agents: latest.agents, contextWindow, quietAfterMs, error: error instanceof Error ? error.message : String(error), at: Date.now() }
   }
 }
 

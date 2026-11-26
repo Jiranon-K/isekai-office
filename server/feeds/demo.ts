@@ -28,6 +28,8 @@ const AGENT_SEEDS: AgentSeed[] = [
   ['a8', 'Write API changelog', 'docs', 'done', null, 48_000, 'Changelog drafted for 2.4.0.']
 ]
 
+const QUIET_DEMO_MINUTES: Record<string, number> = { a4: 14 }
+
 function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now: number): OfficeAgent {
   return {
     id,
@@ -41,13 +43,14 @@ function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now:
     tool,
     lastMessage: last,
     updatedAt: now - MINUTE,
+    activeAt: now - (QUIET_DEMO_MINUTES[id] ?? 1) * MINUTE,
     terminal: state === 'done' ? null : `demo-${id}`
   }
 }
 
 function officeSnapshot(): OfficeSnapshot {
   const now = Date.now()
-  return { orcaRunning: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, error: null, at: now }
+  return { orcaRunning: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, quietAfterMs: 10 * MINUTE, error: null, at: now }
 }
 
 type CardSeed = [key: string, title: string, column: QuestCard['column'], route: string, loop: string | null, extra?: Partial<QuestCard>]

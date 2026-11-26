@@ -120,7 +120,7 @@ export async function sessionContext(
   worktree: string,
   agentTitle: string,
   projectsDir = PROJECTS_DIR
-): Promise<{ session: string; contextTokens: number | null } | null> {
+): Promise<{ session: string; contextTokens: number | null; modifiedAt: number | null } | null> {
   const now = Date.now()
   const candidates = await listCandidates(transcriptFolder(worktree, projectsDir), now)
   const picked = pickTranscript(candidates, agentTitle, now)
@@ -128,5 +128,5 @@ export async function sessionContext(
     return null
   }
   const chosen = candidates.find((candidate) => candidate.path === picked)
-  return { session: sessionName(picked), contextTokens: chosen?.contextTokens ?? null }
+  return { session: sessionName(picked), contextTokens: chosen?.contextTokens ?? null, modifiedAt: chosen?.modifiedAt ?? null }
 }

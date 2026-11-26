@@ -12,6 +12,7 @@ export type OfficeAgent = {
   tool: string | null
   lastMessage: string | null
   updatedAt: number
+  activeAt: number
   terminal: string | null
 }
 
@@ -19,6 +20,7 @@ export type OfficeSnapshot = {
   orcaRunning: boolean
   agents: OfficeAgent[]
   contextWindow: number
+  quietAfterMs: number
   error: string | null
   at: number
 }
