@@ -1,6 +1,7 @@
 import type { OfficeAgent } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { manaLevel, type ManaLevel } from '@/office/scene/mana'
+import { CompactButton } from '@/agent/CompactButton'
 import { formatContextLoad } from '@/agent/panel-logic'
 import { loadRows, type LoadRow } from './panel-data'
 import { PanelNote } from './SessionList'
@@ -25,11 +26,11 @@ function LoadBar({ ratio }: { ratio: number }): React.JSX.Element {
 function LoadItem({ row, contextWindow, onSelect }: { row: LoadRow; contextWindow: number; onSelect(agentId: string): void }): React.JSX.Element {
   const { agent, ratio } = row
   return (
-    <li>
+    <li className="flex items-center gap-1 rounded-md pr-2 transition-colors duration-fast hover:bg-accent hover:text-accent-foreground motion-reduce:transition-none">
       <button
         type="button"
         onClick={() => onSelect(agent.id)}
-        className="focus-ring flex w-full flex-col gap-1 rounded-md px-2 py-1.5 text-left transition-colors duration-fast hover:bg-accent hover:text-accent-foreground motion-reduce:transition-none"
+        className="focus-ring flex min-w-0 flex-1 flex-col gap-1 rounded-md px-2 py-1.5 text-left"
       >
         <span className="flex items-baseline gap-2">
           <span className="min-w-0 flex-1 truncate text-small font-medium">{agent.title}</span>
@@ -37,6 +38,7 @@ function LoadItem({ row, contextWindow, onSelect }: { row: LoadRow; contextWindo
         </span>
         {ratio === null ? null : <LoadBar ratio={ratio} />}
       </button>
+      <CompactButton agent={agent} contextWindow={contextWindow} />
     </li>
   )
 }

@@ -11,6 +11,7 @@ import { replyMode } from '@/alerts/alert-logic'
 import { useAlertSetting } from '@/alerts/use-alert-setting'
 import { useJumpKey } from '@/alerts/use-jump-key'
 import { useNow } from '@/alerts/use-now'
+import { useLoadAlerts } from '@/alerts/use-load-alerts'
 import { useQuietAlerts } from '@/alerts/use-quiet-alerts'
 import { quietMinutesById } from '@/alerts/quiet-logic'
 import { useWaitingAlerts } from '@/alerts/use-waiting-alerts'
@@ -64,6 +65,7 @@ export function App(): React.JSX.Element {
   const quietAfterMs = office.data?.quietAfterMs ?? Number.POSITIVE_INFINITY
   const quiet = useMemo(() => quietMinutesById(agents, now, quietAfterMs), [agents, now, quietAfterMs])
   useQuietAlerts(alertAgents, now, quietAfterMs, alerts.enabled, pickAgent)
+  useLoadAlerts(alertAgents, contextWindow, alerts.enabled, pickAgent)
   useJumpKey({ agents, currentId: route.agentId, boardOpen, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])

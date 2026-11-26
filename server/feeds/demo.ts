@@ -24,7 +24,7 @@ const AGENT_SEEDS: AgentSeed[] = [
   ['a4', 'Research rate limit options', 'api', 'working', 'WebSearch', 64_000, null],
   ['a5', 'APP-18 onboarding checklist', 'web-app', 'waiting', 'Bash', 238_000, 'Allow Bash: bun run db:migrate?'],
   ['a6', 'OPS-9 rotate signing keys', 'infra', 'blocked', null, 705_000, 'I need the staging vault path before I can continue.'],
-  ['a7', 'APP-9 empty states', 'web-app', 'done', null, 301_000, 'Opened the merge request and all checks pass.'],
+  ['a7', 'APP-9 empty states', 'web-app', 'done', null, 452_000, 'Opened the merge request and all checks pass.'],
   ['a8', 'Write API changelog', 'docs', 'done', null, 48_000, 'Changelog drafted for 2.4.0.']
 ]
 
@@ -44,7 +44,7 @@ function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now:
     lastMessage: last,
     updatedAt: now - MINUTE,
     activeAt: now - (QUIET_DEMO_MINUTES[id] ?? 1) * MINUTE,
-    terminal: state === 'done' ? null : `demo-${id}`
+    terminal: id === 'a8' ? null : `demo-${id}`
   }
 }
 
