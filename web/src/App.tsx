@@ -9,7 +9,9 @@ import { closePanel, mergeQuery, parseRoute, selectAgent, togglePanel } from '@/
 import { toggleMode, useTheme } from '@/lib/theme'
 import { replyMode } from '@/alerts/alert-logic'
 import { useAlertSetting } from '@/alerts/use-alert-setting'
+import { useJumpKey } from '@/alerts/use-jump-key'
 import { useWaitingAlerts } from '@/alerts/use-waiting-alerts'
+import { KeyHints } from '@/room-panels/KeyHints'
 import type { HotspotId } from '@/office/scene/hotspots'
 import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
@@ -53,6 +55,7 @@ export function App(): React.JSX.Element {
   const alerts = useAlertSetting()
   const alertAgents = office.data?.orcaRunning ? office.data.agents : null
   useWaitingAlerts(alertAgents, alerts.enabled, pickAgent)
+  useJumpKey({ agents, currentId: route.agentId, boardOpen, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
   const openHotspot = useCallback(
@@ -86,6 +89,7 @@ export function App(): React.JSX.Element {
         locateRef={locateRef}
       />
       {boardOpen ? <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} /> : null}
+      <KeyHints />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
       <HotspotPanels

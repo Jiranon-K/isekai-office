@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Loadable } from '@/lib/api'
+import { isTyping } from '@/lib/keyboard'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { choiceExcerpt, choiceForKey, parseChoices } from './choice-logic'
 import { decisionLocked, lastScreenLines, STATE_LABELS } from './panel-logic'
@@ -27,10 +28,6 @@ function centreRect(): DOMRect {
 
 function focusRoom(): void {
   document.querySelector<HTMLElement>('[role="application"]')?.focus()
-}
-
-function isTyping(target: EventTarget): boolean {
-  return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 }
 
 function ScreenLines({ session, choices }: { session: Loadable<SessionDetail>; choices: Choice[] }): React.JSX.Element {
