@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { toCommand } from './command'
 import { isAllowedRequest } from './guard'
 import { parseLoopState } from './sources/loop-state'
 import { cleanTitle, lastTool, sendArgs, toState } from './sources/orca'
@@ -46,6 +47,14 @@ describe('orca commands', () => {
     expect(sendArgs('t', { agentId: 'a', action: 'escape' })).toEqual(['terminal', 'send', '--terminal', 't', '--text', '\x1b'])
   })
 
+  test('choose presses the digit of the choice without enter', () => {
+    expect(sendArgs('t', { agentId: 'a', action: 'choose', choice: 3 })).toEqual(['terminal', 'send', '--terminal', 't', '--text', '3'])
+  })
+
+  test('choose without a choice is not sent', () => {
+    expect(sendArgs('t', { agentId: 'a', action: 'choose' })).toBeNull()
+  })
+
   test('a title made of a command caveat falls back to the workspace name', () => {
     expect(cleanTitle('<local-command-caveat>Caveat: the messages below</local-command-caveat>', 'main')).toBe('main')
     expect(cleanTitle('<command-name>/clear</command-name> Fix login', 'main')).toBe('Fix login')
@@ -79,5 +88,28 @@ describe('board', () => {
     const stages = parseLoopState('OPS-541 status=merged repo=web mr=https://x/1 ui=yes session=abc\nAPP-9 status=working repo=ui wt=/tmp/wt\n\n')
     expect(stages.get('OPS-541')).toEqual({ status: 'merged', mr: 'https://x/1', worktree: null, session: 'abc' })
     expect(stages.get('APP-9')).toEqual({ status: 'working', mr: null, worktree: '/tmp/wt', session: null })
+  })
+})
+
+describe('command body', () => {
+  test('choose with a choice from 1 to 9 is accepted', () => {
+    expect(toCommand({ agentId: 'a', action: 'choose', choice: 1 })).toEqual({ agentId: 'a', action: 'choose', text: undefined, choice: 1 })
+    expect(toCommand({ agentId: 'a', action: 'choose', choice: 9 })?.choice).toBe(9)
+  })
+
+  test('choose with 0, 10, 1.5, a string or nothing is refused', () => {
+    for (const choice of [0, 10, 1.5, '2', null, undefined]) {
+      expect(toCommand({ agentId: 'a', action: 'choose', choice })).toBeNull()
+    }
+  })
+
+  test('the other actions ignore a choice', () => {
+    expect(toCommand({ agentId: 'a', action: 'allow', choice: 99 })?.choice).toBeUndefined()
+  })
+
+  test('an unknown action or a missing agent is refused', () => {
+    expect(toCommand({ agentId: 'a', action: 'explode' })).toBeNull()
+    expect(toCommand({ action: 'allow' })).toBeNull()
+    expect(toCommand(null)).toBeNull()
   })
 })

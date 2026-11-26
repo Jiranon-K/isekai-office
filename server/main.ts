@@ -1,5 +1,6 @@
 import { join, normalize } from 'node:path'
-import type { CommandAction, CommandRequest, OfficeAgent } from '@shared/types'
+import type { OfficeAgent } from '@shared/types'
+import { toCommand } from './command'
 import { board } from './feeds/board'
 import { demoBoard, demoCommand, demoSession, demoSnapshot, demoSubscribe } from './feeds/demo'
 import { currentSnapshot, subscribe } from './feeds/office'
@@ -15,7 +16,6 @@ const DEMO = process.env.DEMO === '1'
 const feeds = DEMO
   ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, session: demoSession, command: demoCommand }
   : { subscribe, snapshot: currentSnapshot, board, session: readSession, command: sendCommand }
-const ACTIONS: CommandAction[] = ['prompt', 'escape', 'allow', 'deny']
 const encoder = new TextEncoder()
 
 function json(body: unknown, status = 200): Response {
@@ -41,19 +41,6 @@ function officeEvents(request: Request): Response {
   return new Response(stream, {
     headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }
   })
-}
-
-function toCommand(body: unknown): CommandRequest | null {
-  if (typeof body !== 'object' || body === null) {
-    return null
-  }
-  const agentId = Reflect.get(body, 'agentId')
-  const action = ACTIONS.find((known) => known === Reflect.get(body, 'action'))
-  const text = Reflect.get(body, 'text')
-  if (typeof agentId !== 'string' || !action) {
-    return null
-  }
-  return { agentId, action, text: typeof text === 'string' ? text : undefined }
 }
 
 function agentFor(agentId: string): OfficeAgent | null {

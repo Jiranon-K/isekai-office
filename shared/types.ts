@@ -88,12 +88,15 @@ export type SessionDetail = {
   screen: string | null
 }
 
-export type CommandAction = 'prompt' | 'escape' | 'allow' | 'deny'
+export type Choice = { number: number; label: string; selected: boolean }
+
+export type CommandAction = 'prompt' | 'escape' | 'allow' | 'deny' | 'choose'
 
 export type CommandRequest = {
   agentId: string
   action: CommandAction
   text?: string
+  choice?: number
 }
 
 export type CommandResult = {

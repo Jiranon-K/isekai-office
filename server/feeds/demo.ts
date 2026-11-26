@@ -125,6 +125,23 @@ const SCREEN = [
   '   3. No, and tell Claude what to do differently (esc)'
 ].join('\n')
 
+const QUESTION_SCREEN = [
+  ' Which store should hold the vault paths?',
+  '',
+  ' ❯ 1. Environment variables',
+  '      Simple, read at start up',
+  '   2. Vault agent sidecar',
+  '      Rotates without a restart',
+  '   3. Config file in the repo',
+  '      Easy to review',
+  '   4. Other',
+  '      Say it in the full panel'
+].join('\n')
+
+function screenFor(id: string): string {
+  return id === 'a6' ? QUESTION_SCREEN : SCREEN
+}
+
 function chat(now: number): SessionEntry[] {
   const at = (minutesAgo: number): number => now - minutesAgo * MINUTE
   return [
@@ -152,7 +169,7 @@ export async function demoBoard(): Promise<BoardSnapshot> {
 }
 
 export async function demoSession(id: string, agent: OfficeAgent | null): Promise<SessionDetail> {
-  return { id, entries: chat(Date.now()), screen: agent?.terminal ? SCREEN : null }
+  return { id, entries: chat(Date.now()), screen: agent?.terminal ? screenFor(id) : null }
 }
 
 export async function demoCommand(): Promise<CommandResult> {

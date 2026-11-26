@@ -170,6 +170,8 @@ export function sendArgs(terminal: string, request: CommandRequest): string[] | 
       return [...base, '--text', ALLOW_KEY]
     case 'deny':
       return [...base, '--text', ESCAPE]
+    case 'choose':
+      return request.choice === undefined ? null : [...base, '--text', String(request.choice)]
   }
 }
 
