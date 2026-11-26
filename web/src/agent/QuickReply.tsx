@@ -177,7 +177,7 @@ export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyPr
           event.preventDefault()
           focusRoom()
         }}
-        className="flex w-80 max-w-[calc(100vw-1.5rem)] flex-col gap-3"
+        className="flex max-h-(--radix-popover-content-available-height) w-80 max-w-[calc(100vw-1.5rem)] flex-col gap-3 overflow-y-auto"
       >
         <PopoverHeader>
           <PopoverTitle className="truncate text-body-strong">{agent.title}</PopoverTitle>
