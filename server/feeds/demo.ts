@@ -60,8 +60,8 @@ function officeSnapshot(): OfficeSnapshot {
 type CardSeed = [key: string, title: string, column: QuestCard['column'], route: string, loop: string | null, extra?: Partial<QuestCard>]
 
 const CARD_SEEDS: CardSeed[] = [
-  ['APP-12', 'Dark mode toggle in settings', 'doing', 'agent', 'working', { labels: ['type:feature', 'risk:low'] }],
-  ['APP-14', 'Checkout test fails one run in five', 'doing', 'agent', 'working', { labels: ['type:bug'], priority: 'High' }],
+  ['APP-12', 'Dark mode toggle in settings', 'doing', 'agent', 'working', { labels: ['type:feature', 'risk:low'], epic: 'Settings and checkout polish' }],
+  ['APP-14', 'Checkout test fails one run in five', 'doing', 'agent', 'working', { labels: ['type:bug'], priority: 'High', epic: 'Settings and checkout polish' }],
   ['APP-18', 'Onboarding checklist for new teams', 'doing', 'agent', 'working', { labels: ['type:feature'] }],
   ['APP-21', 'Search inside project settings', 'todo', 'agent', 'design_ready', { labels: ['type:feature', 'risk:medium'] }],
   ['APP-9', 'Empty states for lists', 'review', 'agent', 'mr_open', { labels: ['type:feature'] }],
