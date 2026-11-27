@@ -137,6 +137,10 @@ export function answerLockHeld(answeredFor: number | null, updatedAt: number, sc
   return answeredFor === updatedAt || !screenLoaded
 }
 
+export function canWriteTo(terminal: string | null, commandCapable: boolean): boolean {
+  return terminal !== null && commandCapable
+}
+
 export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
   return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
 }

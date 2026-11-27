@@ -5,6 +5,7 @@ import {
   afterSkip,
   answerLockHeld,
   canAct,
+  canWriteTo,
   currentOf,
   forgetGone,
   isQueueOpenKey,
@@ -316,5 +317,13 @@ describe('answer lock', () => {
 
   test('frees for a still-waiting agent once its new screen has loaded', () => {
     expect(answerLockHeld(100, 200, true)).toBe(false)
+  })
+})
+
+describe('canWriteTo', () => {
+  test('needs a terminal and a source that accepts commands', () => {
+    expect(canWriteTo('term', true)).toBe(true)
+    expect(canWriteTo(null, true)).toBe(false)
+    expect(canWriteTo('term', false)).toBe(false)
   })
 })

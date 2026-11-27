@@ -2,12 +2,13 @@ import type { OfficeAgent } from '@shared/types'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/kbd'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { parseChoices } from './choice-logic'
 import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
 import { decisionLocked } from './panel-logic'
 import { QueueComposer } from './QueueComposer'
 import { QueueHeader } from './QueueHeader'
-import { answerLockHeld, canAct, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
+import { answerLockHeld, canAct, canWriteTo, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
 import { useCommand } from './use-command'
 import type { PrefetchedSession } from './use-prefetched-session'
 import { useQueueKeys } from './use-queue-keys'
@@ -59,7 +60,8 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
   const screen = session.data?.screen ?? null
   const choices = useMemo(() => (screen ? parseChoices(screen) : []), [screen])
   const locked = decisionLocked(command.status.kind, answeredAt, agent.updatedAt)
-  const canWrite = agent.terminal !== null
+  const caps = useSourceCaps()
+  const canWrite = canWriteTo(agent.terminal, caps.command)
   const needsComposer = canWrite && agent.state === 'blocked' && choices.length === 0
   const screenLoaded = session.data !== null || session.error !== null
   const arrival = useRef<{ screenFor: number | null; at: number }>({ screenFor: null, at: 0 })
@@ -127,7 +129,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
       )}
       {!canWrite ? (
         <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
-          ตอบจากที่นี่ไม่ได้
+          {caps.command ? 'ตอบจากที่นี่ไม่ได้' : READ_ONLY_REASON}
         </p>
       ) : needsComposer ? (
         <QueueComposer disabled={locked} status={command.status} onEscape={onClose} onPrompt={(text) => answer(() => command.run('prompt', text))} />
