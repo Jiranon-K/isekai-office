@@ -36,7 +36,7 @@ const SIDES: Record<PopoverPanelId, PanelSide> = {
 function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }): React.JSX.Element {
   const agents = props.office.data?.agents ?? []
   if (id === 'reception') {
-    return <RosterPanel office={props.office} quiet={props.quiet} onSelect={props.onSelectAgent} />
+    return <RosterPanel office={props.office} board={props.board} quiet={props.quiet} onSelect={props.onSelectAgent} />
   }
   if (id === 'door') {
     return <DoorPanel theme={props.theme} onThemeChange={props.onThemeChange} />
