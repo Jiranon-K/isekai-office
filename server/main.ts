@@ -8,6 +8,7 @@ import { createWorktree, listRepos, sendCommand } from './sources/orca'
 import { activeSource } from './sources/select'
 import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
+import { readOnlyReply } from './read-only'
 
 const PORT = Number(process.env.PORT ?? 4300)
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
@@ -54,6 +55,10 @@ function terminalFor(agentId: string): string | null {
 }
 
 async function command(request: Request): Promise<Response> {
+  const blocked = readOnlyReply(feeds.snapshot().caps, 'command')
+  if (blocked) {
+    return json(blocked, 409)
+  }
   const parsed = toCommand(await request.json().catch(() => null))
   if (!parsed) {
     return json({ ok: false, error: 'bad_request' }, 400)
@@ -74,6 +79,10 @@ async function repos(): Promise<Response> {
 }
 
 async function spawn(request: Request): Promise<Response> {
+  const blocked = readOnlyReply(feeds.snapshot().caps, 'spawn')
+  if (blocked) {
+    return json(blocked, 409)
+  }
   const body = await request.json().catch(() => null)
   const reply = await handleSpawn(body, { repos: feeds.repos, spawn: feeds.spawn })
   return json(reply.result, reply.status)

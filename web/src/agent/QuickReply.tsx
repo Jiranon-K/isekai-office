@@ -7,6 +7,7 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverHeader, PopoverTitle } f
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Loadable } from '@/lib/api'
 import { isTyping } from '@/lib/keyboard'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { choiceExcerpt, choiceForKey, parseChoices } from './choice-logic'
 import { decisionLocked, lastScreenLines, STATE_LABELS } from './panel-logic'
@@ -123,6 +124,7 @@ export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyPr
   const contentRef = useRef<HTMLDivElement>(null)
   const session = useSession(agent)
   const command = useCommand(agent.id)
+  const caps = useSourceCaps()
   const [answeredAt, setAnsweredAt] = useState<number | null>(null)
   const locked = decisionLocked(command.status.kind, answeredAt, agent.updatedAt)
   const screen = session.data?.screen
@@ -137,7 +139,7 @@ export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyPr
   }
   function onKeyDown(event: React.KeyboardEvent): void {
     const choice = choiceForKey(event.key, choices)
-    if (choice === null || locked || agent.terminal === null) {
+    if (choice === null || locked || agent.terminal === null || !caps.command) {
       return
     }
     if (isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
@@ -186,9 +188,9 @@ export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyPr
           </div>
         </PopoverHeader>
         <ScreenLines session={session} choices={choices} />
-        {agent.terminal === null ? (
+        {agent.terminal === null || !caps.command ? (
           <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
-            session นี้ไม่มี terminal ที่เขียนได้ ตอบจากที่นี่ไม่ได้
+            {caps.command ? 'session นี้ไม่มี terminal ที่เขียนได้ ตอบจากที่นี่ไม่ได้' : READ_ONLY_REASON}
           </p>
         ) : choices.length > 0 ? (
           <ChoiceList choices={choices} status={command.status} disabled={locked} onChoose={choose} onDeny={() => decide('deny')} />

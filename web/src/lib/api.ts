@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { shouldPoll } from '@/alerts/pipeline-logic'
+import { publishSourceCaps } from './source-caps'
 import type {
   BoardSnapshot,
   CommandRequest,
@@ -20,7 +21,11 @@ export function useOfficeFeed(): Loadable<OfficeSnapshot> {
   const [state, setState] = useState<Loadable<OfficeSnapshot>>({ data: null, error: null, loading: true })
   useEffect(() => {
     const source = new EventSource('/api/office/events')
-    source.onmessage = (event) => setState({ data: JSON.parse(event.data), error: null, loading: false })
+    source.onmessage = (event) => {
+      const data: OfficeSnapshot = JSON.parse(event.data)
+      publishSourceCaps(data.caps)
+      setState({ data, error: null, loading: false })
+    }
     source.onerror = () => setState((previous) => ({ ...previous, error: 'server_unreachable', loading: false }))
     return () => source.close()
   }, [])

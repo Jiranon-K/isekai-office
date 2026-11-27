@@ -53,7 +53,7 @@ export const HOTSPOTS: readonly Hotspot[] = [
     rects: [tiles(24.9, 11.5, 10.3, 4.5)],
     action: PANEL,
   },
-  { id: 'hearth', label: 'เตาผิง', hint: 'สถานะ server, Orca และบันทึกของกิลด์', rects: [tiles(27, 0, 4, 3.4)], action: PANEL },
+  { id: 'hearth', label: 'เตาผิง', hint: 'สถานะ server, แหล่งข้อมูล และบันทึกของกิลด์', rects: [tiles(27, 0, 4, 3.4)], action: PANEL },
   { id: 'archive', label: 'ชั้นหนังสือ', hint: 'ประวัติงานใน Loop', rects: [tiles(1.9, 2.05, 10.2, 3.05)], action: PANEL },
 ]
 

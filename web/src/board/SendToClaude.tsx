@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { sendCommand } from '@/lib/api'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { describeResult, STATE_LABELS } from '@/agent/panel-logic'
 import { loopStartPrompt, sendableAgents } from './board-logic'
 
@@ -17,7 +18,10 @@ type SendToClaudeProps = {
   onSendToAgent(agentId: string): void
 }
 
-function disabledReason(card: QuestCard, candidates: OfficeAgent[]): string | null {
+function disabledReason(card: QuestCard, candidates: OfficeAgent[], canCommand: boolean): string | null {
+  if (!canCommand) {
+    return READ_ONLY_REASON
+  }
   if (card.key === null) {
     return 'card นี้ไม่มี key จึงสั่ง /jk-loop:start ไม่ได้'
   }
@@ -40,8 +44,9 @@ function StatusLine({ status }: { status: SendStatus }): React.JSX.Element | nul
 export function SendToClaude({ card, agents, onSendToAgent }: SendToClaudeProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<SendStatus>({ kind: 'idle' })
+  const caps = useSourceCaps()
   const candidates = sendableAgents(agents)
-  const reason = disabledReason(card, candidates)
+  const reason = disabledReason(card, candidates, caps.command)
   const sending = status.kind === 'sending'
 
   async function sendTo(agent: OfficeAgent): Promise<void> {

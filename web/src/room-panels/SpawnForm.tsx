@@ -4,6 +4,7 @@ import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendSpawn, useRepos } from '@/lib/api'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { buildSpawnRequest, EMPTY_FIELDS, hasProblem, spawnProblems, type SpawnFields } from './spawn-logic'
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'failed'; reason: string }
@@ -33,7 +34,7 @@ function statusLine(status: Status): React.JSX.Element | null {
   return null
 }
 
-export function SpawnForm(): React.JSX.Element {
+function SpawnFields(): React.JSX.Element {
   const repos = useRepos()
   const [fields, setFields] = useState<SpawnFields>(EMPTY_FIELDS)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
@@ -122,4 +123,12 @@ export function SpawnForm(): React.JSX.Element {
       {statusLine(status)}
     </form>
   )
+}
+
+export function SpawnForm(): React.JSX.Element {
+  const caps = useSourceCaps()
+  if (!caps.spawn) {
+    return <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">{READ_ONLY_REASON}</p>
+  }
+  return <SpawnFields />
 }
