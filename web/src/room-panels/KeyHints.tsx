@@ -4,6 +4,7 @@ import { isRevealKey, isTyping } from '@/lib/keyboard'
 
 const HINTS = [
   { keys: 'n', label: 'ไปหาคนที่รอ' },
+  { keys: 'a', label: 'ตอบทีละคน' },
   { keys: '1-9', label: 'ตอบ' }
 ]
 

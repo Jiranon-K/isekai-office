@@ -1,17 +1,15 @@
-import type { Choice, OfficeAgent, SessionDetail } from '@shared/types'
+import type { OfficeAgent } from '@shared/types'
 import { useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/badge'
-import { AllowIcon, DenyIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
-import { Skeleton } from '@/components/ui/skeleton'
-import type { Loadable } from '@/lib/api'
 import { isTyping } from '@/lib/keyboard'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import type { AgentLocator } from '@/office/use-office-canvas'
-import { choiceExcerpt, choiceForKey, parseChoices } from './choice-logic'
-import { decisionLocked, lastScreenLines, STATE_LABELS } from './panel-logic'
-import { useCommand, type CommandStatus } from './use-command'
+import { choiceForKey, parseChoices } from './choice-logic'
+import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
+import { decisionLocked, STATE_LABELS } from './panel-logic'
+import { useCommand } from './use-command'
 import { useSession } from './use-session'
 
 type QuickReplyProps = {
@@ -21,103 +19,12 @@ type QuickReplyProps = {
   onClose(): void
 }
 
-const SCREEN_LINES = 6
-
 function centreRect(): DOMRect {
   return new DOMRect(window.innerWidth / 2, window.innerHeight / 2, 0, 0)
 }
 
 function focusRoom(): void {
   document.querySelector<HTMLElement>('[role="application"]')?.focus()
-}
-
-function ScreenLines({ session, choices }: { session: Loadable<SessionDetail>; choices: Choice[] }): React.JSX.Element {
-  if (!session.data && session.loading) {
-    return <Skeleton className="h-24 w-full" />
-  }
-  const screen = session.data?.screen
-  if (!screen) {
-    return <p className="rounded-md bg-muted p-2 text-small text-muted-foreground">อ่านหน้าจอ terminal ไม่ได้</p>
-  }
-  return (
-    <pre className="max-h-40 overflow-auto rounded-md bg-muted p-2 font-mono text-caption whitespace-pre-wrap">
-      {(choices.length > 0 && choiceExcerpt(screen)) || lastScreenLines(screen, SCREEN_LINES)}
-    </pre>
-  )
-}
-
-function Failure({ status }: { status: CommandStatus }): React.JSX.Element | null {
-  if (status.kind !== 'failed') {
-    return null
-  }
-  return (
-    <p role="alert" className="text-caption text-tint-red-fg">
-      ส่งไม่สำเร็จ ({status.reason}) ลองใหม่อีกครั้ง
-    </p>
-  )
-}
-
-function ChoiceList({
-  choices,
-  status,
-  disabled,
-  onChoose,
-  onDeny
-}: {
-  choices: Choice[]
-  status: CommandStatus
-  disabled: boolean
-  onChoose(choice: number): void
-  onDeny(): void
-}): React.JSX.Element {
-  return (
-    <div className="flex flex-col gap-2">
-      {choices.map((choice, index) => (
-        <Button
-          key={choice.number}
-          variant={index === 0 ? 'default' : 'outline'}
-          className="h-auto min-h-9 justify-start py-1.5 text-left whitespace-normal"
-          disabled={disabled}
-          onClick={() => onChoose(choice.number)}
-        >
-          {choice.number}. {choice.label}
-        </Button>
-      ))}
-      <Button variant="outline" disabled={disabled} onClick={onDeny}>
-        <DenyIcon />
-        ปฏิเสธ
-      </Button>
-      <Failure status={status} />
-    </div>
-  )
-}
-
-function Decision({
-  status,
-  disabled,
-  onAllow,
-  onDeny
-}: {
-  status: CommandStatus
-  disabled: boolean
-  onAllow(): void
-  onDeny(): void
-}): React.JSX.Element {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
-        <Button className="flex-1" disabled={disabled} onClick={onAllow}>
-          <AllowIcon />
-          อนุญาต
-        </Button>
-        <Button variant="outline" className="flex-1" disabled={disabled} onClick={onDeny}>
-          <DenyIcon />
-          ปฏิเสธ
-        </Button>
-      </div>
-      <Failure status={status} />
-    </div>
-  )
 }
 
 export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyProps): React.JSX.Element {

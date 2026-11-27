@@ -23,6 +23,10 @@ import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { CommandPanel } from '@/agent/CommandPanel'
 import { QuickReply } from '@/agent/QuickReply'
+import { DecisionQueue } from '@/agent/DecisionQueue'
+import { QueueEntryProvider } from '@/agent/QueueEntryButton'
+import { useDecisionQueue } from '@/agent/use-decision-queue'
+import { waitingQueue } from '@/alerts/jump-logic'
 
 const CLOCK_MS = 30_000
 
@@ -71,7 +75,17 @@ export function App(): React.JSX.Element {
   useLoadAlerts(alertAgents, contextWindow, alerts.enabled, pickAgent)
   const showBoard = useCallback(() => setRoute((current) => openPanel(current, 'questBoard')), [])
   usePipelineAlerts(questBoard.data, alerts.enabled, showBoard)
-  useJumpKey({ agents, currentId: route.agentId, boardOpen, onPick: pickAgent })
+  const expandAgent = useCallback((agentId: string) => {
+    pickAgent(agentId)
+    setExpandedId(agentId)
+  }, [pickAgent])
+  const queue = useDecisionQueue({ agents, boardOpen, onFocus: pickAgent, onExpand: expandAgent })
+  const queueOpen = queue.state !== null
+  const openQueueFromPanel = useCallback(() => {
+    setRoute(closePanel)
+    queue.open()
+  }, [queue.open])
+  useJumpKey({ agents, currentId: route.agentId, boardOpen: boardOpen || queueOpen, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
   const openHotspot = useCallback(
@@ -109,6 +123,7 @@ export function App(): React.JSX.Element {
       <KeyHints />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
+      <QueueEntryProvider value={{ waiting: waitingQueue(agents).length, open: openQueueFromPanel }}>
       <HotspotPanels
         open={route.open}
         office={office}
@@ -119,10 +134,14 @@ export function App(): React.JSX.Element {
         onSelectAgent={pickAgent}
         onClose={close}
       />
-      {selected && showQuickReply ? (
+      </QueueEntryProvider>
+      {queue.state ? (
+        <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
+      ) : null}
+      {selected && showQuickReply && !queueOpen ? (
         <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
       ) : null}
-      {selected && !showQuickReply ? <CommandPanel agent={selected} contextWindow={contextWindow} onClose={() => pickAgent(null)} /> : null}
+      {selected && !showQuickReply && !queueOpen ? <CommandPanel agent={selected} contextWindow={contextWindow} onClose={() => pickAgent(null)} /> : null}
     </div>
   )
 }

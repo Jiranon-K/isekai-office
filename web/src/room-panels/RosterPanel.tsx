@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { countAgents } from '@/lib/agent-counts'
 import type { Loadable } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { QueueEntryButton } from '@/agent/QueueEntryButton'
 import { rosterOrder } from './panel-data'
 import { SessionList } from './SessionList'
 
@@ -39,6 +40,7 @@ export function RosterPanel({ office, quiet, onSelect }: RosterPanelProps): Reac
         <Count label="กำลังทำงาน" value={counts.working} />
         <Count label="รอคุณ" value={counts.needsYou} emphasised={counts.needsYou > 0} />
       </dl>
+      <QueueEntryButton />
       <SessionList agents={rosterOrder(office.data.agents)} empty="ยังไม่มี session" quiet={quiet} onSelect={onSelect} />
     </>
   )
