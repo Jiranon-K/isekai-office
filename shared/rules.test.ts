@@ -44,7 +44,7 @@ describe('isTooBroad', () => {
     for (const rule of ['Bash', 'Write', 'Edit']) {
       expect(isTooBroad(rule)).toBe(true)
     }
-    for (const rule of ['Read', 'WebSearch', 'Glob']) {
+    for (const rule of ['WebSearch', 'Glob', 'Grep']) {
       expect(isTooBroad(rule)).toBe(false)
     }
   })
@@ -83,6 +83,37 @@ describe('isTooBroad', () => {
 
   test('a text that is not a rule is not reported as too broad', () => {
     expect(isTooBroad('nonsense')).toBe(false)
+  })
+})
+
+const TOO_BROAD_ALLOW_RULES = [
+  'Bash(zsh *)', 'Bash(fish *)', 'Bash(ksh *)', 'Bash(dash *)', 'Bash(env *)', 'Bash(xargs *)', 'Bash(nc *)', 'Bash(ssh *)',
+  'Bash(npx *)', 'Bash(node *)', 'Bash(python *)', 'Bash(python3 *)', 'Bash(perl *)', 'Bash(ruby *)', 'Bash(bunx *)', 'Bash(bun x *)',
+  'Bash(pwsh *)', 'Bash(powershell *)', 'Bash(cmd *)',
+  'Bash(/bin/rm *)', 'Bash(/usr/bin/curl *)', 'Bash(C:\\Windows\\System32\\cmd.exe /c *)',
+  'Bash(git *)', 'Bash(git:*)', 'Bash(git * main)', 'Bash(git -C . push *)', 'Bash(git -c core.pager=x log)', 'Bash(git push *)',
+  'Bash(find *)', 'Bash(r*)', 'Bash(*m *)',
+  'PowerShell(Remove-Item *)', 'PowerShell(iex *)', 'PowerShell(Invoke-Expression *)', 'PowerShell(pwsh *)',
+  'Edit(//**)', 'Edit(//**/*)', 'Edit(**/*)', 'Edit(/**)', 'Edit(~/**)',
+  'Edit(.claude/**)', 'Edit(./.claude/settings.json)', 'Write(.git/hooks/*)', 'NotebookEdit(**/.claude/*)', 'Edit(~/.claude/settings.json)', 'Edit(//**/.git/**)',
+  'NotebookEdit', 'WebFetch', 'Read', 'Agent', 'Skill', 'PowerShell',
+  'WebFetch(domain:*)', 'WebFetch(domain:*.com)',
+  'Read(//**)', 'Read(~/.ssh/**)'
+]
+
+const ALLOWED_RULES = [
+  'Bash(bun run check)', 'Bash(bun test)', 'Bash(bun run typecheck)', 'Bash(npm test)', 'Bash(git status)', 'Bash(git diff *)', 'Bash(git log *)',
+  'Edit(src/**)', 'Read(./src/**)', 'WebFetch(domain:example.com)', 'WebFetch(domain:*.example.com)', 'Agent(Explore)', 'Skill(commit)'
+]
+
+describe('isTooBroad table', () => {
+  test.each(TOO_BROAD_ALLOW_RULES)('%s is too broad', (rule) => {
+    expect(toRule(rule)).toBe(rule)
+    expect(isTooBroad(rule)).toBe(true)
+  })
+
+  test.each(ALLOWED_RULES)('%s is allowed', (rule) => {
+    expect(isTooBroad(rule)).toBe(false)
   })
 })
 
