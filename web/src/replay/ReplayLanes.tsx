@@ -46,7 +46,7 @@ function GapOverlay({ day }: { day: ReplayDay }): React.JSX.Element {
 export function ReplayLanes({ day, at }: { day: ReplayDay; at: number }): React.JSX.Element {
   const { shown, hidden } = limitLanes(day.lanes)
   return (
-    <div className="relative col-span-2 grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-1">
+    <div className="relative col-span-2 row-start-1 grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-1">
       {shown.map((lane) => (
         <LaneRow key={lane.agentId} day={day} lane={lane} />
       ))}
