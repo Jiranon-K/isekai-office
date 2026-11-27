@@ -1,14 +1,20 @@
+import type { OfficeAgent } from '@shared/types'
+import { Button } from '@/components/ui/button'
 import { countAgents } from '@/lib/agent-counts'
 import { peakLoad } from '@/office/scene/mana'
 import { rosterOrder } from '@/room-panels/panel-data'
 import { SessionList } from '@/room-panels/SessionList'
+import { PartyComposer } from './PartyComposer'
 import type { Party } from './party-logic'
 import { Pennant } from './Pennant'
 
 type PartySectionProps = {
   party: Party
+  agents: OfficeAgent[]
   contextWindow: number
   quiet: ReadonlyMap<string, number>
+  composing: boolean
+  onToggleComposer(): void
   onSelect(agentId: string): void
 }
 
@@ -19,7 +25,7 @@ function PartyFacts({ party, contextWindow }: { party: Party; contextWindow: num
   return <p className="text-caption text-muted-foreground">{`ทำงาน ${counts.working} · รอคุณ ${counts.needsYou}${load}`}</p>
 }
 
-export function PartySection({ party, contextWindow, quiet, onSelect }: PartySectionProps): React.JSX.Element {
+export function PartySection({ party, agents, contextWindow, quiet, composing, onToggleComposer, onSelect }: PartySectionProps): React.JSX.Element {
   return (
     <section aria-label={`ปาร์ตี้ ${party.name}`} className="flex flex-col gap-1">
       <div className="flex items-center gap-2 px-2">
@@ -28,7 +34,11 @@ export function PartySection({ party, contextWindow, quiet, onSelect }: PartySec
           <h3 className="truncate text-small font-medium">{party.name}</h3>
           <PartyFacts party={party} contextWindow={contextWindow} />
         </div>
+        <Button variant="outline" size="xs" aria-expanded={composing} onClick={onToggleComposer}>
+          สั่งทั้งปาร์ตี้
+        </Button>
       </div>
+      {composing ? <PartyComposer party={party} agents={agents} /> : null}
       <SessionList agents={rosterOrder(party.members)} empty="" quiet={quiet} onSelect={onSelect} />
     </section>
   )

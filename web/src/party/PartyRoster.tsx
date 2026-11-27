@@ -1,4 +1,5 @@
 import type { BoardSnapshot, OfficeAgent } from '@shared/types'
+import { useState } from 'react'
 import { rosterOrder } from '@/room-panels/panel-data'
 import { SessionList } from '@/room-panels/SessionList'
 import { soloAgents } from './grouping-logic'
@@ -38,6 +39,7 @@ function SoloSection({ agents, quiet, onSelect }: Pick<PartyRosterProps, 'agents
 
 export function PartyRoster({ agents, board, contextWindow, quiet, onSelect, flat }: PartyRosterProps): React.JSX.Element {
   const [grouped, setGrouped] = usePartyGrouping()
+  const [composingKey, setComposingKey] = useState<string | null>(null)
   const found = useParties(agents, board)
   return (
     <>
@@ -48,8 +50,11 @@ export function PartyRoster({ agents, board, contextWindow, quiet, onSelect, fla
             <PartySection
               key={party.key}
               party={party}
+              agents={agents}
               contextWindow={contextWindow}
               quiet={quiet}
+              composing={composingKey === party.key}
+              onToggleComposer={() => setComposingKey((current) => (current === party.key ? null : party.key))}
               onSelect={onSelect}
             />
           ))}

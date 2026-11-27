@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { OfficeAgent } from '@shared/types'
-import { GONE_REASON, initialRows, runBroadcast, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
+import { describeRow, GONE_REASON, initialRows, runBroadcast, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
 import { SKIP_REASONS, type BroadcastRow } from './party-logic'
 
 function agent(id: string, state: OfficeAgent['state'] = 'done'): OfficeAgent {
@@ -98,5 +98,15 @@ describe('runBroadcast', () => {
     expect(snapshots[0]).toEqual(initialRows(['a', 'b']))
     expect(snapshots.some((rows) => rows[0]?.status === 'sending' && rows[1]?.status === 'idle')).toBe(true)
     expect(snapshots.at(-1)?.map((row) => row.status)).toEqual(['sent', 'sent'])
+  })
+})
+
+describe('describeRow', () => {
+  test('reads each status in Thai and shows the reason for a skip or a failure', () => {
+    expect(describeRow({ agentId: 'a', status: 'idle', reason: null })).toBeNull()
+    expect(describeRow({ agentId: 'a', status: 'sending', reason: null })).toBe('กำลังส่ง')
+    expect(describeRow({ agentId: 'a', status: 'sent', reason: null })).toBe('ส่งแล้ว')
+    expect(describeRow({ agentId: 'a', status: 'failed', reason: 'no_terminal' })).toBe('ส่งไม่สำเร็จ (no_terminal)')
+    expect(describeRow({ agentId: 'a', status: 'skipped', reason: SKIP_REASONS.working })).toBe('กำลังทำงานอยู่')
   })
 })

@@ -14,6 +14,19 @@ export function initialRows(agentIds: readonly string[]): BroadcastRow[] {
   return agentIds.map((agentId) => ({ agentId, status: 'idle', reason: null }))
 }
 
+export function describeRow(row: BroadcastRow): string | null {
+  if (row.status === 'sending') {
+    return 'กำลังส่ง'
+  }
+  if (row.status === 'sent') {
+    return 'ส่งแล้ว'
+  }
+  if (row.status === 'failed') {
+    return `ส่งไม่สำเร็จ (${row.reason})`
+  }
+  return row.status === 'skipped' ? row.reason : null
+}
+
 function withRow(rows: BroadcastRow[], next: BroadcastRow): BroadcastRow[] {
   return rows.map((row) => (row.agentId === next.agentId ? next : row))
 }
