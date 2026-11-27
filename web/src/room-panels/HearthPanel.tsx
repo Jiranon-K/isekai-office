@@ -2,6 +2,7 @@ import type { OfficeSnapshot } from '@shared/types'
 import { Badge } from '@/components/badge'
 import { useGuildLog, type Loadable } from '@/lib/api'
 import { GuildLogSection } from './GuildLogSection'
+import { sourceHealth } from './source-health'
 import { useLastHidden } from './use-last-hidden'
 
 type Health = { label: string; ok: boolean }
@@ -11,13 +12,6 @@ function serverHealth(office: Loadable<OfficeSnapshot>): Health {
     return { label: 'ติดต่อไม่ได้', ok: false }
   }
   return office.data ? { label: 'เชื่อมต่ออยู่', ok: true } : { label: 'กำลังเชื่อมต่อ', ok: false }
-}
-
-function orcaHealth(office: Loadable<OfficeSnapshot>): Health {
-  if (!office.data) {
-    return { label: 'ยังไม่ทราบ', ok: false }
-  }
-  return office.data.orcaRunning ? { label: 'ทำงานอยู่', ok: true } : { label: 'ปิดอยู่', ok: false }
 }
 
 function HealthRow({ name, health }: { name: string; health: Health }): React.JSX.Element {
@@ -43,7 +37,7 @@ export function HearthPanel({ office, onSelect }: { office: Loadable<OfficeSnaps
     <>
       <dl className="flex flex-col gap-2">
         <HealthRow name="Server" health={serverHealth(office)} />
-        <HealthRow name="Orca" health={orcaHealth(office)} />
+        <HealthRow name="แหล่งข้อมูล" health={sourceHealth(office.data)} />
       </dl>
       {office.data?.error ? (
         <p role="alert" className="rounded-md bg-tint-red-bg p-2 font-mono text-caption break-words text-tint-red-fg">

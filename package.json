@@ -3,13 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "scripts/dev.sh",
+    "dev": "bun run scripts/dev.ts",
+    "dev:service": "scripts/dev.sh",
     "build": "vite build",
     "start": "bun run server/main.ts",
     "demo": "bun run build && DEMO=1 PORT=4310 PUBLIC_PORT=4310 bun run server/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test",
-    "check": "bun run typecheck && bun test && bun run build"
+    "check": "bun run typecheck && bun test && bun run build",
+    "hooks": "bun run scripts/hooks.ts"
   },
   "dependencies": {
     "@fontsource-variable/anuphan": "^5.3.0",

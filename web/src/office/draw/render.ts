@@ -32,7 +32,7 @@ export type FrameInput = {
   selectedId: string | null
   seconds: number
   animate: boolean
-  orcaRunning: boolean
+  sourceReady: boolean
   agentCount: number
   fontsReady: boolean
   world: World
@@ -95,7 +95,7 @@ function drawSprite(context: CanvasRenderingContext2D, palette: OfficePalette, a
 }
 
 function drawEmptySigns(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, input: FrameInput): void {
-  if (!input.orcaRunning) {
+  if (!input.sourceReady) {
     drawSign(context, palette, view, 'Orca ปิดอยู่', SIGN_CENTER.x, SIGN_CENTER.y, 9)
     return
   }
@@ -116,7 +116,7 @@ export function renderFrame(input: FrameInput): void {
   context.setTransform(view.scale, 0, 0, view.scale, view.offsetX, view.offsetY)
   context.drawImage(layers.room, 0, 0)
   if (!layers.painted) {
-    drawAmbientFlames(context, palette, animate ? seconds : 0, workers.forge.length, input.orcaRunning)
+    drawAmbientFlames(context, palette, animate ? seconds : 0, workers.forge.length, input.sourceReady)
   }
   for (const actor of sorted) {
     drawGround(context, palette, actor, actor.id === input.selectedId, seconds, animate)

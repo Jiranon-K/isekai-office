@@ -1,6 +1,6 @@
 import { readdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 
 const PROJECTS_DIR = join(homedir(), '.claude', 'projects')
 const TAIL_BYTES = 256 * 1024
@@ -16,7 +16,7 @@ type CacheEntry = { key: string; facts: TranscriptFacts }
 const cache = new Map<string, CacheEntry>()
 
 export function transcriptFolder(worktree: string, projectsDir = PROJECTS_DIR): string {
-  return join(projectsDir, worktree.replace(/[/.]/g, '-'))
+  return join(projectsDir, worktree.replace(/[^A-Za-z0-9-]/g, '-'))
 }
 
 function usageTokens(usage: Record<string, unknown>): number {
@@ -61,8 +61,8 @@ export async function readTail(path: string, size: number, bytes = TAIL_BYTES): 
     return Bun.file(path).text()
   }
   const text = await Bun.file(path).slice(size - bytes, size).text()
-  const firstBreak = text.indexOf('\n')
-  return firstBreak === -1 ? '' : text.slice(firstBreak + 1)
+  const rest = text.slice(text.indexOf('\n') + 1)
+  return text.includes('\n') && rest.trim() !== '' ? rest : text
 }
 
 async function factsFor(path: string, modifiedMs: number, size: number): Promise<TranscriptFacts> {
@@ -89,9 +89,8 @@ export function pickTranscript(candidates: TranscriptCandidate[], agentTitle: st
   return recent.length === 1 && only ? only.path : null
 }
 
-function sessionName(path: string): string {
-  const base = path.slice(path.lastIndexOf('/') + 1)
-  return base.slice(0, -TRANSCRIPT_SUFFIX.length)
+export function sessionName(path: string): string {
+  return basename(path, TRANSCRIPT_SUFFIX)
 }
 
 async function listCandidates(folder: string, now: number): Promise<(TranscriptCandidate & TranscriptFacts)[]> {

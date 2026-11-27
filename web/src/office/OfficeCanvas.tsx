@@ -6,7 +6,7 @@ import { useOfficeCanvas, type AgentLocator } from './use-office-canvas'
 
 type OfficeCanvasProps = {
   agents: OfficeAgent[]
-  orcaRunning: boolean
+  sourceReady: boolean
   contextWindow: number
   quiet: ReadonlyMap<string, number>
   selectedId: string | null

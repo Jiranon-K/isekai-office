@@ -1,6 +1,7 @@
 import type { OfficeAgent } from '@shared/types'
 import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { canSendCompact, COMPACT_TEXT, isOverLoad } from '@/alerts/load-logic'
 import { useCommand, type CommandStatus } from './use-command'
 
@@ -17,13 +18,14 @@ function label(status: CommandStatus): React.ReactNode {
 
 export function CompactButton({ agent, contextWindow }: CompactButtonProps): React.JSX.Element | null {
   const command = useCommand(agent.id)
+  const caps = useSourceCaps()
   if (!isOverLoad(agent, contextWindow)) {
     return null
   }
-  const allowed = canSendCompact(agent)
+  const allowed = canSendCompact(agent) && caps.command
   const busy = command.status.kind === 'sending' || command.status.kind === 'sent'
   return (
-    <span className="flex shrink-0 items-center gap-1.5" title={allowed ? undefined : IDLE_ONLY_HINT}>
+    <span className="flex shrink-0 items-center gap-1.5" title={allowed ? undefined : caps.command ? IDLE_ONLY_HINT : READ_ONLY_REASON}>
       {command.status.kind === 'failed' ? (
         <span role="alert" className="text-caption text-tint-red-fg">
           ส่งไม่สำเร็จ ({command.status.reason})

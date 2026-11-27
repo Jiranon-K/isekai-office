@@ -1,4 +1,7 @@
-import { describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { toCommand } from './command'
 import { demoLog } from './feeds/demo'
 import { isAllowedRequest } from './guard'
@@ -153,5 +156,84 @@ describe('guild log', () => {
     expect(events).toHaveLength(8)
     expect(times).toEqual([...times].sort((first, second) => second - first))
     expect(Object.keys(events[0] ?? {}).sort()).toEqual(['agentId', 'at', 'from', 'title', 'to'])
+  })
+})
+
+const MAIN_SCRIPT = join(import.meta.dir, 'main.ts')
+
+type RunningServer = { port: number; stop: () => Promise<void> }
+
+async function freePort(): Promise<number> {
+  const probe = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response('') })
+  const { port } = probe
+  await probe.stop(true)
+  return port ?? 0
+}
+
+async function startServer(home: string): Promise<RunningServer> {
+  const port = await freePort()
+  const env = { ...process.env, PORT: String(port), PUBLIC_PORT: String(port), SESSION_SOURCE: 'local', HOME: home, USERPROFILE: home }
+  const child = Bun.spawn(['bun', MAIN_SCRIPT], { env, stdout: 'ignore', stderr: 'ignore' })
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const reply = await fetch(`http://127.0.0.1:${port}/api/nothing`).catch(() => null)
+    if (reply?.status === 404) {
+      return { port, stop: async () => void (child.kill(), await child.exited) }
+    }
+    await Bun.sleep(100)
+  }
+  child.kill()
+  throw new Error('server did not start')
+}
+
+function postTo(server: RunningServer, path: string, body: string, headers: Record<string, string> = {}): Promise<Response> {
+  const origin = `http://127.0.0.1:${server.port}`
+  return fetch(`${origin}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin, ...headers }, body })
+}
+
+describe('the real server route', () => {
+  let home = ''
+  let server: RunningServer
+
+  beforeAll(async () => {
+    home = await mkdtemp(join(tmpdir(), 'isekai-route-'))
+    server = await startServer(home)
+  })
+
+  afterAll(async () => {
+    await server.stop()
+    await rm(home, { recursive: true, force: true })
+  })
+
+  test('a hook post from the local script is accepted', async () => {
+    const reply = await postTo(server, '/api/hook', JSON.stringify({ session_id: 'abc', hook_event_name: 'Stop' }))
+    expect(reply.status).toBe(200)
+    expect(await reply.json()).toEqual({ ok: true })
+  })
+
+  test('a hook post carrying a foreign Origin is refused', async () => {
+    const reply = await postTo(server, '/api/hook', JSON.stringify({ session_id: 'abc', hook_event_name: 'Stop' }), { Origin: 'https://evil.example' })
+    expect(reply.status).toBe(403)
+  })
+
+  test('a hook body over 64 KB is refused with 413 before it is parsed', async () => {
+    const reply = await postTo(server, '/api/hook', JSON.stringify({ session_id: 'abc', hook_event_name: 'Stop', message: 'x'.repeat(70_000) }))
+    expect(reply.status).toBe(413)
+  })
+
+  test('a command on a read only source is refused with 409 read_only_source', async () => {
+    const reply = await postTo(server, '/api/command', JSON.stringify({ agentId: 'a', action: 'allow' }))
+    expect(reply.status).toBe(409)
+    expect(await reply.json()).toEqual({ ok: false, error: 'read_only_source' })
+  })
+
+  test('a spawn on a read only source is refused with 409 read_only_source', async () => {
+    const reply = await postTo(server, '/api/spawn', JSON.stringify({ repo: 'x', name: 'y' }))
+    expect(reply.status).toBe(409)
+    expect(await reply.json()).toEqual({ ok: false, error: 'read_only_source' })
+  })
+
+  test('a session id over 128 characters is a bad request', async () => {
+    const reply = await postTo(server, '/api/hook', JSON.stringify({ session_id: 'a'.repeat(129), hook_event_name: 'Stop' }))
+    expect(reply.status).toBe(400)
   })
 })

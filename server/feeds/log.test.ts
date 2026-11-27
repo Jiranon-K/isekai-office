@@ -7,7 +7,7 @@ function agentIn(id: string, state: AgentState): OfficeAgent {
 }
 
 function snapshotOf(agents: OfficeAgent[], at: number, extra: Partial<OfficeSnapshot> = {}): OfficeSnapshot {
-  return { orcaRunning: true, agents, contextWindow: 1, quietAfterMs: 1, error: null, at, ...extra }
+  return { source: 'orca', caps: { command: true, spawn: true, screen: true }, sourceReady: true, agents, contextWindow: 1, quietAfterMs: 1, error: null, at, ...extra }
 }
 
 function eventAt(at: number): LogEvent {
@@ -89,7 +89,7 @@ describe('recordSnapshot', () => {
 
   test('a tick with Orca closed records nothing and keeps the baseline', () => {
     const first = recordSnapshot(FRESH, snapshotOf([agentIn('a', 'working')], 1))
-    expect(recordSnapshot(first, snapshotOf([], 2, { orcaRunning: false }))).toBe(first)
+    expect(recordSnapshot(first, snapshotOf([], 2, { sourceReady: false }))).toBe(first)
   })
 })
 

@@ -1,7 +1,9 @@
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import type { LoopStage } from '@shared/types'
 import { runText } from '../run'
 
-const LOOP_STATE = process.env.LOOP_STATE_BIN ?? `${process.env.HOME}/loop/bin/loop-state`
+const LOOP_STATE = process.env.LOOP_STATE_BIN ?? join(homedir(), 'loop', 'bin', 'loop-state')
 
 export function parseLoopState(output: string): Map<string, LoopStage> {
   const stages = new Map<string, LoopStage>()

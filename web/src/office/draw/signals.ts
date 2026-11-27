@@ -8,7 +8,7 @@ export type Signals = {
   needsYou: number
   boardWaiting: number
   peakLoad: number | null
-  orcaRunning: boolean
+  sourceReady: boolean
 }
 
 const DIGITS: readonly (readonly number[])[] = [
@@ -96,7 +96,7 @@ export function drawSignals(
   signals: Signals,
   seconds: number,
 ): void {
-  if (!signals.orcaRunning) {
+  if (!signals.sourceReady) {
     drawEmbers(context, palette, anchors.firebox, seconds)
   }
   if (signals.boardWaiting > 0) {

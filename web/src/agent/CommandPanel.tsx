@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Badge } from '@/components/badge'
 import { AllowIcon, DenyIcon, TerminalIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
 import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
@@ -79,7 +80,8 @@ function PanelHeader({ agent, contextWindow, onClose }: CommandPanelProps): Reac
 export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProps): React.JSX.Element {
   const session = useSession(agent)
   const command = useCommand(agent.id)
-  const readonly = agent.terminal === null
+  const caps = useSourceCaps()
+  const readonly = agent.terminal === null || !caps.command
   const sending = command.status.kind === 'sending'
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProp
       <footer className="flex flex-col gap-2 border-t p-3">
         {readonly ? (
           <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
-            session นี้เป็นแบบ chat หรือไม่พบ terminal ที่เขียนได้ ส่งคำสั่งจากที่นี่ไม่ได้
+            {caps.command ? 'session นี้เป็นแบบ chat หรือไม่พบ terminal ที่เขียนได้ ส่งคำสั่งจากที่นี่ไม่ได้' : READ_ONLY_REASON}
           </p>
         ) : null}
         {needsDecision(agent.state) ? (

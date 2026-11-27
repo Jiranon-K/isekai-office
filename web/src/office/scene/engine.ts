@@ -25,7 +25,7 @@ import { getContext } from '../draw/draw'
 
 export type OfficeInput = {
   agents: readonly OfficeAgent[]
-  orcaRunning: boolean
+  sourceReady: boolean
   contextWindow: number
   quiet: ReadonlyMap<string, number>
   selectedId: string | null
@@ -91,7 +91,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       needsYou: countAgents([...current.agents]).needsYou,
       boardWaiting: current.boardWaiting,
       peakLoad: peakLoad(current.agents.map((agent) => agent.contextTokens), current.contextWindow),
-      orcaRunning: current.orcaRunning,
+      sourceReady: current.sourceReady,
     }
   }
 
@@ -129,7 +129,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       selectedId: input.selectedId,
       seconds: now / 1000,
       animate,
-      orcaRunning: input.orcaRunning,
+      sourceReady: input.sourceReady,
       agentCount: input.agents.length,
       fontsReady,
       world: input.world,
@@ -160,7 +160,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
   const handleVisibility = (): void => requestFrame()
   const handleMotionChange = (): void => {
     if (input) {
-      syncActors(actors, input.orcaRunning ? input.agents : [], grid, reducedQuery.matches, input.contextWindow)
+      syncActors(actors, input.sourceReady ? input.agents : [], grid, reducedQuery.matches, input.contextWindow)
     }
     requestFrame()
   }
@@ -177,7 +177,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     if (themeChanged) {
       paletteDirty = true
     }
-    syncActors(actors, next.orcaRunning ? next.agents : [], grid, reducedQuery.matches, next.contextWindow)
+    syncActors(actors, next.sourceReady ? next.agents : [], grid, reducedQuery.matches, next.contextWindow)
     markQuiet(actors, next.quiet)
     requestFrame()
   }

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { contextWindowFrom, quietAfterMsFrom } from '../feeds/office'
 import { worktreeFromId } from './orca'
-import { parseTranscriptTail, pickTranscript, sessionContext, transcriptFolder } from './transcripts'
+import { parseTranscriptTail, pickTranscript, readTail, sessionContext, sessionName, transcriptFolder } from './transcripts'
 
 const NOW = 1_800_000_000_000
 const HOUR_MS = 60 * 60 * 1000
@@ -23,6 +23,22 @@ function titleLine(title: string): string {
 describe('transcript folder', () => {
   test('slashes and dots in the worktree path become dashes', () => {
     expect(transcriptFolder('/Users/a.b/Home/.claude/worktrees/x').endsWith('-Users-a-b-Home--claude-worktrees-x')).toBe(true)
+  })
+
+  test('a Windows path becomes the folder name Claude Code writes', () => {
+    expect(transcriptFolder('C:\\Users\\stell').endsWith('C--Users-stell')).toBe(true)
+    expect(transcriptFolder('D:\\Project\\uritto\\.claude\\worktrees\\x').endsWith('D--Project-uritto--claude-worktrees-x')).toBe(true)
+  })
+
+  test('underscores and spaces become dashes too', () => {
+    expect(transcriptFolder('/home/a/my_app v2/src').endsWith('-home-a-my-app-v2-src')).toBe(true)
+  })
+})
+
+describe('session name', () => {
+  test('the file name without the suffix is the session, whichever separator the path uses', () => {
+    expect(sessionName('/a/b/abc-123.jsonl')).toBe('abc-123')
+    expect(sessionName(join('a', 'b', 'abc-123.jsonl'))).toBe('abc-123')
   })
 })
 
@@ -164,5 +180,19 @@ describe('context window setting', () => {
     expect(contextWindowFrom(undefined)).toBe(1_000_000)
     expect(contextWindowFrom('abc')).toBe(1_000_000)
     expect(contextWindowFrom('0')).toBe(1_000_000)
+  })
+})
+
+describe('readTail', () => {
+  test('a last line larger than the tail comes back as a fragment instead of nothing', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'tail-'))
+    const path = join(folder, 'big.jsonl')
+    const content = `${assistantLine(1, 0, 0)}
+${JSON.stringify({ type: 'user', message: { content: 'x'.repeat(5000) } })}
+`
+    await writeFile(path, content)
+    const tail = await readTail(path, Buffer.byteLength(content), 1000)
+    await rm(folder, { recursive: true, force: true })
+    expect(tail.trim()).not.toBe('')
   })
 })

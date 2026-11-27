@@ -8,7 +8,7 @@ export function systemTrouble(office: Loadable<OfficeSnapshot>): string | null {
   if (office.error === 'server_unreachable') {
     return 'ติดต่อ server ไม่ได้'
   }
-  return office.data !== null && !office.data.orcaRunning ? 'Orca ปิดอยู่' : null
+  return office.data !== null && !office.data.sourceReady ? 'Orca ปิดอยู่' : null
 }
 
 export function StatusChip({ office, onOpen }: StatusChipProps): React.JSX.Element | null {
