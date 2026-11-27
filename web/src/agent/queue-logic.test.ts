@@ -13,6 +13,7 @@ import {
   loadedScreen,
   nextOf,
   prefetchedScreen,
+  queueKeyFor,
   queueOrder,
   restartGuard,
   settle,
@@ -325,5 +326,18 @@ describe('canWriteTo', () => {
     expect(canWriteTo('term', true)).toBe(true)
     expect(canWriteTo(null, true)).toBe(false)
     expect(canWriteTo('term', false)).toBe(false)
+  })
+})
+
+describe('queueKeyFor', () => {
+  test('gives the same keys as keyFor while the board is closed', () => {
+    expect(queueKeyFor(press('1'), NUMBERED, false)).toEqual({ kind: 'choose', choice: 1 })
+    expect(queueKeyFor(press('Escape'), NUMBERED, false)).toEqual({ kind: 'close' })
+  })
+
+  test('gives nothing while the quest board is open over the card', () => {
+    for (const key of ['1', 'x', 's', 'o', 'Escape']) {
+      expect(queueKeyFor(press(key), NUMBERED, true)).toBeNull()
+    }
   })
 })

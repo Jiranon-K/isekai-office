@@ -62,6 +62,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
   const locked = decisionLocked(command.status.kind, answeredAt, agent.updatedAt)
   const caps = useSourceCaps()
   const canWrite = canWriteTo(agent.terminal, caps.command)
+  const boardOpen = state.boardOpen === true
   const needsComposer = canWrite && agent.state === 'blocked' && choices.length === 0
   const screenLoaded = session.data !== null || session.error !== null
   const arrival = useRef<{ screenFor: number | null; at: number }>({ screenFor: null, at: 0 })
@@ -117,7 +118,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
     void answer(send)
   }
 
-  useQueueKeys({ choices, onKey })
+  useQueueKeys({ choices, boardOpen, onKey })
 
   return (
     <>
@@ -132,7 +133,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
           {caps.command ? 'ตอบจากที่นี่ไม่ได้' : READ_ONLY_REASON}
         </p>
       ) : needsComposer ? (
-        <QueueComposer disabled={locked} status={command.status} onEscape={onClose} onPrompt={(text) => answer(() => command.run('prompt', text))} />
+        <QueueComposer disabled={locked || boardOpen} status={command.status} onEscape={onClose} onPrompt={(text) => answer(() => command.run('prompt', text))} />
       ) : choices.length > 0 ? (
         <ChoiceList choices={choices} status={command.status} disabled={locked} onChoose={(choice) => onKey({ kind: 'choose', choice })} onDeny={() => onKey({ kind: 'deny' })} />
       ) : (

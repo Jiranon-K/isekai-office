@@ -1,5 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isTyping } from '@/lib/keyboard'
 import { waitingQueue } from '@/alerts/jump-logic'
 import { afterAnswer, afterSkip, isQueueOpenKey, settle, startQueue, type QueueState } from './queue-logic'
@@ -75,5 +75,7 @@ export function useDecisionQueue(options: DecisionQueueOptions): DecisionQueueCo
     return () => window.removeEventListener('keydown', handle)
   }, [isOpen, open])
 
-  return { state, open, close, skip, answered, expand }
+  const shown = useMemo(() => (state ? { ...state, boardOpen: options.boardOpen } : null), [state, options.boardOpen])
+
+  return { state: shown, open, close, skip, answered, expand }
 }

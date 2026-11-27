@@ -7,7 +7,7 @@ export const ACT_DELAY_MS = 400
 
 const OPEN_KEY = 'a'
 
-export type QueueState = { skipped: ReadonlySet<string>; currentId: string | null; shownAt: number }
+export type QueueState = { skipped: ReadonlySet<string>; currentId: string | null; shownAt: number; boardOpen?: boolean }
 
 export type QueueKey =
   | { kind: 'choose'; choice: number }
@@ -110,6 +110,10 @@ export function keyFor(event: QueueKeyEvent, choices: readonly Choice[]): QueueK
   }
   const choice = choiceForKey(event.key, [...choices])
   return choice === null ? null : { kind: 'choose', choice }
+}
+
+export function queueKeyFor(event: QueueKeyEvent, choices: readonly Choice[], boardOpen: boolean): QueueKey | null {
+  return boardOpen ? null : keyFor(event, choices)
 }
 
 export function canAct(state: QueueState, now: number, screenLoaded: boolean): boolean {
