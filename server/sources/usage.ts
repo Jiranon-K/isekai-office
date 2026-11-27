@@ -3,8 +3,7 @@ import { addTokens, emptyTokens, localDay, type TokenTotals } from '@shared/ledg
 export type Usage = { id: string; model: string; day: string; tokens: TokenTotals }
 
 export type UsageState = {
-  totals: Map<string, Map<string, TokenTotals>>
-  pending: Usage | null
+  entries: Map<string, Usage>
 }
 
 function parseLine(line: string): Record<string, any> | null {
@@ -67,31 +66,21 @@ export function usageOf(line: string): Usage | null {
 }
 
 export function createUsageState(): UsageState {
-  return { totals: new Map(), pending: null }
-}
-
-function accumulate(totals: UsageState['totals'], usage: Usage): void {
-  const models = totals.get(usage.day) ?? new Map<string, TokenTotals>()
-  models.set(usage.model, addTokens(models.get(usage.model) ?? emptyTokens(), usage.tokens))
-  totals.set(usage.day, models)
+  return { entries: new Map() }
 }
 
 export function addUsage(state: UsageState, usage: Usage): void {
-  if (state.pending?.id === usage.id) {
-    state.pending = usage
-    return
-  }
-  if (state.pending) {
-    accumulate(state.totals, state.pending)
-  }
-  state.pending = usage
+  state.entries.set(usage.id, usage)
 }
 
-export function totalsForDay(state: UsageState, day: string): Map<string, TokenTotals> {
-  const combined = new Map(state.totals.get(day) ?? [])
-  if (state.pending?.day === day) {
-    const { model, tokens } = state.pending
-    combined.set(model, addTokens(combined.get(model) ?? emptyTokens(), tokens))
+export function totalsForDay(state: UsageState, day: string, counted: Set<string> = new Set()): Map<string, TokenTotals> {
+  const combined = new Map<string, TokenTotals>()
+  for (const usage of state.entries.values()) {
+    if (usage.day !== day || counted.has(usage.id)) {
+      continue
+    }
+    counted.add(usage.id)
+    combined.set(usage.model, addTokens(combined.get(usage.model) ?? emptyTokens(), usage.tokens))
   }
   return combined
 }

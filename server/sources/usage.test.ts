@@ -62,3 +62,25 @@ describe('addUsage', () => {
     expect(totalsForDay(state, '2026-05-09').get('claude-sonnet-x')?.input).toBe(1)
   })
 })
+
+describe('message ids across lines and files', () => {
+  test('an id interleaved with another id is still counted once', () => {
+    const first = assistantLine('a', NOON, usageOfSize(1))
+    const state = feed([first, assistantLine('b', NOON, usageOfSize(10)), first])
+    expect(totalsForDay(state, '2026-05-10').get('claude-sonnet-x')?.input).toBe(11)
+  })
+
+  test('a later line for the same id replaces the earlier one', () => {
+    const state = feed([assistantLine('a', NOON, usageOfSize(1)), assistantLine('b', NOON, usageOfSize(10)), assistantLine('a', NOON, usageOfSize(3))])
+    expect(totalsForDay(state, '2026-05-10').get('claude-sonnet-x')?.input).toBe(13)
+  })
+
+  test('an id already counted from another file is skipped', () => {
+    const counted = new Set<string>()
+    const line = assistantLine('a', NOON, usageOfSize(1))
+    const firstFile = totalsForDay(feed([line]), '2026-05-10', counted)
+    const secondFile = totalsForDay(feed([line, assistantLine('c', NOON, usageOfSize(5))]), '2026-05-10', counted)
+    expect(firstFile.get('claude-sonnet-x')?.input).toBe(1)
+    expect(secondFile.get('claude-sonnet-x')?.input).toBe(5)
+  })
+})

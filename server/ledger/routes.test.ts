@@ -99,6 +99,15 @@ describe('GET /api/ledger', () => {
     expect(ledger.rows[0]?.tokens.input).toBe(2)
   })
 
+  test('a resumed session that repeats old lines in a new file is counted once', async () => {
+    const now = new Date().toISOString()
+    writeSession('s1', [assistantLine('m1', now, usageOfSize(1)), assistantLine('m2', now, usageOfSize(2))])
+    writeSession('s2', [assistantLine('m2', now, usageOfSize(2)), assistantLine('m3', now, usageOfSize(4))])
+    const ledger = (await (await ask('/api/ledger'))?.json()) as Ledger
+    const input = ledger.rows.reduce((sum, row) => sum + row.tokens.input, 0)
+    expect(input).toBe(7)
+  })
+
   test('demo mode serves one unpriced row', async () => {
     const ledger = (await (await ask('/api/ledger', true))?.json()) as Ledger
     expect(ledger.rows.length).toBeGreaterThan(1)

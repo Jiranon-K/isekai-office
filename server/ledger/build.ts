@@ -71,9 +71,9 @@ export function createLedgerBuilder(options: LedgerBuilderOptions): { build(date
     return label
   }
 
-  async function rowsOf(file: RecentFile, date: string, agents: OfficeAgent[], pricing: Pricing | null): Promise<LedgerRow[]> {
+  async function rowsOf(file: RecentFile, date: string, agents: OfficeAgent[], pricing: Pricing | null, counted: Set<string>): Promise<LedgerRow[]> {
     const state = await reader.read(file.path, file.size)
-    const models = totalsForDay(state, date)
+    const models = totalsForDay(state, date, counted)
     if (models.size === 0) {
       return []
     }
@@ -94,7 +94,8 @@ export function createLedgerBuilder(options: LedgerBuilderOptions): { build(date
     reader.keepOnly(new Set(all.map((file) => file.path)))
     const pricing = await loadPricing()
     const files = all.filter((file) => file.modifiedAt >= dayStart)
-    const rows = (await Promise.all(files.map((file) => rowsOf(file, date, agents, pricing)))).flat()
+    const counted = new Set<string>()
+    const rows = (await Promise.all(files.map((file) => rowsOf(file, date, agents, pricing, counted)))).flat()
     return summarise(date, rows, pricing, now())
   }
 
