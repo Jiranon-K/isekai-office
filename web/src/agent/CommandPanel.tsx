@@ -1,5 +1,5 @@
 import type { OfficeAgent, SessionDetail } from '@shared/types'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Badge } from '@/components/badge'
 import { AllowIcon, DenyIcon, TerminalIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,8 @@ import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
 import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
+import { OrdersSection } from './OrdersSection'
+import { PanelTabs, type PanelTab } from './PanelTabs'
 import { Transcript } from './Transcript'
 import { useCommand } from './use-command'
 import { useSession } from './use-session'
@@ -83,6 +85,7 @@ export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProp
   const caps = useSourceCaps()
   const readonly = agent.terminal === null || !caps.command
   const sending = command.status.kind === 'sending'
+  const [tab, setTab] = useState<PanelTab>('chat')
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent): void {
@@ -100,7 +103,9 @@ export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProp
       className="absolute top-3 right-3 bottom-3 z-overlay flex w-[380px] max-w-[calc(100%-1.5rem)] animate-peek-in flex-col rounded-lg border bg-card shadow-lg"
     >
       <PanelHeader agent={agent} contextWindow={contextWindow} onClose={onClose} />
-      <div data-transcript-scroller="" className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
+      <PanelTabs tab={tab} onChange={setTab} />
+      {tab === 'orders' ? <OrdersSection agentId={agent.id} /> : null}
+      <div data-transcript-scroller="" data-off={tab === 'orders'} className="flex flex-1 flex-col gap-3 overflow-y-auto p-3 data-[off=true]:hidden">
         <Transcript key={agent.id} {...session} />
         <ScreenBlock session={session.data} agent={agent} />
       </div>
