@@ -61,6 +61,8 @@ const RISKY_COMMANDS = [
   'perl',
   'ruby',
   'bunx',
+  'deno',
+  'php',
   'eval',
   'powershell',
   'pwsh',
@@ -71,6 +73,12 @@ const RISKY_COMMANDS = [
   'invoke-expression',
   'remove-item'
 ]
+
+const COMMAND_WRAPPERS = ['time', 'nohup', 'exec', 'command', 'builtin', 'nice']
+
+const VARIABLE_ASSIGNMENT = /^[a-z_][a-z0-9_]*=/
+
+const SHELL_OPERATOR = /[|;&`<>]|\$\(/
 
 const RISKY_GIT_SUBCOMMANDS = ['push', 'reset', 'clean']
 
@@ -153,10 +161,26 @@ function isBroadGit(words: string[]): boolean {
   return subcommand.includes('*') || subcommand.startsWith('-') || RISKY_GIT_SUBCOMMANDS.includes(subcommand)
 }
 
+function isCommandPrefix(word: string): boolean {
+  return VARIABLE_ASSIGNMENT.test(word) || COMMAND_WRAPPERS.includes(commandName(word))
+}
+
+function withoutCommandPrefixes(words: string[]): string[] {
+  const start = words.findIndex((word) => !isCommandPrefix(word))
+  return start === -1 ? [] : words.slice(start)
+}
+
+function chainsCommands(specifier: string): boolean {
+  return specifier.includes('*') && SHELL_OPERATOR.test(specifier)
+}
+
 function isBroadShellCommand(specifier: string): boolean {
-  const words = commandWords(specifier)
+  if (chainsCommands(specifier)) {
+    return true
+  }
+  const words = withoutCommandPrefixes(commandWords(specifier))
   const first = words[0] ?? ''
-  if (first.includes('*')) {
+  if (first === '' || first.includes('*')) {
     return true
   }
   const name = commandName(first)

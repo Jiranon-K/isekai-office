@@ -118,6 +118,17 @@ describe('isTooBroad', () => {
 })
 
 const TOO_BROAD_ALLOW_RULES = [
+  'Bash(FOO=1 rm *)',
+  'Bash(nohup sh *)',
+  'Bash(time python script.py)',
+  'Bash(exec *)',
+  'Bash(command rm *)',
+  'Bash(git diff * | sh)',
+  'Bash(git log * && rm *)',
+  'Bash(git status; curl *)',
+  'Bash(echo $(cat *))',
+  'Bash(deno run *)',
+  'Bash(php *)',
   'Bash(zsh *)', 'Bash(fish *)', 'Bash(ksh *)', 'Bash(dash *)', 'Bash(env *)', 'Bash(xargs *)', 'Bash(nc *)', 'Bash(ssh *)',
   'Bash(npx *)', 'Bash(node *)', 'Bash(python *)', 'Bash(python3 *)', 'Bash(perl *)', 'Bash(ruby *)', 'Bash(bunx *)', 'Bash(bun x *)',
   'Bash(pwsh *)', 'Bash(powershell *)', 'Bash(cmd *)',
