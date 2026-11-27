@@ -1,4 +1,4 @@
-import { addTokens, emptyTokens, type TokenTotals } from '@shared/ledger'
+import { addTokens, emptyTokens, localDay, type TokenTotals } from '@shared/ledger'
 
 export type Usage = { id: string; model: string; day: string; tokens: TokenTotals }
 
@@ -28,12 +28,6 @@ export function dayOfTimestamp(timestamp: unknown): string | null {
     return null
   }
   return localDay(moment)
-}
-
-export function localDay(moment: Date): string {
-  const month = String(moment.getMonth() + 1).padStart(2, '0')
-  const day = String(moment.getDate()).padStart(2, '0')
-  return `${moment.getFullYear()}-${month}-${day}`
 }
 
 function cacheWrites(usage: Record<string, any>): { fiveMinutes: number; oneHour: number } {

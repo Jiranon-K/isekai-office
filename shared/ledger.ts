@@ -46,3 +46,9 @@ export function sumTokens(tokens: TokenTotals): number {
 export function goldOf(cost: number): number {
   return Math.round(cost * 100)
 }
+
+export function localDay(moment: Date): string {
+  const month = String(moment.getMonth() + 1).padStart(2, '0')
+  const day = String(moment.getDate()).padStart(2, '0')
+  return `${moment.getFullYear()}-${month}-${day}`
+}

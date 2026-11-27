@@ -1,6 +1,6 @@
 import { isDayDate } from '@shared/day-log'
 import type { OfficeAgent } from '@shared/types'
-import { localDay } from '../sources/usage'
+import { localDay } from '@shared/ledger'
 import { ledgerBuilder, startOfDay } from './build'
 import { demoLedger } from './demo-ledger'
 
