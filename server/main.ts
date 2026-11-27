@@ -14,6 +14,7 @@ import { handleDayLog } from './day-log/routes'
 import { restoreLog } from './feeds/office'
 import { demoOrdersFeeds } from './feeds/demo-orders'
 import { changeOrders, readOrders, realOrdersFeeds } from './orders'
+import { handleLedger } from './ledger/routes'
 
 const PORT = Number(process.env.PORT ?? 4300)
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
@@ -148,6 +149,10 @@ async function route(request: Request): Promise<Response> {
   const dayLog = await handleDayLog(url, DEMO)
   if (dayLog) {
     return dayLog
+  }
+  const ledger = await handleLedger(url, { demo: DEMO, agents: () => feeds.snapshot().agents })
+  if (ledger) {
+    return ledger
   }
   if (url.pathname === '/api/board') {
     return json(await feeds.board(url.searchParams.has('refresh')))

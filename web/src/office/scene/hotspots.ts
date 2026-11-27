@@ -49,7 +49,7 @@ export const HOTSPOTS: readonly Hotspot[] = [
   {
     id: 'barShelf',
     label: 'ชั้นบาร์',
-    hint: 'session ที่เสร็จแล้วและ MR ที่รอ verify',
+    hint: 'session ที่เสร็จแล้ว MR ที่รอ verify และบิลของวัน',
     rects: [tiles(24.9, 11.5, 10.3, 4.5)],
     action: PANEL,
   },
