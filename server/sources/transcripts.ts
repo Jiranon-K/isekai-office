@@ -16,7 +16,7 @@ type CacheEntry = { key: string; facts: TranscriptFacts }
 const cache = new Map<string, CacheEntry>()
 
 export function transcriptFolder(worktree: string, projectsDir = PROJECTS_DIR): string {
-  return join(projectsDir, worktree.replace(/[/.]/g, '-'))
+  return join(projectsDir, worktree.replace(/[^A-Za-z0-9-]/g, '-'))
 }
 
 function usageTokens(usage: Record<string, unknown>): number {
@@ -89,7 +89,7 @@ export function pickTranscript(candidates: TranscriptCandidate[], agentTitle: st
   return recent.length === 1 && only ? only.path : null
 }
 
-function sessionName(path: string): string {
+export function sessionName(path: string): string {
   return basename(path, TRANSCRIPT_SUFFIX)
 }
 

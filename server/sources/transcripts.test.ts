@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { contextWindowFrom, quietAfterMsFrom } from '../feeds/office'
 import { worktreeFromId } from './orca'
-import { parseTranscriptTail, pickTranscript, sessionContext, transcriptFolder } from './transcripts'
+import { parseTranscriptTail, pickTranscript, sessionContext, sessionName, transcriptFolder } from './transcripts'
 
 const NOW = 1_800_000_000_000
 const HOUR_MS = 60 * 60 * 1000
@@ -23,6 +23,22 @@ function titleLine(title: string): string {
 describe('transcript folder', () => {
   test('slashes and dots in the worktree path become dashes', () => {
     expect(transcriptFolder('/Users/a.b/Home/.claude/worktrees/x').endsWith('-Users-a-b-Home--claude-worktrees-x')).toBe(true)
+  })
+
+  test('a Windows path becomes the folder name Claude Code writes', () => {
+    expect(transcriptFolder('C:\\Users\\stell').endsWith('C--Users-stell')).toBe(true)
+    expect(transcriptFolder('D:\\Project\\uritto\\.claude\\worktrees\\x').endsWith('D--Project-uritto--claude-worktrees-x')).toBe(true)
+  })
+
+  test('underscores and spaces become dashes too', () => {
+    expect(transcriptFolder('/home/a/my_app v2/src').endsWith('-home-a-my-app-v2-src')).toBe(true)
+  })
+})
+
+describe('session name', () => {
+  test('the file name without the suffix is the session, whichever separator the path uses', () => {
+    expect(sessionName('/a/b/abc-123.jsonl')).toBe('abc-123')
+    expect(sessionName(join('a', 'b', 'abc-123.jsonl'))).toBe('abc-123')
   })
 })
 
