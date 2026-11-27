@@ -83,9 +83,17 @@ describe('summarise waits', () => {
     expect([summary.waits, summary.waitingMs]).toEqual([1, 30 * MINUTE])
   })
 
-  test('time outside every watched span counts for nothing', () => {
+  test('a day with no watch markers is watched from its first to its last event', () => {
     const summary = summarise(dayOf([state('09:00', null, 'waiting'), state('10:00', 'waiting', 'working')]), null)
-    expect([summary.watchedMs, summary.waitingMs, summary.waits]).toEqual([0, 0, 0])
+    expect([summary.watchedMs, summary.waitingMs, summary.waits]).toEqual([60 * MINUTE, 60 * MINUTE, 1])
+  })
+
+  test('time outside every watched span counts for nothing', () => {
+    const summary = summarise(
+      dayOf([watch('08:00', true), watch('08:30', false), state('09:00', null, 'waiting'), state('10:00', 'waiting', 'working')]),
+      null
+    )
+    expect([summary.watchedMs, summary.waitingMs, summary.waits]).toEqual([30 * MINUTE, 0, 0])
   })
 })
 
