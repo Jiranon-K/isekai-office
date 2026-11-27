@@ -1,22 +1,9 @@
-import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, parse, resolve } from 'node:path'
+import { lstat, readFile } from 'node:fs/promises'
+import { isAbsolute, join, parse, resolve } from 'node:path'
 import type { OrderChange, OrderResult, RuleLayer, RuleScope } from '@shared/orders'
+import { REAL_FILE_OPERATIONS, replaceFile, type SettingsFileOperations } from '../atomic-file'
 
 type SettingsDocument = Record<string, unknown>
-
-export type SettingsFileOperations = {
-  makeFolder(path: string): Promise<void>
-  writeFile(path: string, text: string): Promise<void>
-  rename(from: string, to: string): Promise<void>
-  removeFile(path: string): Promise<void>
-}
-
-export const REAL_FILE_OPERATIONS: SettingsFileOperations = {
-  makeFolder: async (path) => void (await mkdir(path, { recursive: true })),
-  writeFile: (path, text) => writeFile(path, text, 'utf8'),
-  rename,
-  removeFile: (path) => rm(path, { force: true })
-}
 
 let pendingWrite: Promise<unknown> = Promise.resolve()
 
@@ -143,42 +130,6 @@ function editDocument(document: SettingsDocument, change: OrderChange): Settings
   }
   const next = editList(current, change)
   return next === null ? null : { ...document, permissions: { ...permissions, [change.list]: next } }
-}
-
-const RENAME_RETRY_CODES = ['EPERM', 'EBUSY']
-
-const RENAME_RETRIES = 3
-
-const RENAME_RETRY_DELAY_MILLISECONDS = 25
-
-function shouldRetryRename(error: unknown): boolean {
-  return error instanceof Error && RENAME_RETRY_CODES.includes(String(Reflect.get(error, 'code')))
-}
-
-async function renameWithRetry(operations: SettingsFileOperations, from: string, to: string): Promise<void> {
-  for (let retry = 0; ; retry += 1) {
-    try {
-      return await operations.rename(from, to)
-    } catch (error) {
-      if (retry >= RENAME_RETRIES || !shouldRetryRename(error)) {
-        throw error
-      }
-      await new Promise((resolve) => setTimeout(resolve, RENAME_RETRY_DELAY_MILLISECONDS))
-    }
-  }
-}
-
-export async function replaceFile(path: string, text: string, operations: SettingsFileOperations): Promise<OrderResult> {
-  const temporary = `${path}.${process.pid}.${Date.now()}.tmp`
-  try {
-    await operations.makeFolder(dirname(path))
-    await operations.writeFile(temporary, text)
-    await renameWithRetry(operations, temporary, path)
-    return { ok: true, error: null }
-  } catch {
-    await operations.removeFile(temporary).catch(() => undefined)
-    return { ok: false, error: 'write_failed' }
-  }
 }
 
 function refusingChangedFile(expectedText: string | null, operations: SettingsFileOperations): SettingsFileOperations {

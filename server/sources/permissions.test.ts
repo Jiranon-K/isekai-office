@@ -3,7 +3,8 @@ import { mkdtemp, readdir, readFile, rm, mkdir, symlink, writeFile } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OrderChange } from '@shared/orders'
-import { changeLocalRule, layerFromDocument, localSettingsPath, readLayers, REAL_FILE_OPERATIONS, type SettingsFileOperations } from './permissions'
+import { changeLocalRule, layerFromDocument, localSettingsPath, readLayers } from './permissions'
+import { REAL_FILE_OPERATIONS, type SettingsFileOperations } from '../atomic-file'
 
 let folder = ''
 

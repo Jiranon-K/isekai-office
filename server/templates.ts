@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { BUILT_IN_TEMPLATES, toTemplates, type TemplateList } from '@shared/templates'
 import { dataDir } from './data-dir'
-import { REAL_FILE_OPERATIONS, replaceFile } from './sources/permissions'
+import { REAL_FILE_OPERATIONS, replaceFile } from './atomic-file'
 
 export type TemplateReply = { status: number; body: TemplateList | { ok: boolean; error: string | null } }
 
