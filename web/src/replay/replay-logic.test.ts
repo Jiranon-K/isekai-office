@@ -66,6 +66,16 @@ describe('agentsAt', () => {
     expect(agentsAt([station(at(9), 'ghost', 'desk')], at(10))).toEqual([])
   })
 
+  test('applies a station written just before the first state of the same moment', () => {
+    const early = [station(at(9), 'a', 'archive'), state(at(9), 'a', null, 'working')]
+    expect(agentsAt(early, at(9))[0]).toMatchObject({ state: 'working', station: 'archive' })
+  })
+
+  test('forgets a station for an agent that arrives at a later moment or does not work', () => {
+    expect(agentsAt([station(at(9), 'a', 'archive'), state(at(10), 'a', null, 'working')], at(10))[0]).toMatchObject({ station: null })
+    expect(agentsAt([station(at(9), 'a', 'archive'), state(at(9), 'a', null, 'waiting')], at(9))[0]).toMatchObject({ station: null })
+  })
+
   test('returns nothing for an empty day', () => {
     expect(agentsAt([], at(10))).toEqual([])
   })

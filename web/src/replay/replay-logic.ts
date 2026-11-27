@@ -50,38 +50,50 @@ function firstIndexFrom(events: readonly DayEvent[], at: number): number {
   return low
 }
 
-function applyState(present: Map<string, ReplayAgent>, event: StateEvent): void {
+type PendingStations = Map<string, StationEvent>
+
+function pendingStationFor(pending: PendingStations, event: StateEvent): StationId | null {
+  const waiting = pending.get(event.agentId)
+  pending.delete(event.agentId)
+  return waiting && waiting.at === event.at ? waiting.station : null
+}
+
+function applyState(present: Map<string, ReplayAgent>, pending: PendingStations, event: StateEvent): void {
   if (event.to === null) {
     present.delete(event.agentId)
     return
   }
   const previous = present.get(event.agentId)
+  const early = pendingStationFor(pending, event)
   present.set(event.agentId, {
     agentId: event.agentId,
     title: event.title,
     repo: event.repo,
     state: event.to,
-    station: event.to === 'working' ? (previous?.station ?? null) : null
+    station: event.to === 'working' ? (previous?.station ?? early) : null
   })
 }
 
-function applyStation(present: Map<string, ReplayAgent>, event: StationEvent): void {
+function applyStation(present: Map<string, ReplayAgent>, pending: PendingStations, event: StationEvent): void {
   const agent = present.get(event.agentId)
   if (agent) {
     present.set(event.agentId, { ...agent, station: event.station })
+    return
   }
+  pending.set(event.agentId, event)
 }
 
 export function agentsAt(events: readonly DayEvent[], at: number): ReplayAgent[] {
   const present = new Map<string, ReplayAgent>()
+  const pending: PendingStations = new Map()
   const count = firstIndexAfter(events, at)
   for (let index = 0; index < count; index += 1) {
     const event = events[index]
     if (event?.kind === 'state') {
-      applyState(present, event)
+      applyState(present, pending, event)
     }
     if (event?.kind === 'station') {
-      applyStation(present, event)
+      applyStation(present, pending, event)
     }
   }
   return [...present.values()]
