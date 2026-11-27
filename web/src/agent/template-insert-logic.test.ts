@@ -31,6 +31,13 @@ describe('agentTemplateValues', () => {
   })
 })
 
+describe('insertTemplate with missing values', () => {
+  test('keeps the placeholders of values the agent does not have', () => {
+    const values = agentTemplateValues({ repo: null, worktree: null })
+    expect(insertTemplate('', 0, 0, TEMPLATE, values).text).toBe('Review {{name}} in {{repo}} against main')
+  })
+})
+
 describe('insertAtCursor', () => {
   test('inserts at the cursor and moves it after the insertion', () => {
     expect(insertAtCursor('abcd', 2, 2, 'XY')).toEqual({ text: 'abXYcd', cursor: 4 })

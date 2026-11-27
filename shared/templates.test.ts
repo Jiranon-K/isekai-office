@@ -25,6 +25,10 @@ describe('fillTemplate', () => {
     expect(fillTemplate('{{repo}} and {{repo}}', VALUES)).toBe('cozu and cozu')
   })
 
+  test('leaves a placeholder as written when its value is empty', () => {
+    expect(fillTemplate('{{name}} in {{repo}}', { ...VALUES, name: '', repo: '' })).toBe('{{name}} in {{repo}}')
+  })
+
   test('does not expand placeholders inside a filled value', () => {
     expect(fillTemplate('{{name}}', { ...VALUES, name: '{{repo}}' })).toBe('{{repo}}')
   })

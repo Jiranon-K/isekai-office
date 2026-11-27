@@ -48,7 +48,7 @@ export const BUILT_IN_TEMPLATES: QuestTemplate[] = [
 ]
 
 export function fillTemplate(prompt: string, values: TemplateValues): string {
-  return prompt.replace(/\{\{(name|repo|branch)\}\}/g, (_match, key: keyof TemplateValues) => values[key])
+  return prompt.replace(/\{\{(name|repo|branch)\}\}/g, (match, key: keyof TemplateValues) => values[key] || match)
 }
 
 export function templateValues(name: string, repo: string, baseBranch: string): TemplateValues {
