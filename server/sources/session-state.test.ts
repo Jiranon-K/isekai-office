@@ -49,6 +49,14 @@ describe('stateFromTail', () => {
     expect(stateFromTail(lines)).toBe('done')
   })
 
+  test('a local slash command after a finished turn leaves it done', () => {
+    const finished = [user('fix it'), assistant([TEXT], {}, 'end_turn')]
+    for (const content of ['<command-name>/clear</command-name>', '<local-command-stdout>ok</local-command-stdout>', '<local-command-caveat>Caveat</local-command-caveat>']) {
+      expect(stateFromTail([...finished, user(content)])).toBe('done')
+      expect(stateFromTail([...finished, user([{ type: 'text', text: content }])])).toBe('done')
+    }
+  })
+
   test('an empty file is done', () => {
     expect(stateFromTail([])).toBe('done')
     expect(stateFromTail([''])).toBe('done')

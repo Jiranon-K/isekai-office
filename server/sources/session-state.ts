@@ -5,6 +5,7 @@ type Block = { type?: string; name?: string; text?: string }
 type TranscriptRecord = { type: string; isSidechain?: boolean; isMeta?: boolean; message?: { content?: unknown; stop_reason?: string | null } }
 
 const INTERRUPT_PREFIX = '[Request interrupted by user'
+const LOCAL_COMMAND_PREFIXES = ['<command-name>', '<command-message>', '<local-command-stdout>', '<local-command-stderr>', '<local-command-caveat>']
 
 function parseRecord(line: string): TranscriptRecord | null {
   if (!line.includes('"type":"user"') && !line.includes('"type":"assistant"')) {
@@ -17,8 +18,19 @@ function parseRecord(line: string): TranscriptRecord | null {
   }
 }
 
+function isLocalCommand(record: TranscriptRecord): boolean {
+  const content = record.message?.content
+  if (typeof content === 'string') {
+    return LOCAL_COMMAND_PREFIXES.some((prefix) => content.startsWith(prefix))
+  }
+  return blocksOf(record).some((block) => typeof block.text === 'string' && LOCAL_COMMAND_PREFIXES.some((prefix) => block.text?.startsWith(prefix)))
+}
+
 function isConversational(record: TranscriptRecord | null): record is TranscriptRecord {
   if (!record || record.isSidechain || record.isMeta) {
+    return false
+  }
+  if (record.type === 'user' && isLocalCommand(record)) {
     return false
   }
   return record.type === 'user' || record.type === 'assistant'
