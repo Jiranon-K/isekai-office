@@ -1,7 +1,6 @@
-import { formatGold } from '@/ledger/ledger-logic'
 import { SummaryAgents } from './SummaryAgents'
 import { SummaryCopyButton } from './SummaryCopyButton'
-import { busiestHourText, EMPTY_DAY_NOTE, formatDuration, isEmptyDay, isUnwatchedDay, longestWaitText, medianText, UNWATCHED_NOTE, watchedNote } from './summary-format'
+import { busiestHourText, EMPTY_DAY_NOTE, formatDuration, isEmptyDay, isUnwatchedDay, longestWaitText, medianText, spendText, UNWATCHED_NOTE, watchedNote } from './summary-format'
 import type { DaySummary } from './summary-logic'
 import { PanelNote } from './SessionList'
 
@@ -26,10 +25,6 @@ function Line({ label, value }: { label: string; value: string | null }): React.
       {value}
     </p>
   )
-}
-
-function spendText(summary: DaySummary): string | null {
-  return summary.spend ? formatGold(summary.spend.amount) : null
 }
 
 function WatchedDetails({ summary, present, onSelect }: SummaryBodyProps): React.JSX.Element {

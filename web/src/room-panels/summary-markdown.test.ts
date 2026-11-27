@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { toMarkdown } from './summary-markdown'
-import { formatDuration, isEmptyDay, watchedNote } from './summary-format'
+import { formatDuration, isEmptyDay, spendText, watchedNote } from './summary-format'
 import type { DaySummary } from './summary-logic'
 
 const MINUTE = 60_000
@@ -46,6 +46,12 @@ describe('toMarkdown', () => {
     expect(text).toContain('- ชั่วโมงที่ทำงานมากที่สุด: 10:00–11:00 น.')
     expect(text).toContain('| Fix login | 1 ชม. 30 นาที | 25 นาที | 2 |')
     expect(text).toContain('นับเฉพาะช่วงที่เปิดแท็บไว้ (รวม 3 ชม. 0 นาที)')
+  })
+
+  test('the spend line is the same text in the panel and in the Markdown, gold and money', () => {
+    expect(spendText(SUMMARY)).toBe('◎ 150 (1.50 USD)')
+    expect(toMarkdown(SUMMARY)).toContain('- ค่าใช้จ่าย: ◎ 150 (1.50 USD)')
+    expect(spendText({ ...SUMMARY, spend: null })).toBeNull()
   })
 
   test('leaves the spend line out without a spend', () => {

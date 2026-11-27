@@ -1,3 +1,4 @@
+import { formatGold, formatMoney } from '@/ledger/ledger-logic'
 import { formatClock } from '@/replay/replay-format'
 import type { DaySummary } from './summary-logic'
 
@@ -32,6 +33,13 @@ export const UNWATCHED_NOTE = 'วันนี้ไม่มีช่วงท�
 
 export function isUnwatchedDay(summary: DaySummary): boolean {
   return summary.watchedMs === 0
+}
+
+export function spendText(summary: DaySummary): string | null {
+  if (!summary.spend) {
+    return null
+  }
+  return `${formatGold(summary.spend.amount)} (${formatMoney(summary.spend.amount, summary.spend.currency || null)})`
 }
 
 export function isEmptyDay(summary: DaySummary): boolean {
