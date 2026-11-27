@@ -28,6 +28,12 @@ export function watchedNote(watchedMs: number): string {
   return `นับเฉพาะช่วงที่เปิดแท็บไว้ (รวม ${Math.floor(minutes / 60)} ชม. ${minutes % 60} นาที)`
 }
 
+export const UNWATCHED_NOTE = 'วันนี้ไม่มีช่วงที่เปิดแท็บไว้ จึงนับเวลาไม่ได้'
+
+export function isUnwatchedDay(summary: DaySummary): boolean {
+  return summary.watchedMs === 0
+}
+
 export function isEmptyDay(summary: DaySummary): boolean {
   return summary.sessions === 0
 }

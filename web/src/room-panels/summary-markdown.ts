@@ -1,6 +1,6 @@
 import { formatGold, formatMoney } from '@/ledger/ledger-logic'
 import type { DaySummary } from './summary-logic'
-import { busiestHourText, EMPTY_DAY_NOTE, formatDuration, isEmptyDay, longestWaitText, medianText, watchedNote } from './summary-format'
+import { busiestHourText, EMPTY_DAY_NOTE, formatDuration, isEmptyDay, isUnwatchedDay, longestWaitText, medianText, UNWATCHED_NOTE, watchedNote } from './summary-format'
 
 function tableRows(summary: DaySummary): string[] {
   const header = ['| session | ทำงาน | รอ | ครั้งที่รอ |', '| --- | --- | --- | --- |']
@@ -24,9 +24,16 @@ function optionalLines(summary: DaySummary): string[] {
   return lines
 }
 
+function unwatchedMarkdown(summary: DaySummary): string {
+  return `# สรุปวัน ${summary.date}\n\n- session: ${summary.sessions}\n- เสร็จแล้ว: ${summary.finished}\n\n${UNWATCHED_NOTE}\n`
+}
+
 export function toMarkdown(summary: DaySummary): string {
   if (isEmptyDay(summary)) {
     return `# สรุปวัน ${summary.date}\n\n${EMPTY_DAY_NOTE}\n`
+  }
+  if (isUnwatchedDay(summary)) {
+    return unwatchedMarkdown(summary)
   }
   const longest = longestWaitText(summary)
   const lines = [

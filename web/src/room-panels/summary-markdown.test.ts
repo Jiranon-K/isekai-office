@@ -59,4 +59,13 @@ describe('toMarkdown', () => {
     expect(toMarkdown(empty)).toContain('ยังไม่มีข้อมูลของวันนี้')
     expect(toMarkdown(empty)).not.toContain('รอรวม')
   })
+  test('a day with sessions but no watched time says so instead of printing zero waits', () => {
+    const unwatched = { ...SUMMARY, watchedMs: 0, waits: 0, waitingMs: 0, longestWait: null, medianWaitMs: null, busiestHour: null }
+    const text = toMarkdown(unwatched)
+    expect(text).toContain('- session: 3')
+    expect(text).toContain('- เสร็จแล้ว: 2')
+    expect(text).toContain('วันนี้ไม่มีช่วงที่เปิดแท็บไว้ จึงนับเวลาไม่ได้')
+    expect(text).not.toContain('รอรวม')
+    expect(text).not.toContain('รอนานที่สุด')
+  })
 })
