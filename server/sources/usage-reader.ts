@@ -1,6 +1,6 @@
 import { addUsage, createUsageState, usageOf, type UsageState } from './usage'
 
-const CHUNK_BYTES = 4 * 1024 * 1024
+const CHUNK_BYTES = 1024 * 1024
 const NEWLINE = 10
 const HEAD_BYTES = 64
 

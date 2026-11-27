@@ -95,7 +95,10 @@ export function createLedgerBuilder(options: LedgerBuilderOptions): { build(date
     const pricing = await loadPricing()
     const files = all.filter((file) => file.modifiedAt >= dayStart)
     const counted = new Set<string>()
-    const rows = (await Promise.all(files.map((file) => rowsOf(file, date, agents, pricing, counted)))).flat()
+    const rows: LedgerRow[] = []
+    for (const file of files) {
+      rows.push(...(await rowsOf(file, date, agents, pricing, counted)))
+    }
     return summarise(date, rows, pricing, now())
   }
 

@@ -118,6 +118,46 @@ describe('GET /api/ledger', () => {
     expect(ledger.unpricedRows).toBe(1)
   })
 
+  test('a first request reads one file at a time in chunks of at most one megabyte', async () => {
+    const now = new Date().toISOString()
+    const filler = 'x'.repeat(2000)
+    const bigSession = (prefix: string) => Array.from({ length: 800 }, (_, index) => assistantLine(`${prefix}${index}`, now, usageOfSize(1)).replace('"usage"', `"filler":"${filler}","usage"`))
+    writeSession('s1', bigSession('a'))
+    writeSession('s2', bigSession('b'))
+    const original = Bun.file
+    let running = 0
+    let mostRunning = 0
+    let largest = 0
+    const patched = (...args: Parameters<typeof Bun.file>) => {
+      const file = original(...args)
+      const slice = file.slice.bind(file)
+      file.slice = ((from?: number, to?: number, type?: string) => {
+        largest = Math.max(largest, (to ?? 0) - (from ?? 0))
+        const part = slice(from, to, type)
+        const buffer = part.arrayBuffer.bind(part)
+        part.arrayBuffer = async () => {
+          running += 1
+          mostRunning = Math.max(mostRunning, running)
+          await Bun.sleep(5)
+          running -= 1
+          return buffer()
+        }
+        return part
+      }) as typeof file.slice
+      return file
+    }
+    Bun.file = patched as typeof Bun.file
+    try {
+      const ledger = (await (await ask('/api/ledger'))?.json()) as Ledger
+      expect(ledger.rows.reduce((sum, row) => sum + row.tokens.input, 0)).toBe(1600)
+    } finally {
+      Bun.file = original
+    }
+    expect(largest).toBeGreaterThan(0)
+    expect(largest).toBeLessThanOrEqual(1024 * 1024)
+    expect(mostRunning).toBe(1)
+  })
+
   test('demo mode serves one unpriced row', async () => {
     const ledger = (await (await ask('/api/ledger', true))?.json()) as Ledger
     expect(ledger.rows.length).toBeGreaterThan(1)
