@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { OfficeAgent } from '@shared/types'
-import { describeRow, GONE_REASON, initialRows, runBroadcast, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
+import { claimSubmit, describeRow, GONE_REASON, initialRows, releaseSubmit, runBroadcast, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
 import { SKIP_REASONS, type BroadcastRow } from './party-logic'
 
 function agent(id: string, state: OfficeAgent['state'] = 'done'): OfficeAgent {
@@ -45,6 +45,21 @@ function setup(agents: OfficeAgent[], failures: Record<string, string | Error> =
   }
   return { live, sent, snapshots, deps }
 }
+
+describe('submit guard', () => {
+  test('the second claim before the first is released is refused', () => {
+    const guard = { current: false }
+    expect(claimSubmit(guard)).toBe(true)
+    expect(claimSubmit(guard)).toBe(false)
+  })
+
+  test('a released guard can be claimed again', () => {
+    const guard = { current: false }
+    claimSubmit(guard)
+    releaseSubmit(guard)
+    expect(claimSubmit(guard)).toBe(true)
+  })
+})
 
 describe('runBroadcast', () => {
   test('sends exactly the ready members and shows why another was skipped', async () => {

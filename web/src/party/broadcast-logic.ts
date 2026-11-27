@@ -11,6 +11,20 @@ export type BroadcastDeps = {
 export const GONE_REASON = 'ไม่อยู่ในห้องแล้ว'
 export const UNREACHABLE_REASON = 'server_unreachable'
 
+export type SubmitGuard = { current: boolean }
+
+export function claimSubmit(guard: SubmitGuard): boolean {
+  if (guard.current) {
+    return false
+  }
+  guard.current = true
+  return true
+}
+
+export function releaseSubmit(guard: SubmitGuard): void {
+  guard.current = false
+}
+
 export function initialRows(agentIds: readonly string[]): BroadcastRow[] {
   return agentIds.map((agentId) => ({ agentId, status: 'idle', reason: null }))
 }

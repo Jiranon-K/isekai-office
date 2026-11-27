@@ -4,7 +4,7 @@ import { describeResult } from '@/agent/panel-logic'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendCommand } from '@/lib/api'
-import { runBroadcast } from './broadcast-logic'
+import { claimSubmit, releaseSubmit, runBroadcast } from './broadcast-logic'
 import { canReceive, type BroadcastRow, type Party } from './party-logic'
 import { PartyMemberRow } from './PartyMemberRow'
 
@@ -30,6 +30,7 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
   const latest = useRef(agents)
   latest.current = agents
   const cancelled = useRef(false)
+  const submitting = useRef(false)
   useEffect(() => {
     cancelled.current = false
     return () => {
@@ -40,6 +41,9 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
   const canSend = !running && chosen.length > 0 && text.trim().length > 0
 
   async function submit(): Promise<void> {
+    if (!claimSubmit(submitting)) {
+      return
+    }
     setRunning(true)
     await runBroadcast(
       chosen.map((member) => member.id),
@@ -51,6 +55,7 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
         isCancelled: () => cancelled.current
       }
     )
+    releaseSubmit(submitting)
     if (!cancelled.current) {
       setRunning(false)
     }
