@@ -12,6 +12,8 @@ import { handleHook } from './hook'
 import { readOnlyReply } from './read-only'
 import { handleDayLog } from './day-log/routes'
 import { restoreLog } from './feeds/office'
+import { demoOrdersFeeds } from './feeds/demo-orders'
+import { changeOrders, readOrders, realOrdersFeeds } from './orders'
 
 const PORT = Number(process.env.PORT ?? 4300)
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
@@ -24,6 +26,7 @@ const feeds = DEMO
   : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: activeSource.readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
 const encoder = new TextEncoder()
 const MAX_HOOK_BYTES = 64 * 1024
+const ordersFeeds = DEMO ? demoOrdersFeeds : realOrdersFeeds
 
 function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
@@ -83,6 +86,16 @@ async function hook(request: Request): Promise<Response> {
     return json({ ok: false, error: 'payload_too_large' }, 413)
   }
   const reply = handleHook(await new Response(text).json().catch(() => null))
+  return json(reply.body, reply.status)
+}
+
+async function ordersRead(agentId: string): Promise<Response> {
+  const reply = await readOrders(agentId, agentFor, ordersFeeds)
+  return json(reply.body, reply.status)
+}
+
+async function ordersChange(request: Request): Promise<Response> {
+  const reply = await changeOrders(await request.json().catch(() => null), agentFor, ordersFeeds)
   return json(reply.body, reply.status)
 }
 
@@ -153,6 +166,12 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/spawn' && request.method === 'POST') {
     return spawn(request)
+  }
+  if (url.pathname.startsWith('/api/orders/') && request.method === 'GET') {
+    return ordersRead(decodeURIComponent(url.pathname.slice('/api/orders/'.length)))
+  }
+  if (url.pathname === '/api/orders' && request.method === 'POST') {
+    return ordersChange(request)
   }
   if (url.pathname.startsWith('/api/')) {
     return json({ error: 'not_found' }, 404)

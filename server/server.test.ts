@@ -237,3 +237,21 @@ describe('the real server route', () => {
     expect(reply.status).toBe(400)
   })
 })
+
+describe('orders guard', () => {
+  test('an orders post from another origin is refused by the guard', () => {
+    const post = new Request(`http://localhost:${PORT}/api/orders`, {
+      method: 'POST',
+      headers: { host: 'localhost:4300', origin: 'https://evil.example', 'content-type': 'application/json' }
+    })
+    expect(isAllowedRequest(post, PORTS)).toBe(false)
+  })
+
+  test('an orders post without an origin is refused', () => {
+    const post = new Request(`http://localhost:${PORT}/api/orders`, {
+      method: 'POST',
+      headers: { host: 'localhost:4300', 'content-type': 'application/json' }
+    })
+    expect(isAllowedRequest(post, PORTS)).toBe(false)
+  })
+})
