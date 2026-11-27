@@ -149,6 +149,10 @@ export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
   return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
 }
 
+export function canAnswer(state: QueueState, now: number, screenLoaded: boolean, locked: boolean): boolean {
+  return !locked && canAct(state, now, screenLoaded)
+}
+
 export function isQueueOpenKey(event: QueueKeyEvent, typing: boolean, boardOpen: boolean): boolean {
   if (event.key !== OPEN_KEY || typing || boardOpen) {
     return false

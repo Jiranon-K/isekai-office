@@ -8,7 +8,7 @@ import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
 import { decisionLocked } from './panel-logic'
 import { QueueComposer } from './QueueComposer'
 import { QueueHeader } from './QueueHeader'
-import { answerLockHeld, canAct, canWriteTo, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
+import { answerLockHeld, canAnswer, canWriteTo, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
 import { useCommand } from './use-command'
 import type { PrefetchedSession } from './use-prefetched-session'
 import { useQueueKeys } from './use-queue-keys'
@@ -91,6 +91,17 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
     return sent
   }
 
+  function answerAllowed(): boolean {
+    return canAnswer(restartGuard(state, arrival.current.at), Date.now(), screenLoaded, locked)
+  }
+
+  function onPrompt(text: string): Promise<boolean> {
+    if (!answerAllowed()) {
+      return Promise.resolve(false)
+    }
+    return answer(() => command.run('prompt', text))
+  }
+
   function onKey(key: QueueKey): void {
     if (key.kind === 'close') {
       onClose()
@@ -100,7 +111,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
       onExpand(agent.id)
       return
     }
-    if (!canAct(restartGuard(state, arrival.current.at), Date.now(), screenLoaded) || locked) {
+    if (!answerAllowed()) {
       return
     }
     if (key.kind === 'skip') {
@@ -133,7 +144,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
           {caps.command ? 'ตอบจากที่นี่ไม่ได้' : READ_ONLY_REASON}
         </p>
       ) : needsComposer ? (
-        <QueueComposer disabled={locked || boardOpen} status={command.status} onEscape={onClose} onPrompt={(text) => answer(() => command.run('prompt', text))} />
+        <QueueComposer disabled={locked || boardOpen} status={command.status} onEscape={onClose} onPrompt={onPrompt} />
       ) : choices.length > 0 ? (
         <ChoiceList choices={choices} status={command.status} disabled={locked} onChoose={(choice) => onKey({ kind: 'choose', choice })} onDeny={() => onKey({ kind: 'deny' })} />
       ) : (

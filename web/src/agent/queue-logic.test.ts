@@ -5,6 +5,7 @@ import {
   afterSkip,
   answerLockHeld,
   canAct,
+  canAnswer,
   canWriteTo,
   currentOf,
   forgetGone,
@@ -339,5 +340,17 @@ describe('queueKeyFor', () => {
     for (const key of ['1', 'x', 's', 'o', 'Escape']) {
       expect(queueKeyFor(press(key), NUMBERED, true)).toBeNull()
     }
+  })
+})
+
+describe('canAnswer', () => {
+  test('a typed prompt waits for the loaded screen and the guard like a key', () => {
+    expect(canAnswer(state('a', [], 0), 10_000, false, false)).toBe(false)
+    expect(canAnswer(state('a', [], 1000), 1100, true, false)).toBe(false)
+    expect(canAnswer(state('a', [], 1000), 1400, true, false)).toBe(true)
+  })
+
+  test('is false while the decision is locked', () => {
+    expect(canAnswer(state('a', [], 0), 10_000, true, true)).toBe(false)
   })
 })
