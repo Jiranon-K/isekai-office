@@ -14,6 +14,7 @@ export type HintStore = {
 
 const OVERRIDE_MS = 2_000
 const MAX_HINTS = 500
+const MAX_SESSION_ID_LENGTH = 128
 const WORKING_EVENTS = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse']
 const PERMISSION_PATTERN = /permission/i
 
@@ -23,7 +24,7 @@ export function parseHook(body: unknown): HookPayload | null {
   }
   const sessionId = Reflect.get(body, 'session_id')
   const event = Reflect.get(body, 'hook_event_name')
-  if (typeof sessionId !== 'string' || sessionId === '' || typeof event !== 'string') {
+  if (typeof sessionId !== 'string' || sessionId === '' || sessionId.length > MAX_SESSION_ID_LENGTH || typeof event !== 'string') {
     return null
   }
   const notificationType = Reflect.get(body, 'notification_type')

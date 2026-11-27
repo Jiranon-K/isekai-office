@@ -51,6 +51,22 @@ describe('hook client', () => {
     expect(result.ms).toBeLessThan(1500)
   })
 
+  test('the script posts only the four fields the room needs', async () => {
+    let received: unknown = null
+    const server = Bun.serve({
+      hostname: '127.0.0.1',
+      port: 0,
+      async fetch(request) {
+        received = await request.json()
+        return Response.json({ ok: true })
+      }
+    })
+    const payload = { session_id: 'a', hook_event_name: 'Notification', notification_type: 'permission_prompt', message: 'needs permission', tool_input: { command: 'secret' }, cwd: '/x' }
+    await runHook(JSON.stringify(payload), { ISEKAI_PORT: String(server.port) })
+    await server.stop(true)
+    expect(received).toEqual({ session_id: 'a', hook_event_name: 'Notification', notification_type: 'permission_prompt', message: 'needs permission' })
+  })
+
   test('the script exits 0 on empty input and on input that is not json', async () => {
     expect((await runHook('', { ISEKAI_PORT: '1' })).code).toBe(0)
     expect((await runHook('not json', { ISEKAI_PORT: '1' })).code).toBe(0)

@@ -1,9 +1,11 @@
-import { hookUrl, postHook, readStdin } from './hook-post'
+import { forwardedBody, hookUrl, postHook, readStdin } from './hook-post'
 
 const body = await readStdin()
 
-if (body.trim() !== '') {
-  await postHook(hookUrl(process.env.ISEKAI_PORT), body)
+const forwarded = forwardedBody(body)
+
+if (forwarded !== null) {
+  await postHook(hookUrl(process.env.ISEKAI_PORT), forwarded)
 }
 
 process.exit(0)

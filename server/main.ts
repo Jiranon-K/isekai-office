@@ -21,6 +21,7 @@ const feeds = DEMO
   ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand, repos: demoRepos, spawn: demoSpawn }
   : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: activeSource.readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
 const encoder = new TextEncoder()
+const MAX_HOOK_BYTES = 64 * 1024
 
 function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
@@ -72,7 +73,14 @@ async function command(request: Request): Promise<Response> {
 }
 
 async function hook(request: Request): Promise<Response> {
-  const reply = handleHook(await request.json().catch(() => null))
+  if (Number(request.headers.get('content-length') ?? 0) > MAX_HOOK_BYTES) {
+    return json({ ok: false, error: 'payload_too_large' }, 413)
+  }
+  const text = await request.text()
+  if (text.length > MAX_HOOK_BYTES) {
+    return json({ ok: false, error: 'payload_too_large' }, 413)
+  }
+  const reply = handleHook(await new Response(text).json().catch(() => null))
   return json(reply.body, reply.status)
 }
 

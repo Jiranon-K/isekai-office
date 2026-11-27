@@ -7,6 +7,20 @@ export function hookUrl(port: string | undefined): string {
   return `http://127.0.0.1:${resolved}/api/hook`
 }
 
+const FORWARDED_FIELDS = ['session_id', 'hook_event_name', 'notification_type', 'message']
+
+export function forwardedBody(raw: string): string | null {
+  try {
+    const parsed = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) {
+      return null
+    }
+    return JSON.stringify(Object.fromEntries(FORWARDED_FIELDS.filter((field) => field in parsed).map((field) => [field, parsed[field]])))
+  } catch {
+    return null
+  }
+}
+
 export function originOf(url: string): string {
   return new URL(url).origin
 }
