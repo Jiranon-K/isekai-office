@@ -12,7 +12,8 @@ type SummaryPanelProps = { present: ReadonlySet<string>; onSelect(agentId: strin
 export function SummaryPanel({ present, onSelect }: SummaryPanelProps): React.JSX.Element {
   const options = summaryDayOptions(useLogDays(true).data?.days ?? [])
   const [date, setDate] = useState(options[0]?.date ?? '')
-  const summary = useDaySummary(date)
+  const ledgerDay = options.find((option) => option.date === date)?.ledgerDay ?? date
+  const summary = useDaySummary(date, ledgerDay)
   return (
     <div className="flex flex-col gap-3">
       <ul aria-label="เลือกวัน" className="flex flex-wrap gap-1">
