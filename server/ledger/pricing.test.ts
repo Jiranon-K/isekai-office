@@ -76,4 +76,35 @@ describe('loadPricing', () => {
     writeFileSync(join(folder, 'pricing.json'), 'garbage')
     expect(await loadPricing()).toBeNull()
   })
+
+  test('an unusable file is reported once by name and still gives no pricing', async () => {
+    const original = console.error
+    const messages: string[] = []
+    console.error = (...parts: unknown[]) => {
+      messages.push(parts.join(' '))
+    }
+    try {
+      writeFileSync(join(folder, 'pricing.json'), JSON.stringify({ currency: 'USD', models: [entry('a', 1), { match: 'b' }] }))
+      expect(await loadPricing()).toBeNull()
+      expect(await loadPricing()).toBeNull()
+    } finally {
+      console.error = original
+    }
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toContain(join(folder, 'pricing.json'))
+  })
+
+  test('a missing file reports nothing', async () => {
+    const original = console.error
+    const messages: string[] = []
+    console.error = (...parts: unknown[]) => {
+      messages.push(parts.join(' '))
+    }
+    try {
+      await loadPricing()
+    } finally {
+      console.error = original
+    }
+    expect(messages).toHaveLength(0)
+  })
 })

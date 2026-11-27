@@ -43,12 +43,29 @@ export function parsePricing(text: string): Pricing | null {
   return { currency, models: body.models }
 }
 
+let lastReported: string | null = null
+
+function reportUnusable(path: string, text: string): void {
+  const signature = `${path}:${text}`
+  if (signature === lastReported) {
+    return
+  }
+  lastReported = signature
+  console.error(`pricing file ${path} cannot be used, no prices are applied`)
+}
+
 export async function loadPricing(): Promise<Pricing | null> {
-  const file = Bun.file(join(dataDir(), 'pricing.json'))
+  const path = join(dataDir(), 'pricing.json')
+  const file = Bun.file(path)
   if (!(await file.exists())) {
     return null
   }
-  return parsePricing(await file.text().catch(() => ''))
+  const text = await file.text().catch(() => '')
+  const pricing = parsePricing(text)
+  if (pricing === null) {
+    reportUnusable(path, text)
+  }
+  return pricing
 }
 
 export function priceFor(pricing: Pricing | null, model: string | null): ModelPrice | null {
