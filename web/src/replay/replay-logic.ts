@@ -213,12 +213,26 @@ export function buildReplayDay(date: string, events: readonly DayEvent[]): Repla
   }
 }
 
+function changesRoom(event: DayEvent | undefined): boolean {
+  return event !== undefined && event.kind !== 'watch'
+}
+
 export function nextEventAt(events: readonly DayEvent[], at: number): number | null {
-  return events[firstIndexAfter(events, at)]?.at ?? null
+  for (let index = firstIndexAfter(events, at); index < events.length; index += 1) {
+    if (changesRoom(events[index])) {
+      return events[index]?.at ?? null
+    }
+  }
+  return null
 }
 
 export function previousEventAt(events: readonly DayEvent[], at: number): number | null {
-  return events[firstIndexFrom(events, at) - 1]?.at ?? null
+  for (let index = firstIndexFrom(events, at) - 1; index >= 0; index -= 1) {
+    if (changesRoom(events[index])) {
+      return events[index]?.at ?? null
+    }
+  }
+  return null
 }
 
 export function limitLanes(all: readonly Lane[], max: number = MAX_LANES): { shown: Lane[]; hidden: number } {

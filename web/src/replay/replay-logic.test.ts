@@ -239,7 +239,16 @@ describe('arrow navigation', () => {
   test('lands exactly on the previous event time', () => {
     expect(previousEventAt(events, at(10))).toBe(at(9, 30))
     expect(previousEventAt(events, at(9, 45))).toBe(at(9, 30))
-    expect(previousEventAt(events, at(9, 30))).toBe(at(9))
+    expect(previousEventAt(events, at(9, 30))).toBeNull()
+  })
+
+  test('steps over watch markers where the room does not change', () => {
+    const marked = [state(at(9), 'a', null, 'working'), watch(at(9, 10), false), watch(at(9, 20), true), state(at(10), 'a', 'working', 'done'), watch(at(11), false)]
+    expect(nextEventAt(marked, at(9))).toBe(at(10))
+    expect(previousEventAt(marked, at(10))).toBe(at(9))
+    expect(nextEventAt(marked, at(10))).toBeNull()
+    expect(previousEventAt(marked, at(9, 15))).toBe(at(9))
+    expect(previousEventAt([watch(at(9), true), state(at(9, 30), 'a', null, 'working')], at(9, 30))).toBeNull()
   })
 
   test('returns null past either end of the day', () => {
