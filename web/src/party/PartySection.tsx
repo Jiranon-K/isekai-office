@@ -30,13 +30,13 @@ export function PartySection({ party, agents, contextWindow, quiet, composing, o
     <section aria-label={`ปาร์ตี้ ${party.name}`} className="flex flex-col gap-1">
       <div className="flex items-center gap-2 px-2">
         <Pennant colour={party.colour} />
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-small font-medium">{party.name}</h3>
-          <PartyFacts party={party} contextWindow={contextWindow} />
-        </div>
+        <h3 className="min-w-0 flex-1 truncate text-small font-medium">{party.name}</h3>
         <Button variant="outline" size="xs" aria-expanded={composing} onClick={onToggleComposer}>
           สั่งทั้งปาร์ตี้
         </Button>
+      </div>
+      <div className="pr-2 pl-7">
+        <PartyFacts party={party} contextWindow={contextWindow} />
       </div>
       {composing ? <PartyComposer party={party} agents={agents} /> : null}
       <SessionList agents={rosterOrder(party.members)} empty="" quiet={quiet} onSelect={onSelect} />
