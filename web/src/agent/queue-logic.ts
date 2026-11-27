@@ -123,6 +123,13 @@ export function loadedScreen<Screen>(screen: Screen | null, loadedFor: number | 
   return screen !== null && loadedFor === updatedAt ? screen : null
 }
 
+export function prefetchedScreen<Screen>(prefetched: { agentId: string; updatedAt: number; detail: Screen } | null, agentId: string, updatedAt: number): Screen | null {
+  if (prefetched === null || prefetched.agentId !== agentId) {
+    return null
+  }
+  return loadedScreen(prefetched.detail, prefetched.updatedAt, updatedAt)
+}
+
 export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
   return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
 }

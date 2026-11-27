@@ -10,6 +10,7 @@ import {
   keyFor,
   loadedScreen,
   nextOf,
+  prefetchedScreen,
   queueOrder,
   restartGuard,
   settle,
@@ -279,5 +280,22 @@ describe('loaded screen', () => {
     expect(canAct(restartGuard(shown, 5000), 5100, true)).toBe(false)
     expect(canAct(restartGuard(shown, 5000), 5400, true)).toBe(true)
     expect(restartGuard(shown, -1)).toBe(shown)
+  })
+})
+
+describe('prefetched screen', () => {
+  const prefetched = { agentId: 'b', updatedAt: 100, detail: 'P1' }
+
+  test('is used when it is for the same agent and the same update', () => {
+    expect(prefetchedScreen(prefetched, 'b', 100)).toBe('P1')
+  })
+
+  test('is dropped when the agent prompt changed before it became current', () => {
+    expect(prefetchedScreen(prefetched, 'b', 200)).toBeNull()
+  })
+
+  test('is dropped for another agent or when nothing was prefetched', () => {
+    expect(prefetchedScreen(prefetched, 'c', 100)).toBeNull()
+    expect(prefetchedScreen(null, 'b', 100)).toBeNull()
   })
 })
