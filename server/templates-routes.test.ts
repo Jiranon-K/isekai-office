@@ -77,6 +77,25 @@ describe('templates routes', () => {
     expect(current.templates).toEqual([template('a'), template('b')])
   })
 
+  test('put with a content-length over 200 KB answers 413 before reading the body and writes nothing', async () => {
+    const request = put({ templates: [] })
+    let read = false
+    Object.defineProperty(request, 'json', { value: async () => { read = true; return {} } })
+    Object.defineProperty(request, 'text', { value: async () => { read = true; return '{}' } })
+    request.headers.set('content-length', String(200 * 1024 + 1))
+    const response = await handleTemplates(request, false)
+    expect(response?.status).toBe(413)
+    expect(await response?.json()).toEqual({ ok: false, error: 'too_large' })
+    expect(read).toBe(false)
+    expect(await readdir(folder)).toEqual([])
+  })
+
+  test('put with a content-length at 200 KB is read as usual', async () => {
+    const request = put({ templates: [], revision: NO_FILE_REVISION })
+    request.headers.set('content-length', String(200 * 1024))
+    expect((await handleTemplates(request, false))?.status).toBe(200)
+  })
+
   test('put refuses a body that is not json', async () => {
     expect((await handleTemplates(put('not json'), false))?.status).toBe(400)
   })
