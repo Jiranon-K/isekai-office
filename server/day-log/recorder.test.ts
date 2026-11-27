@@ -78,6 +78,15 @@ describe('recordTick', () => {
     expect(kinds.slice(5)).toEqual(['state'])
   })
 
+  test('a new local date starts with a station event for an agent that kept its station', async () => {
+    const edit = agentAt('a', 'working', 'Edit')
+    const tomorrow = NOW + 86_400_000
+    await recordTick([edit], snapshotOf([edit], NOW))
+    await recordTick([edit], snapshotOf([edit], tomorrow))
+    const stations = (await readDay(localDate(tomorrow))).events.filter((event) => event.kind === 'station')
+    expect(stations).toHaveLength(1)
+  })
+
   test('under the cap station events are written after the state events', async () => {
     await recordTick([agentAt('a', 'waiting')], snapshotOf([agentAt('a', 'working', 'Edit')], NOW))
     expect((await readDay(TODAY)).events.map((event) => event.kind)).toEqual(['state', 'station'])
@@ -89,6 +98,15 @@ describe('recordWatch', () => {
     await recordWatch(true, NOW)
     await recordWatch(false, NOW + 5)
     expect((await readDay(TODAY)).events).toEqual([{ kind: 'watch', at: NOW, on: true }, { kind: 'watch', at: NOW + 5, on: false }])
+  })
+
+  test('turning the watch on makes the next tick write a station event again', async () => {
+    const edit = agentAt('a', 'working', 'Edit')
+    await recordTick([edit], snapshotOf([edit], NOW))
+    await recordWatch(false, NOW + 1)
+    await recordWatch(true, NOW + 2)
+    await recordTick([edit], snapshotOf([edit], NOW + 3))
+    expect((await readDay(TODAY)).events.map((event) => event.kind)).toEqual(['station', 'watch', 'watch', 'station'])
   })
 
   test('writes made without awaiting still land in call order', async () => {

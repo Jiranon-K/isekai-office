@@ -8,6 +8,7 @@ import { appendDayEvents, dayFileBytes, pruneDays, readRecentStates } from './st
 const RING_LIMIT = 100
 
 let memory: StationMemory = NO_STATIONS
+let memoryDate = ''
 let queue: Promise<void> = Promise.resolve()
 let prunedOn = ''
 
@@ -39,6 +40,9 @@ async function write(at: number, states: DayEvent[], stations: DayEvent[]): Prom
 }
 
 export function recordWatch(on: boolean, at = Date.now()): Promise<void> {
+  if (on) {
+    memory = NO_STATIONS
+  }
   return enqueue(async () => {
     await pruneOnNewDate(at)
     await appendDayEvents(localDate(at), [watchEvent(at, on)])
@@ -51,6 +55,11 @@ export function recordTick(previousAgents: OfficeAgent[] | null, snapshot: Offic
   }
   const changes = previousAgents === null ? [] : diffEvents(previousAgents, snapshot.agents, snapshot.at)
   const states = stateEvents(changes, previousAgents ?? [], snapshot.agents)
+  const date = localDate(snapshot.at)
+  if (date !== memoryDate) {
+    memory = NO_STATIONS
+    memoryDate = date
+  }
   const stations = stationEvents(memory, snapshot.agents, snapshot.at)
   memory = stations.memory
   if (states.length === 0 && stations.events.length === 0) {
@@ -75,5 +84,6 @@ export async function restoreRing(at = Date.now()): Promise<LogEvent[]> {
 
 export function resetRecorder(): void {
   memory = NO_STATIONS
+  memoryDate = ''
   prunedOn = ''
 }
