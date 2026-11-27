@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { shouldPoll } from '@/alerts/pipeline-logic'
 import { publishSourceCaps } from './source-caps'
+import type { OrderChange, OrderResult, StandingOrders } from '@shared/orders'
 import type {
   BoardSnapshot,
   CommandRequest,
@@ -115,6 +116,27 @@ export async function sendSpawn(request: SpawnRequest): Promise<SpawnResult> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request)
+    })
+    return await response.json()
+  } catch {
+    return { ok: false, error: 'server_unreachable' }
+  }
+}
+
+export async function fetchOrders(agentId: string): Promise<StandingOrders> {
+  const response = await fetch(`/api/orders/${encodeURIComponent(agentId)}`)
+  if (!response.ok) {
+    throw new Error('orders_unavailable')
+  }
+  return response.json()
+}
+
+export async function sendOrderChange(change: OrderChange): Promise<OrderResult> {
+  try {
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(change)
     })
     return await response.json()
   } catch {
