@@ -8,6 +8,7 @@ import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
 import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
 import { OrdersSection } from './OrdersSection'
+import { SessionGold } from '@/ledger/SessionGold'
 import { PanelTabs, type PanelTab } from './PanelTabs'
 import { Transcript } from './Transcript'
 import { useCommand } from './use-command'
@@ -69,6 +70,7 @@ function PanelHeader({ agent, contextWindow, onClose }: CommandPanelProps): Reac
               {contextLoad}
             </Badge>
           ) : null}
+          <SessionGold agent={agent} />
           <CompactButton agent={agent} contextWindow={contextWindow} />
         </div>
       </div>
