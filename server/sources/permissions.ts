@@ -138,6 +138,18 @@ async function replaceFile(path: string, text: string, operations: SettingsFileO
   }
 }
 
+function refusingChangedFile(expectedText: string | null, operations: SettingsFileOperations): SettingsFileOperations {
+  return {
+    ...operations,
+    async rename(from, to) {
+      if ((await readText(to)) !== expectedText) {
+        throw new Error('settings file changed since it was read')
+      }
+      await operations.rename(from, to)
+    }
+  }
+}
+
 async function editFile(path: string, change: OrderChange, operations: SettingsFileOperations): Promise<OrderResult> {
   let text: string | null
   try {
@@ -156,7 +168,7 @@ async function editFile(path: string, change: OrderChange, operations: SettingsF
   if (edited === null) {
     return { ok: true, error: null }
   }
-  return replaceFile(path, `${JSON.stringify(edited, null, 2)}\n`, operations)
+  return replaceFile(path, `${JSON.stringify(edited, null, 2)}\n`, refusingChangedFile(text, operations))
 }
 
 export function changeLocalRule(worktree: string, change: OrderChange, operations: SettingsFileOperations = REAL_FILE_OPERATIONS): Promise<OrderResult> {

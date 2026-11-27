@@ -100,6 +100,21 @@ describe('changing the local settings file', () => {
     expect(await readdir(join(folder, '.claude'))).toEqual(['settings.local.json'])
   })
 
+  test('a write that lands between our read and our rename is not erased', async () => {
+    await writeLocal(JSON.stringify({ permissions: { allow: ['Read'] } }))
+    const intruder = JSON.stringify({ permissions: { allow: ['Read', 'Bash(ls)'] } })
+    const racing: SettingsFileOperations = {
+      ...REAL_FILE_OPERATIONS,
+      writeFile: async (path, text) => {
+        await REAL_FILE_OPERATIONS.writeFile(path, text)
+        await writeFile(localSettingsPath(folder), intruder)
+      }
+    }
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'), racing)).toEqual({ ok: false, error: 'write_failed' })
+    expect(await readLocal()).toBe(intruder)
+    expect(await readdir(join(folder, '.claude'))).toEqual(['settings.local.json'])
+  })
+
   test('a relative worktree path is refused', async () => {
     expect(await changeLocalRule('relative/path', change('add', 'Bash(bun test)'))).toEqual({ ok: false, error: 'no_worktree' })
   })
