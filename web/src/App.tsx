@@ -31,6 +31,7 @@ import { usePartyByAgent, useParties } from '@/party/use-parties'
 import { replayCanvas } from '@/replay/replay-canvas'
 import { ReplayEntryProvider } from '@/replay/ReplayEntry'
 import { ReplayOverlay } from '@/replay/ReplayOverlay'
+import { replaySurfaces, routeForReplay } from '@/replay/replay-surfaces'
 import { useReplay } from '@/replay/use-replay'
 
 const CLOCK_MS = 30_000
@@ -65,19 +66,29 @@ export function App(): React.JSX.Element {
     restore: (id) => setRoute((current) => openPanel(current, id))
   })
   const replaying = replay.active
+  const surfaces = replaySurfaces(route, replaying)
+  useEffect(() => {
+    if (replaying) {
+      setRoute(routeForReplay)
+    }
+  }, [replaying])
 
   const agents = useMemo(() => office.data?.agents ?? [], [office.data])
   const contextWindow = office.data?.contextWindow ?? 0
-  const selected = agents.find((agent) => agent.id === route.agentId) ?? null
+  const selected = agents.find((agent) => agent.id === surfaces.liveAgentId) ?? null
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
-  const boardOpen = route.open === 'questBoard'
+  const boardOpen = surfaces.board
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
   const partyByAgent = usePartyByAgent(useParties(agents, questBoard.data))
+  const acceptsPick = surfaces.acceptsPick
   const pickAgent = useCallback((agentId: string | null) => {
+    if (!acceptsPick) {
+      return
+    }
     setExpandedId(null)
     setRoute((current) => selectAgent(current, agentId))
-  }, [])
+  }, [acceptsPick])
   const alertAgents = office.data?.sourceReady ? office.data.agents : null
   useWaitingAlerts(alertAgents, alerts.enabled, pickAgent)
   const now = useNow(CLOCK_MS, alerts.enabled)
@@ -85,7 +96,11 @@ export function App(): React.JSX.Element {
   const quiet = useMemo(() => quietMinutesById(agents, now, quietAfterMs), [agents, now, quietAfterMs])
   useQuietAlerts(alertAgents, now, quietAfterMs, alerts.enabled, pickAgent)
   useLoadAlerts(alertAgents, contextWindow, alerts.enabled, pickAgent)
-  const showBoard = useCallback(() => setRoute((current) => openPanel(current, 'questBoard')), [])
+  const showBoard = useCallback(() => {
+    if (acceptsPick) {
+      setRoute((current) => openPanel(current, 'questBoard'))
+    }
+  }, [acceptsPick])
   usePipelineAlerts(questBoard.data, alerts.enabled, showBoard)
   const expandAgent = useCallback((agentId: string) => {
     pickAgent(agentId)
@@ -93,6 +108,12 @@ export function App(): React.JSX.Element {
   }, [pickAgent])
   const queue = useDecisionQueue({ agents, boardOpen: boardOpen || replaying, onFocus: pickAgent, onExpand: expandAgent })
   const queueOpen = queue.state !== null
+  const closeQueue = queue.close
+  useEffect(() => {
+    if (replaying) {
+      closeQueue()
+    }
+  }, [replaying, closeQueue])
   const openQueueFromPanel = useCallback(() => {
     setRoute(closePanel)
     queue.open()
@@ -141,7 +162,7 @@ export function App(): React.JSX.Element {
       <ReplayEntryProvider value={{ date: replay.date, enter: replay.enter }}>
       <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
       <HotspotPanels
-        open={route.open}
+        open={surfaces.panel}
         office={office}
         quiet={quiet}
         board={questBoard}
@@ -152,7 +173,7 @@ export function App(): React.JSX.Element {
       />
       </QueueEntryProvider>
       </ReplayEntryProvider>
-      {queue.state ? (
+      {queue.state && surfaces.queue ? (
         <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
       ) : null}
       {selected && showQuickReply && !queueOpen && !replaying ? (
