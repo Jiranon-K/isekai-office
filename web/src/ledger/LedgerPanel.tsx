@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Ledger } from '@shared/ledger'
 import { Button } from '@/components/ui/button'
 import { PanelNote } from '@/room-panels/SessionList'
-import { dateOfDay, formatGold, formatMoney, NO_PRICE_NOTE, unpricedNote, type LedgerDay } from './ledger-logic'
+import { dateOfDay, formatGold, formatMoney, NO_PRICE_NOTE, unpricedNoteOf, type LedgerDay } from './ledger-logic'
 import { LedgerRowItem } from './LedgerRowItem'
 import { useLedger } from './use-ledger'
 
@@ -24,7 +24,7 @@ function Total({ ledger }: { ledger: Ledger }): React.JSX.Element {
 }
 
 function Body({ ledger }: { ledger: Ledger }): React.JSX.Element {
-  const note = unpricedNote(ledger.unpricedRows)
+  const note = unpricedNoteOf(ledger)
   return (
     <>
       <Total ledger={ledger} />

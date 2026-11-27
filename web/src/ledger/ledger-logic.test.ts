@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { Ledger, LedgerRow } from '@shared/ledger'
-import { dateOfDay, formatGold, formatMoney, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote } from './ledger-logic'
+import { dateOfDay, formatGold, formatMoney, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote, unpricedNoteOf } from './ledger-logic'
 
 const TOKENS = { input: 1, output: 2, cacheRead: 3, cacheWrite5m: 4, cacheWrite1h: 5 }
 
@@ -32,6 +32,11 @@ describe('ledger formatting', () => {
   test('the unpriced note appears only when something is unpriced', () => {
     expect(unpricedNote(0)).toBeNull()
     expect(unpricedNote(2)).toBe('มี 2 session ที่ไม่มีราคาใน pricing.json')
+  })
+
+  test('with no price at all only the no-price line shows', () => {
+    expect(unpricedNoteOf({ ...ledgerOf([]), total: null, unpricedRows: 2 })).toBeNull()
+    expect(unpricedNoteOf({ ...ledgerOf([]), total: 3, unpricedRows: 2 })).toBe('มี 2 session ที่ไม่มีราคาใน pricing.json')
   })
 
   test('the hover lists all five counts', () => {

@@ -108,6 +108,16 @@ describe('GET /api/ledger', () => {
     expect(input).toBe(7)
   })
 
+  test('unpriced rows count sessions, not rows', async () => {
+    const zero = { input: 1000, output: 0, cacheRead: 0, cacheWrite5m: 0, cacheWrite1h: 0 }
+    writeFileSync(join(process.env.ISEKAI_DATA_DIR ?? '', 'pricing.json'), JSON.stringify({ currency: 'USD', models: [{ match: 'known', ...zero }] }))
+    const now = new Date().toISOString()
+    writeSession('s1', [assistantLine('m1', now, usageOfSize(1), 'one'), assistantLine('m2', now, usageOfSize(1), 'two'), assistantLine('m3', now, usageOfSize(1), 'known')])
+    const ledger = (await (await ask('/api/ledger'))?.json()) as Ledger
+    expect(ledger.rows).toHaveLength(3)
+    expect(ledger.unpricedRows).toBe(1)
+  })
+
   test('demo mode serves one unpriced row', async () => {
     const ledger = (await (await ask('/api/ledger', true))?.json()) as Ledger
     expect(ledger.rows.length).toBeGreaterThan(1)

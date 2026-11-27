@@ -48,7 +48,7 @@ function summarise(date: string, rows: LedgerRow[], pricing: Pricing | null, at:
     currency: pricing?.currency ?? null,
     rows: [...rows].sort(compareRows),
     total,
-    unpricedRows: rows.length - priced.length,
+    unpricedRows: new Set(rows.filter((row) => row.cost === null).map((row) => row.session)).size,
     at
   }
 }

@@ -33,6 +33,10 @@ export function unpricedNote(unpricedRows: number): string | null {
   return unpricedRows > 0 ? `มี ${unpricedRows} session ที่ไม่มีราคาใน pricing.json` : null
 }
 
+export function unpricedNoteOf(ledger: Ledger): string | null {
+  return ledger.total === null ? null : unpricedNote(ledger.unpricedRows)
+}
+
 export function tokenBreakdown(tokens: TokenTotals): string {
   return [
     `input ${tokens.input.toLocaleString('en-US')}`,
