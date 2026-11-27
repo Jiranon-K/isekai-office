@@ -18,7 +18,22 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return isTyping(target)
 }
 
-export function replayKeyAction(event: KeyFacts, typing: boolean): ReplayKeyAction | null {
+export type KeySituation = { onButton: boolean; panelOpen: boolean }
+
+const CALM: KeySituation = { onButton: false, panelOpen: false }
+
+export function isButtonTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLButtonElement
+}
+
+function blockedBySituation(action: ReplayKeyAction | null, situation: KeySituation): boolean {
+  if (action === 'toggle') {
+    return situation.onButton
+  }
+  return action === 'leave' && situation.panelOpen
+}
+
+export function replayKeyAction(event: KeyFacts, typing: boolean, situation: KeySituation = CALM): ReplayKeyAction | null {
   if (typing || event.ctrlKey || event.metaKey || event.altKey) {
     return null
   }
@@ -26,5 +41,5 @@ export function replayKeyAction(event: KeyFacts, typing: boolean): ReplayKeyActi
   if (action === 'toggle' && event.repeat) {
     return null
   }
-  return action
+  return blockedBySituation(action, situation) ? null : action
 }

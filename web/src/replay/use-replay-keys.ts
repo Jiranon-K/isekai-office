@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'react'
-import { isTypingTarget, replayKeyAction, type ReplayKeyAction } from './replay-keys'
+import { isButtonTarget, isTypingTarget, replayKeyAction, type ReplayKeyAction } from './replay-keys'
 
-export function useReplayKeys(active: boolean, onAction: (action: ReplayKeyAction) => void): void {
+export function useReplayKeys(active: boolean, panelOpen: boolean, onAction: (action: ReplayKeyAction) => void): void {
   const latest = useRef(onAction)
   latest.current = onAction
+  const panelOpenNow = useRef(panelOpen)
+  panelOpenNow.current = panelOpen
   useEffect(() => {
     if (!active) {
       return
     }
     function handle(event: KeyboardEvent): void {
-      const action = replayKeyAction(event, isTypingTarget(event.target))
+      const action = replayKeyAction(event, isTypingTarget(event.target), { onButton: isButtonTarget(event.target), panelOpen: panelOpenNow.current })
       if (action === null) {
         return
       }

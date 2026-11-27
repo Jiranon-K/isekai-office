@@ -117,7 +117,7 @@ export function useReplay(panel: PanelBridge): Replay {
     onEnded: () => setPlaying(false)
   })
   useReplayUrl(date, at, day !== null, playing)
-  useReplayKeys(date !== null, (action) => {
+  useReplayKeys(date !== null, panel.open !== null, (action) => {
     const handlers = { toggle: togglePlay, previous, next, leave }
     handlers[action]()
   })
