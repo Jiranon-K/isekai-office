@@ -27,6 +27,7 @@ import { DecisionQueue } from '@/agent/DecisionQueue'
 import { QueueEntryProvider } from '@/agent/QueueEntryButton'
 import { useDecisionQueue } from '@/agent/use-decision-queue'
 import { waitingQueue } from '@/alerts/jump-logic'
+import { usePartyByAgent, useParties } from '@/party/use-parties'
 
 const CLOCK_MS = 30_000
 
@@ -62,6 +63,7 @@ export function App(): React.JSX.Element {
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
   const boardOpen = route.open === 'questBoard'
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
+  const partyByAgent = usePartyByAgent(useParties(agents, questBoard.data))
   const pickAgent = useCallback((agentId: string | null) => {
     setExpandedId(null)
     setRoute((current) => selectAgent(current, agentId))
@@ -114,6 +116,7 @@ export function App(): React.JSX.Element {
         onHotspot={openHotspot}
         openHotspot={route.open}
         boardWaiting={boardWaiting}
+        partyByAgent={partyByAgent}
         world={theme.world}
         mode={theme.mode}
         paused={boardOpen}

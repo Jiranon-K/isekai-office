@@ -30,6 +30,7 @@ export type FrameInput = {
   layers: RoomLayers
   actors: Iterable<Actor>
   selectedId: string | null
+  ringedPartyKey: string | null
   seconds: number
   animate: boolean
   sourceReady: boolean
@@ -81,6 +82,20 @@ function drawGround(context: CanvasRenderingContext2D, palette: OfficePalette, a
   context.globalAlpha = 1
 }
 
+function drawPartyRing(context: CanvasRenderingContext2D, palette: OfficePalette, actor: Actor, ringedKey: string | null): void {
+  if (!actor.partyColour || actor.partyKey !== ringedKey) {
+    return
+  }
+  context.beginPath()
+  context.ellipse(actor.x, actor.y - 2, 12, 5, 0, 0, Math.PI * 2)
+  context.strokeStyle = palette.color('outline')
+  context.lineWidth = 2.5
+  context.stroke()
+  context.strokeStyle = palette.color(actor.partyColour)
+  context.lineWidth = 1
+  context.stroke()
+}
+
 function drawSprite(context: CanvasRenderingContext2D, palette: OfficePalette, actor: Actor, seconds: number, animate: boolean): void {
   const sheet = getSpriteSheet(palette, actor.look)
   const seated = actor.spot?.seated === true && actor.path.length === 0
@@ -120,6 +135,7 @@ export function renderFrame(input: FrameInput): void {
   }
   for (const actor of sorted) {
     drawGround(context, palette, actor, actor.id === input.selectedId, seconds, animate)
+    drawPartyRing(context, palette, actor, input.ringedPartyKey)
   }
   for (const actor of sorted) {
     drawSprite(context, palette, actor, seconds, animate)

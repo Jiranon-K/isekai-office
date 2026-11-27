@@ -1,5 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
-import { createNpcActors, markQuiet, syncActors, updateActors, type Actor } from './actors'
+import { createNpcActors, markParties, markQuiet, syncActors, updateActors, type Actor } from './actors'
 import type { Mode, World } from '@/lib/theme'
 import { backdropLayer, loadBackdrop } from '../draw/backdrop'
 import { countAgents } from '@/lib/agent-counts'
@@ -22,6 +22,8 @@ import type { Signals } from '../draw/signals'
 import { buildRoomLayer, buildShadeLayer } from '../draw/room'
 import { computeView, toRoomPoint, type ViewMetrics } from './view'
 import { getContext } from '../draw/draw'
+import type { Party } from '@/party/party-logic'
+import { ringedPartyKey } from '@/party/ring-logic'
 
 export type OfficeInput = {
   agents: readonly OfficeAgent[]
@@ -34,6 +36,7 @@ export type OfficeInput = {
   paused: boolean
   boardWaiting: number
   openHotspot: HotspotId | null
+  partyByAgent: ReadonlyMap<string, Party>
 }
 
 export type OfficeEngine = {
@@ -42,6 +45,7 @@ export type OfficeEngine = {
   pick: (clientX: number, clientY: number) => PickTarget | null
   agentRect: (id: string) => RoomRect | null
   setHover: (id: HotspotId | null) => void
+  setHoverAgent: (id: string | null) => void
   setReveal: (reveal: boolean) => void
   pulse: () => void
   destroy: () => void
@@ -65,6 +69,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
   let fontsReady = false
   let destroyed = false
   let hoveredId: HotspotId | null = null
+  let hoveredAgentId: string | null = null
   let revealAll = false
   let pulsePending = false
   let pulseStart: number | null = null
@@ -127,6 +132,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       layers,
       actors: actors.values(),
       selectedId: input.selectedId,
+      ringedPartyKey: ringedPartyKey(actors.values(), hoveredAgentId, input.selectedId),
       seconds: now / 1000,
       animate,
       sourceReady: input.sourceReady,
@@ -179,6 +185,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     }
     syncActors(actors, next.sourceReady ? next.agents : [], grid, reducedQuery.matches, next.contextWindow)
     markQuiet(actors, next.quiet)
+    markParties(actors, next.partyByAgent)
     requestFrame()
   }
 
@@ -224,6 +231,14 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     requestFrame()
   }
 
+  function setHoverAgent(id: string | null): void {
+    if (hoveredAgentId === id) {
+      return
+    }
+    hoveredAgentId = id
+    requestFrame()
+  }
+
   function setReveal(reveal: boolean): void {
     if (revealAll === reveal) {
       return
@@ -247,5 +262,5 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     reducedQuery.removeEventListener('change', handleMotionChange)
   }
 
-  return { update, resize, pick, agentRect, setHover, setReveal, pulse, destroy }
+  return { update, resize, pick, agentRect, setHover, setHoverAgent, setReveal, pulse, destroy }
 }
