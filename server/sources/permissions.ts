@@ -1,5 +1,5 @@
 import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join } from 'node:path'
+import { dirname, isAbsolute, join, parse, resolve } from 'node:path'
 import type { OrderChange, OrderResult, RuleLayer, RuleScope } from '@shared/orders'
 
 type SettingsDocument = Record<string, unknown>
@@ -102,12 +102,26 @@ export async function readLayer(scope: RuleScope, path: string): Promise<RuleLay
   }
 }
 
+function normalizedPath(path: string): string {
+  const full = resolve(path)
+  return process.platform === 'win32' ? full.toLowerCase() : full
+}
+
+export function isHomeOrRoot(worktree: string, home: string): boolean {
+  return normalizedPath(worktree) === normalizedPath(home) || normalizedPath(worktree) === normalizedPath(parse(resolve(worktree)).root)
+}
+
+function isSameFolder(first: string, second: string): boolean {
+  return normalizedPath(first) === normalizedPath(second)
+}
+
 export async function readLayers(worktree: string | null, home: string): Promise<RuleLayer[]> {
   const user = await readLayer('user', userSettingsPath(home))
   if (worktree === null || !isAbsolute(worktree)) {
     return [user, emptyLayer('project', null), emptyLayer('local', null)]
   }
-  return [user, await readLayer('project', projectSettingsPath(worktree)), await readLayer('local', localSettingsPath(worktree))]
+  const project = isSameFolder(worktree, home) ? emptyLayer('project', null) : await readLayer('project', projectSettingsPath(worktree))
+  return [user, project, await readLayer('local', localSettingsPath(worktree))]
 }
 
 export function editList(current: string[], change: OrderChange): string[] | null {

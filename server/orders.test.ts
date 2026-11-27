@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, parse } from 'node:path'
 import type { OrderChange } from '@shared/orders'
 import type { OfficeAgent } from '@shared/types'
 import { demoOrdersFeeds } from './feeds/demo-orders'
-import { changeOrders, readOrders, realOrdersFeeds, type OrdersFeeds } from './orders'
+import { changeOrders, ordersFeedsFor, readOrders, realOrdersFeeds, type OrdersFeeds } from './orders'
 import { localSettingsPath } from './sources/permissions'
 
 function agentWith(worktree: string | null): OfficeAgent {
@@ -125,5 +125,45 @@ describe('the real feed against a temp worktree', () => {
   test('an agent without a worktree cannot be changed', async () => {
     const reply = await changeOrders(post({}), () => agentWith(null), realOrdersFeeds)
     expect(reply).toEqual({ status: 409, body: { ok: false, error: 'no_worktree' } })
+  })
+})
+
+describe('a worktree that is the home folder or a filesystem root', () => {
+  let home = ''
+
+  beforeEach(async () => {
+    home = await mkdtemp(join(tmpdir(), 'isekai-orders-home-'))
+    await mkdir(join(home, '.claude'))
+    await writeFile(join(home, '.claude', 'settings.json'), JSON.stringify({ permissions: { allow: ['Read'] } }))
+  })
+
+  afterEach(async () => {
+    await rm(home, { recursive: true, force: true })
+  })
+
+  test('the project layer is not shown a second time and the agent is not writable', async () => {
+    const view = await ordersFeedsFor(home).read(agentWith(home))
+    expect(view.writable).toBe(false)
+    expect(view.layers.map((layer) => [layer.scope, layer.allow])).toEqual([['user', ['Read']], ['project', []], ['local', []]])
+  })
+
+  test('a normal worktree stays writable and keeps its project layer', async () => {
+    const worktree = join(home, 'tree')
+    await mkdir(join(worktree, '.claude'), { recursive: true })
+    await writeFile(join(worktree, '.claude', 'settings.json'), JSON.stringify({ permissions: { allow: ['Glob'] } }))
+    const view = await ordersFeedsFor(home).read(agentWith(worktree))
+    expect(view.writable).toBe(true)
+    expect(view.layers[1]?.allow).toEqual(['Glob'])
+  })
+
+  test('a filesystem root is not writable', async () => {
+    const view = await ordersFeedsFor(home).read(agentWith(parse(home).root))
+    expect(view.writable).toBe(false)
+  })
+
+  test('a change aimed at the home folder is refused and writes nothing', async () => {
+    const reply = await changeOrders(post({}), () => agentWith(home), ordersFeedsFor(home))
+    expect(reply).toEqual({ status: 409, body: { ok: false, error: 'no_worktree' } })
+    expect(await readdir(join(home, '.claude'))).toEqual(['settings.json'])
   })
 })

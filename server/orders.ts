@@ -2,7 +2,7 @@ import { homedir } from 'node:os'
 import type { OfficeAgent } from '@shared/types'
 import type { OrderChange, OrderResult, RuleLayer, StandingOrders } from '@shared/orders'
 import { isTooBroad, toRule } from '@shared/rules'
-import { changeLocalRule, readLayers } from './sources/permissions'
+import { changeLocalRule, isHomeOrRoot, readLayers } from './sources/permissions'
 
 export type OrdersView = { layers: RuleLayer[]; writable: boolean }
 
@@ -85,16 +85,21 @@ export async function changeOrders(body: unknown, agentFor: (id: string) => Offi
   return { status: result.ok ? 200 : (ERROR_STATUS[result.error ?? ''] ?? 500), body: result }
 }
 
-export const realOrdersFeeds: OrdersFeeds = {
-  async read(agent) {
-    const layers = await readLayers(agent.worktree, homedir())
-    const local = layers.find((layer) => layer.scope === 'local')
-    return { layers, writable: agent.worktree !== null && local?.error === null }
-  },
-  async change(agent, change) {
-    if (agent.worktree === null) {
-      return { ok: false, error: 'no_worktree' }
+export function ordersFeedsFor(home: string): OrdersFeeds {
+  return {
+    async read(agent) {
+      const layers = await readLayers(agent.worktree, home)
+      const local = layers.find((layer) => layer.scope === 'local')
+      const writable = agent.worktree !== null && !isHomeOrRoot(agent.worktree, home) && local?.error === null
+      return { layers, writable }
+    },
+    async change(agent, change) {
+      if (agent.worktree === null || isHomeOrRoot(agent.worktree, home)) {
+        return { ok: false, error: 'no_worktree' }
+      }
+      return changeLocalRule(agent.worktree, change)
     }
-    return changeLocalRule(agent.worktree, change)
   }
 }
+
+export const realOrdersFeeds: OrdersFeeds = ordersFeedsFor(homedir())
