@@ -1,6 +1,6 @@
 import { readdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 
 const PROJECTS_DIR = join(homedir(), '.claude', 'projects')
 const TAIL_BYTES = 256 * 1024
@@ -90,8 +90,7 @@ export function pickTranscript(candidates: TranscriptCandidate[], agentTitle: st
 }
 
 function sessionName(path: string): string {
-  const base = path.slice(path.lastIndexOf('/') + 1)
-  return base.slice(0, -TRANSCRIPT_SUFFIX.length)
+  return basename(path, TRANSCRIPT_SUFFIX)
 }
 
 async function listCandidates(folder: string, now: number): Promise<(TranscriptCandidate & TranscriptFacts)[]> {
