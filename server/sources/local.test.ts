@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OfficeAgent } from '@shared/types'
+import { createHintStore } from './hints'
 import { createLocalSource, recentMsFrom } from './local'
 
 const MINUTE_MS = 60_000
@@ -128,6 +129,33 @@ describe('local source window and history', () => {
     expect(detail.entries.map((entry) => entry.role)).toEqual(['user', 'assistant'])
     expect(detail.entries[0]?.text).toBe('hello there')
     expect(detail.screen).toBeNull()
+  })
+})
+
+describe('local source hooks', () => {
+  async function stateWith(hint: { state: 'working' | 'waiting' | 'done'; at: number } | null): Promise<OfficeAgent | undefined> {
+    const hints = createHintStore()
+    if (hint) {
+      hints.apply({ sessionId: 'sess-hint', hint })
+    }
+    const source = createLocalSource({ projectsDir, recentMs: 60 * MINUTE_MS, hints })
+    return (await source.listAgents()).find((agent) => agent.id === 'sess-hint')
+  }
+
+  test('a fresh waiting hint turns a working session to waiting and keeps its tool', async () => {
+    await session('sess-hint', [line({ type: 'user', cwd: '/x/y', message: { content: 'go' } }), assistantTool('/x/y')])
+    expect(await stateWith({ state: 'waiting', at: Date.now() })).toMatchObject({ state: 'waiting', tool: 'Edit' })
+  })
+
+  test('a transcript written long after the hint wins over it', async () => {
+    await session('sess-hint', [line({ type: 'user', cwd: '/x/y', message: { content: 'go' } }), assistantTool('/x/y')])
+    expect((await stateWith({ state: 'waiting', at: Date.now() - 60_000 }))?.state).toBe('working')
+  })
+
+  test('without a hint the transcript decides and a done hint clears the tool', async () => {
+    await session('sess-hint', [line({ type: 'user', cwd: '/x/y', message: { content: 'go' } }), assistantTool('/x/y')])
+    expect((await stateWith(null))?.state).toBe('working')
+    expect(await stateWith({ state: 'done', at: Date.now() })).toMatchObject({ state: 'done', tool: null })
   })
 })
 

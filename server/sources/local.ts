@@ -4,6 +4,7 @@ import type { OfficeAgent, SessionDetail } from '@shared/types'
 import { historyAt } from './history'
 import { baseNameOf, localFacts, type LocalFacts } from './local-facts'
 import { createRecentFiles, type RecentFile, type RecentFilesOptions } from './recent-files'
+import { applyHint, hintStore, type HintStore } from './hints'
 import { stateFromTail, toolFromTail } from './session-state'
 import type { SessionSource } from './source'
 import { readTail } from './transcripts'
@@ -25,7 +26,10 @@ async function readLines(file: RecentFile): Promise<string[]> {
   return (await readTail(file.path, file.size)).split('\n')
 }
 
-export function createLocalSource(options: Omit<RecentFilesOptions, 'refreshMs'> & { refreshMs?: number }): SessionSource {
+type LocalOptions = Omit<RecentFilesOptions, 'refreshMs'> & { refreshMs?: number; hints?: HintStore }
+
+export function createLocalSource(options: LocalOptions): SessionSource {
+  const hints = options.hints ?? hintStore
   const recent = createRecentFiles({ refreshMs: REFRESH_MS, ...options })
   const cache = new Map<string, Snapshotted>()
 
@@ -52,7 +56,8 @@ export function createLocalSource(options: Omit<RecentFilesOptions, 'refreshMs'>
   }
 
   async function toAgent(file: RecentFile): Promise<OfficeAgent> {
-    const { facts, state, tool } = await analyse(file)
+    const { facts, state: tailState, tool } = await analyse(file)
+    const state = applyHint(tailState, hints.get(file.id), file.modifiedAt)
     const repo = facts.cwd ? baseNameOf(facts.cwd) : null
     return {
       id: file.id,
@@ -63,7 +68,7 @@ export function createLocalSource(options: Omit<RecentFilesOptions, 'refreshMs'>
       session: file.id,
       contextTokens: facts.contextTokens,
       state,
-      tool,
+      tool: state === 'done' ? null : tool,
       lastMessage: null,
       updatedAt: file.modifiedAt,
       activeAt: file.modifiedAt,
@@ -74,6 +79,7 @@ export function createLocalSource(options: Omit<RecentFilesOptions, 'refreshMs'>
   async function listAgents(): Promise<OfficeAgent[]> {
     const files = await recent.list()
     forget(files)
+    hints.prune((options.now ?? Date.now)() - options.recentMs)
     return Promise.all(files.map(toAgent))
   }
 

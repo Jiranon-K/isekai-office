@@ -8,6 +8,7 @@ import { createWorktree, listRepos, sendCommand } from './sources/orca'
 import { activeSource } from './sources/select'
 import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
+import { handleHook } from './hook'
 import { readOnlyReply } from './read-only'
 
 const PORT = Number(process.env.PORT ?? 4300)
@@ -70,6 +71,11 @@ async function command(request: Request): Promise<Response> {
   return json(await feeds.command(terminal, parsed))
 }
 
+async function hook(request: Request): Promise<Response> {
+  const reply = handleHook(await request.json().catch(() => null))
+  return json(reply.body, reply.status)
+}
+
 async function repos(): Promise<Response> {
   try {
     return json({ repos: await feeds.repos() })
@@ -124,6 +130,9 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/command' && request.method === 'POST') {
     return command(request)
+  }
+  if (url.pathname === '/api/hook' && request.method === 'POST') {
+    return hook(request)
   }
   if (url.pathname === '/api/repos') {
     return repos()
