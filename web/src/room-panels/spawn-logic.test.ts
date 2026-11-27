@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { PROMPT_MAX } from '@shared/spawn'
 import type { QuestTemplate } from '@shared/templates'
-import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, shouldConfirmReplace, spawnProblems } from './spawn-logic'
+import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, fillSpawnPrompt, shouldConfirmReplace, spawnProblems, withFilledPrompt } from './spawn-logic'
 
 const FILLED = { ...EMPTY_FIELDS, repoId: 'r1', name: 'fix-login' }
 
@@ -40,45 +40,65 @@ const REVIEW: QuestTemplate = {
 }
 
 describe('applying a template', () => {
-  test('empty fields get the prefix, main as the branch and the repo name', () => {
-    const applied = applyTemplate({ ...EMPTY_FIELDS, repoId: 'r1' }, REVIEW, 'cozu')
+  test('empty fields get the prefix and the template text with its placeholders', () => {
+    const applied = applyTemplate({ ...EMPTY_FIELDS, repoId: 'r1' }, REVIEW)
     expect(applied.name).toBe('review-')
     expect(applied.baseBranch).toBe('')
-    expect(applied.prompt).toBe('Review the diff against main in cozu for review-. {{nmae}}')
-  })
-
-  test('a typed base branch lands in the prompt and is kept', () => {
-    const applied = applyTemplate({ ...FILLED, baseBranch: 'origin/dev' }, REVIEW, 'cozu')
-    expect(applied.baseBranch).toBe('origin/dev')
-    expect(applied.prompt).toContain('against origin/dev in')
+    expect(applied.prompt).toBe(REVIEW.prompt)
   })
 
   test('filled name and branch are not overwritten by the template', () => {
     const template = { ...REVIEW, baseBranch: 'origin/other' }
-    const applied = applyTemplate({ ...FILLED, baseBranch: 'origin/dev' }, template, 'cozu')
+    const applied = applyTemplate({ ...FILLED, baseBranch: 'origin/dev' }, template)
     expect(applied.name).toBe('fix-login')
     expect(applied.baseBranch).toBe('origin/dev')
   })
 
   test('an empty base branch takes the template one', () => {
-    const applied = applyTemplate(FILLED, { ...REVIEW, baseBranch: 'origin/other' }, 'cozu')
-    expect(applied.baseBranch).toBe('origin/other')
-    expect(applied.prompt).toContain('against origin/other in')
+    expect(applyTemplate(FILLED, { ...REVIEW, baseBranch: 'origin/other' }).baseBranch).toBe('origin/other')
   })
 
   test('a template without a prefix leaves an empty name empty', () => {
-    expect(applyTemplate(EMPTY_FIELDS, { ...REVIEW, namePrefix: null }, 'cozu').name).toBe('')
+    expect(applyTemplate(EMPTY_FIELDS, { ...REVIEW, namePrefix: null }).name).toBe('')
+  })
+})
+
+describe('filling the prompt at submit', () => {
+  test('uses the final name, repo and base branch', () => {
+    const fields = { ...FILLED, baseBranch: 'origin/dev', prompt: REVIEW.prompt }
+    expect(fillSpawnPrompt(fields, REVIEW, 'cozu')).toBe('Review the diff against origin/dev in cozu for fix-login. {{nmae}}')
+  })
+
+  test('a name or branch changed after picking is used, not the one at pick time', () => {
+    const picked = applyTemplate({ ...EMPTY_FIELDS, repoId: 'r1' }, REVIEW)
+    const edited = { ...picked, name: 'review-auth', baseBranch: 'origin/dev' }
+    expect(fillSpawnPrompt(edited, REVIEW, 'api')).toBe('Review the diff against origin/dev in api for review-auth. {{nmae}}')
+  })
+
+  test('a bare prefix is never filled into {{name}}', () => {
+    const picked = applyTemplate({ ...EMPTY_FIELDS, repoId: 'r1' }, REVIEW)
+    expect(fillSpawnPrompt(picked, REVIEW, 'cozu')).toContain('for {{name}}.')
+  })
+
+  test('a bare prefix is flagged as a name problem, a completed name is not', () => {
+    const picked = applyTemplate({ ...EMPTY_FIELDS, repoId: 'r1' }, REVIEW)
+    expect(spawnProblems(picked, REVIEW).name).toBe(true)
+    expect(spawnProblems({ ...picked, name: 'review-auth' }, REVIEW).name).toBe(false)
+  })
+
+  test('without a template the prompt is left as typed', () => {
+    expect(fillSpawnPrompt({ ...FILLED, prompt: 'hi {{name}}' }, null, 'cozu')).toBe('hi {{name}}')
   })
 
   test('a filled prompt over the limit is flagged like any other', () => {
-    const applied = applyTemplate(FILLED, { ...REVIEW, prompt: '{{name}}'.repeat(PROMPT_MAX) }, 'cozu')
-    expect(spawnProblems(applied).prompt).toBe(true)
+    const fields = { ...FILLED, prompt: '{{name}}'.repeat(PROMPT_MAX) }
+    expect(spawnProblems(withFilledPrompt(fields, REVIEW, 'cozu'), REVIEW).prompt).toBe(true)
   })
 
   test('the request from a template equals one typed by hand with that text', () => {
-    const applied = applyTemplate({ ...FILLED, baseBranch: 'origin/dev' }, REVIEW, 'cozu')
+    const fields = { ...FILLED, baseBranch: 'origin/dev', prompt: REVIEW.prompt }
     const typed = { ...FILLED, baseBranch: 'origin/dev', prompt: 'Review the diff against origin/dev in cozu for fix-login. {{nmae}}' }
-    expect(buildSpawnRequest(applied)).toEqual(buildSpawnRequest(typed))
+    expect(buildSpawnRequest(withFilledPrompt(fields, REVIEW, 'cozu'))).toEqual(buildSpawnRequest(typed))
   })
 })
 

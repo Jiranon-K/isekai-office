@@ -8,12 +8,16 @@ export type SpawnProblems = { repo: boolean; name: boolean; baseBranch: boolean;
 
 export const EMPTY_FIELDS: SpawnFields = { repoId: '', name: '', baseBranch: '', prompt: '' }
 
-export function spawnProblems(fields: SpawnFields): SpawnProblems {
+export function isBarePrefix(name: string, template: QuestTemplate | null): boolean {
+  return template !== null && template.namePrefix !== null && name === template.namePrefix
+}
+
+export function spawnProblems(fields: SpawnFields, template: QuestTemplate | null = null): SpawnProblems {
   const baseBranch = fields.baseBranch.trim()
   const prompt = cleanPrompt(fields.prompt) ?? ''
   return {
     repo: fields.repoId === '',
-    name: !isValidName(fields.name),
+    name: !isValidName(fields.name) || isBarePrefix(fields.name, template),
     baseBranch: baseBranch !== '' && !isValidBaseBranch(baseBranch),
     prompt: !isValidPrompt(prompt)
   }
@@ -34,11 +38,22 @@ export function buildSpawnRequest(fields: SpawnFields): SpawnRequest {
   }
 }
 
-export function applyTemplate(fields: SpawnFields, template: QuestTemplate, repoName: string): SpawnFields {
+export function applyTemplate(fields: SpawnFields, template: QuestTemplate): SpawnFields {
   const baseBranch = fields.baseBranch.trim() === '' ? (template.baseBranch ?? fields.baseBranch) : fields.baseBranch
   const name = fields.name === '' ? (template.namePrefix ?? '') : fields.name
-  const prompt = fillTemplate(template.prompt, templateValues(name, repoName, baseBranch))
-  return { ...fields, name, baseBranch, prompt }
+  return { ...fields, name, baseBranch, prompt: template.prompt }
+}
+
+export function fillSpawnPrompt(fields: SpawnFields, template: QuestTemplate | null, repoName: string): string {
+  if (template === null) {
+    return fields.prompt
+  }
+  const name = isBarePrefix(fields.name, template) ? '' : fields.name
+  return fillTemplate(fields.prompt, templateValues(name, repoName, fields.baseBranch))
+}
+
+export function withFilledPrompt(fields: SpawnFields, template: QuestTemplate | null, repoName: string): SpawnFields {
+  return { ...fields, prompt: fillSpawnPrompt(fields, template, repoName) }
 }
 
 export function shouldConfirmReplace(prompt: string, lastFilled: string): boolean {

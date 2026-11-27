@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendSpawn, useRepos } from '@/lib/api'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
-import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, hasProblem, shouldConfirmReplace, spawnProblems, type SpawnFields } from './spawn-logic'
+import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, hasProblem, shouldConfirmReplace, spawnProblems, withFilledPrompt, type SpawnFields } from './spawn-logic'
 import { TemplatePicker } from './TemplatePicker'
 import { useTemplates } from './use-templates'
 
@@ -47,7 +47,10 @@ function SpawnFields(): React.JSX.Element {
   const list = repos.data ?? []
   const repoId = fields.repoId || (list[0]?.id ?? '')
   const current = { ...fields, repoId }
-  const problems = spawnProblems(current)
+  const template = templates.templates?.find((item) => item.id === templateId) ?? null
+  const repoName = list.find((repo) => repo.id === repoId)?.name ?? ''
+  const filled = withFilledPrompt(current, template, repoName)
+  const problems = spawnProblems(filled, template)
   const sending = status.kind === 'sending'
   const change = (patch: Partial<SpawnFields>): void => {
     setFields({ ...current, ...patch })
@@ -63,7 +66,7 @@ function SpawnFields(): React.JSX.Element {
     if (shouldConfirmReplace(current.prompt, lastFilled) && !window.confirm('แทนที่ prompt ที่พิมพ์ไว้?')) {
       return
     }
-    const applied = applyTemplate(current, template, list.find((repo) => repo.id === repoId)?.name ?? '')
+    const applied = applyTemplate(current, template)
     setTemplateId(id)
     setLastFilled(applied.prompt)
     change(applied)
@@ -76,7 +79,7 @@ function SpawnFields(): React.JSX.Element {
       return
     }
     setStatus({ kind: 'sending' })
-    const result = await sendSpawn(buildSpawnRequest(current))
+    const result = await sendSpawn(buildSpawnRequest(filled))
     if (!result.ok) {
       setStatus({ kind: 'failed', reason: result.error ?? 'spawn_failed' })
       return
