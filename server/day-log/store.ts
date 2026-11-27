@@ -4,13 +4,14 @@ import type { DayEvent, DayLog } from '@shared/day-log'
 import { isDayDate } from '@shared/day-log'
 import type { LogEvent } from '@shared/types'
 import { dataDir } from '../data-dir'
-import { keepDays } from './config'
+import { dayMaxBytes, keepDays } from './config'
 import { localDate, stateOnly } from './events'
 
 const DAY_MS = 86_400_000
 const TAIL_BYTES = 256 * 1024
 const EXTENSION = '.jsonl'
 const NEWLINE_BYTE = 10
+const HARD_CAP_FACTOR = 4
 const checkedFiles = new Set<string>()
 
 export function logDirectory(): string {
@@ -62,7 +63,8 @@ async function lineBreakFor(file: string): Promise<string> {
   return (await endsMidLine(file)) ? '\n' : ''
 }
 
-export async function appendDayEvents(date: string, events: DayEvent[]): Promise<void> {
+export async function appendDayEvents(date: string, requested: DayEvent[]): Promise<void> {
+  const events = (await dayFileBytes(date)) > dayMaxBytes() * HARD_CAP_FACTOR ? requested.filter((event) => event.kind === 'watch') : requested
   if (events.length === 0) {
     return
   }

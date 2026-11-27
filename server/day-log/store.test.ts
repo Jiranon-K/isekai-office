@@ -17,6 +17,7 @@ beforeEach(async () => {
   folder = await mkdtemp(join(tmpdir(), 'isekai-store-'))
   process.env.ISEKAI_DATA_DIR = folder
   delete process.env.LOG_KEEP_DAYS
+  delete process.env.LOG_DAY_MAX_BYTES
 })
 
 afterEach(async () => {
@@ -39,6 +40,16 @@ describe('append and read back', () => {
     await writeFile(join(logDirectory(), '2026-11-03.jsonl'), `${JSON.stringify(stateAt(1))}\n{"kind":"sta`)
     await appendDayEvents('2026-11-03', [stateAt(2), stateAt(3)])
     expect((await readDay('2026-11-03')).events.map((event) => event.at)).toEqual([1, 2, 3])
+  })
+
+  test('past four times the day cap only watch markers are appended', async () => {
+    process.env.LOG_DAY_MAX_BYTES = '100'
+    const crowd = Array.from({ length: 6 }, (_, index) => stateAt(index))
+    await appendDayEvents('2026-11-03', crowd)
+    expect(await dayFileBytes('2026-11-03')).toBeGreaterThan(400)
+    await appendDayEvents('2026-11-03', [stateAt(10), { kind: 'station', at: 11, agentId: 'a', station: 'desk' }, { kind: 'watch', at: 12, on: false }])
+    const kinds = (await readDay('2026-11-03')).events.map((event) => event.kind)
+    expect(kinds).toEqual(['state', 'state', 'state', 'state', 'state', 'state', 'watch'])
   })
 
   test('an empty batch creates no file', async () => {
