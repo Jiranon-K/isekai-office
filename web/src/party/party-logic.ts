@@ -50,7 +50,8 @@ function byEpicThenNewest(first: QuestCard, second: QuestCard): number {
 
 function epicOf(agent: OfficeAgent, cards: readonly QuestCard[]): string | null {
   const matched = cards.filter((card) => card.epic && agentForCard(card, [agent])?.id === agent.id)
-  return [...matched].sort(byEpicThenNewest)[0]?.epic ?? null
+  const epic = [...matched].sort(byEpicThenNewest)[0]?.epic?.trim()
+  return epic ? epic : null
 }
 
 function repoKeyOf(agent: OfficeAgent): string | null {
@@ -59,7 +60,7 @@ function repoKeyOf(agent: OfficeAgent): string | null {
 
 export function partyKeyOf(agent: OfficeAgent, cards: readonly QuestCard[]): string | null {
   const epic = epicOf(agent, cards)
-  return epic ? `${EPIC_PREFIX}${epic}` : repoKeyOf(agent)
+  return epic ? `${EPIC_PREFIX}${epic.toLowerCase()}` : repoKeyOf(agent)
 }
 
 function groupByKey(agents: readonly OfficeAgent[], keyOf: (agent: OfficeAgent) => string | null): Map<string, OfficeAgent[]> {
@@ -73,14 +74,21 @@ function groupByKey(agents: readonly OfficeAgent[], keyOf: (agent: OfficeAgent) 
   return groups
 }
 
-function toParties(groups: Map<string, OfficeAgent[]>): Party[] {
+function partyNameOf(key: string, kind: PartyKind, first: OfficeAgent, cards: readonly QuestCard[]): string {
+  if (kind === 'epic') {
+    return epicOf(first, cards) ?? key.slice(EPIC_PREFIX.length)
+  }
+  return key.slice(REPO_PREFIX.length)
+}
+
+function toParties(groups: Map<string, OfficeAgent[]>, cards: readonly QuestCard[]): Party[] {
   const found: Party[] = []
   for (const [key, members] of groups) {
     if (members.length < MINIMUM_MEMBERS) {
       continue
     }
     const kind: PartyKind = key.startsWith(EPIC_PREFIX) ? 'epic' : 'repo'
-    const name = key.slice(kind === 'epic' ? EPIC_PREFIX.length : REPO_PREFIX.length)
+    const name = partyNameOf(key, kind, members[0] as OfficeAgent, cards)
     found.push({ key, kind, name, colour: colourOf(key), members })
   }
   return found.sort((first, second) => first.name.localeCompare(second.name))
@@ -90,10 +98,10 @@ export function parties(agents: readonly OfficeAgent[], cards: readonly QuestCar
   const epicParties = toParties(groupByKey(agents, (agent) => {
     const key = partyKeyOf(agent, cards)
     return key?.startsWith(EPIC_PREFIX) ? key : null
-  }))
+  }), cards)
   const placed = new Set(epicParties.flatMap((party) => party.members.map((member) => member.id)))
   const unplaced = agents.filter((agent) => !placed.has(agent.id))
-  return [...epicParties, ...toParties(groupByKey(unplaced, repoKeyOf))]
+  return [...epicParties, ...toParties(groupByKey(unplaced, repoKeyOf), cards)]
 }
 
 export function partyByAgentId(found: readonly Party[]): Map<string, Party> {

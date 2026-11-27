@@ -59,7 +59,7 @@ function keyed(id: string, key: string, repo: string | null = null): OfficeAgent
 
 describe('partyKeyOf', () => {
   test('uses the epic of the card matched to the agent', () => {
-    expect(partyKeyOf(keyed('a', 'APP-1', 'web'), [card('APP-1', 'Checkout')])).toBe('epic:Checkout')
+    expect(partyKeyOf(keyed('a', 'APP-1', 'web'), [card('APP-1', 'Checkout')])).toBe('epic:checkout')
   })
 
   test('falls back to the repo when the matched card has no epic', () => {
@@ -77,12 +77,12 @@ describe('partyKeyOf', () => {
   test('matches a card through the loop worktree', () => {
     const matched = agent('a', { worktree: '/w/a', repo: 'web' })
     const cards = [card('APP-9', 'Billing', { loop: { status: 'working', mr: null, worktree: '/w/a', session: null } })]
-    expect(partyKeyOf(matched, cards)).toBe('epic:Billing')
+    expect(partyKeyOf(matched, cards)).toBe('epic:billing')
   })
 
   test('prefers the epic of an open card over a done one', () => {
     const cards = [card('APP-1', 'Old', { column: 'done', updatedAt: '2026-02-01T00:00:00.000Z' }), card('APP-1', 'Current')]
-    expect(partyKeyOf(keyed('a', 'APP-1'), cards)).toBe('epic:Current')
+    expect(partyKeyOf(keyed('a', 'APP-1'), cards)).toBe('epic:current')
   })
 })
 
@@ -94,6 +94,17 @@ describe('parties', () => {
     ])
   })
 
+  test('epics that differ only by case or surrounding spaces form one party named without the spaces', () => {
+    const found = parties([keyed('a', 'APP-1'), keyed('b', 'APP-2')], [card('APP-1', 'Checkout'), card('APP-2', ' checkout ')])
+    expect(found.map((party) => [party.key, party.name, party.members.map((member) => member.id)])).toEqual([
+      ['epic:checkout', 'Checkout', ['a', 'b']]
+    ])
+  })
+
+  test('a blank epic is ignored and the agent falls back to its repo', () => {
+    expect(partyKeyOf(keyed('a', 'APP-1', 'web'), [card('APP-1', '   ')])).toBe('repo:web')
+  })
+
   test('two agents of one repo with no epic form a repo party', () => {
     const found = parties([keyed('a', 'APP-1', 'web'), keyed('b', 'APP-2', 'web')], [])
     expect(found.map((party) => [party.kind, party.name])).toEqual([['repo', 'web']])
@@ -102,13 +113,13 @@ describe('parties', () => {
   test('an agent in an epic party is not counted again in its repo party', () => {
     const agents = [keyed('a', 'APP-1', 'web'), keyed('b', 'APP-2', 'web'), keyed('c', 'APP-3', 'web')]
     const found = parties(agents, [card('APP-1', 'Checkout'), card('APP-2', 'Checkout')])
-    expect(found.map((party) => [party.key, party.members.map((member) => member.id)])).toEqual([['epic:Checkout', ['a', 'b']]])
+    expect(found.map((party) => [party.key, party.members.map((member) => member.id)])).toEqual([['epic:checkout', ['a', 'b']]])
   })
 
   test('two repo mates plus an epic pair make both parties', () => {
     const agents = [keyed('a', 'APP-1', 'web'), keyed('b', 'APP-2', 'web'), keyed('c', 'APP-3', 'web'), keyed('d', 'APP-4', 'web')]
     const found = parties(agents, [card('APP-1', 'Checkout'), card('APP-2', 'Checkout')])
-    expect(found.map((party) => party.key)).toEqual(['epic:Checkout', 'repo:web'])
+    expect(found.map((party) => party.key)).toEqual(['epic:checkout', 'repo:web'])
     expect(found[1]?.members.map((member) => member.id)).toEqual(['c', 'd'])
   })
 
