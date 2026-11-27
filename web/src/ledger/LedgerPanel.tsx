@@ -58,7 +58,7 @@ export function LedgerPanel(): React.JSX.Element {
           รีเฟรช
         </Button>
       </div>
-      {ledger.error && !ledger.data ? <PanelNote>อ่านบิลไม่ได้ ลองรีเฟรชอีกครั้ง</PanelNote> : null}
+      {ledger.error ? <PanelNote>อ่านบิลไม่ได้ ลองรีเฟรชอีกครั้ง</PanelNote> : null}
       {ledger.data ? <Body ledger={ledger.data} /> : null}
     </div>
   )

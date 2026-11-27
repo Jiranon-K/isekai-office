@@ -1,6 +1,9 @@
 import { goldOf, localDay, type Ledger, type TokenTotals } from '@shared/ledger'
+import type { Loadable } from '@/lib/api'
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+export type LedgerState = Loadable<Ledger> & { date: string }
 
 export type LedgerDay = 'today' | 'yesterday'
 
@@ -35,6 +38,13 @@ export function unpricedNote(unpricedRows: number): string | null {
 
 export function unpricedNoteOf(ledger: Ledger): string | null {
   return ledger.total === null ? null : unpricedNote(ledger.unpricedRows)
+}
+
+export function startLoading(previous: LedgerState, date: string): LedgerState {
+  if (previous.date !== date) {
+    return { data: null, error: null, loading: true, date }
+  }
+  return { ...previous, loading: true }
 }
 
 export function tokenBreakdown(tokens: TokenTotals): string {

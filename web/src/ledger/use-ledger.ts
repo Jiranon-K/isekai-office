@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Ledger } from '@shared/ledger'
 import type { Loadable } from '@/lib/api'
+import { startLoading, type LedgerState } from './ledger-logic'
 
 export async function fetchLedger(date: string): Promise<Ledger> {
   const response = await fetch(`/api/ledger?date=${encodeURIComponent(date)}`)
@@ -11,7 +12,7 @@ export async function fetchLedger(date: string): Promise<Ledger> {
 }
 
 export function useLedger(date: string, active = true): Loadable<Ledger> & { refresh: () => void } {
-  const [state, setState] = useState<Loadable<Ledger>>({ data: null, error: null, loading: true })
+  const [state, setState] = useState<LedgerState>({ data: null, error: null, loading: true, date })
   const [revision, setRevision] = useState(0)
   const refresh = useCallback(() => setRevision((previous) => previous + 1), [])
   useEffect(() => {
@@ -19,13 +20,14 @@ export function useLedger(date: string, active = true): Loadable<Ledger> & { ref
       return
     }
     let current = true
-    setState((previous) => ({ ...previous, loading: true }))
+    setState((previous) => startLoading(previous, date))
     fetchLedger(date)
-      .then((data) => current && setState({ data, error: null, loading: false }))
+      .then((data) => current && setState({ data, error: null, loading: false, date }))
       .catch(() => current && setState((previous) => ({ ...previous, error: 'ledger_unavailable', loading: false })))
     return () => {
       current = false
     }
   }, [active, date, revision])
-  return { ...state, refresh }
+  const shown = state.date === date ? state : startLoading(state, date)
+  return { data: shown.data, error: shown.error, loading: shown.loading, refresh }
 }

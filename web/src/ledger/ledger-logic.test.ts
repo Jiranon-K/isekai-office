@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { Ledger, LedgerRow } from '@shared/ledger'
-import { dateOfDay, formatGold, formatMoney, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote, unpricedNoteOf } from './ledger-logic'
+import { dateOfDay, formatGold, formatMoney, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote, unpricedNoteOf, startLoading } from './ledger-logic'
 
 const TOKENS = { input: 1, output: 2, cacheRead: 3, cacheWrite5m: 4, cacheWrite1h: 5 }
 
@@ -49,6 +49,18 @@ describe('days', () => {
     const now = new Date(2026, 4, 10, 12).getTime()
     expect(dateOfDay('today', now)).toBe('2026-05-10')
     expect(dateOfDay('yesterday', now)).toBe('2026-05-09')
+  })
+})
+
+describe('startLoading', () => {
+  const shown = { data: ledgerOf([]), error: 'ledger_unavailable', loading: false, date: '2026-05-10' }
+
+  test('another day clears the rows and the error', () => {
+    expect(startLoading(shown, '2026-05-09')).toEqual({ data: null, error: null, loading: true, date: '2026-05-09' })
+  })
+
+  test('the same day keeps the rows while it loads again', () => {
+    expect(startLoading(shown, '2026-05-10')).toEqual({ ...shown, loading: true })
   })
 })
 
