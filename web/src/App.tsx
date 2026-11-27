@@ -28,6 +28,9 @@ import { QueueEntryProvider } from '@/agent/QueueEntryButton'
 import { useDecisionQueue } from '@/agent/use-decision-queue'
 import { waitingQueue } from '@/alerts/jump-logic'
 import { usePartyByAgent, useParties } from '@/party/use-parties'
+import { replayCanvas } from '@/replay/replay-canvas'
+import { ReplayOverlay } from '@/replay/ReplayOverlay'
+import { useReplay } from '@/replay/use-replay'
 
 const CLOCK_MS = 30_000
 
@@ -55,6 +58,12 @@ export function App(): React.JSX.Element {
   useRecordHidden()
 
   useEffect(() => history.replaceState(null, '', mergeQuery(location.search, route) || location.pathname), [route])
+  const replay = useReplay({
+    open: route.open,
+    close: () => setRoute(closePanel),
+    restore: (id) => setRoute((current) => openPanel(current, id))
+  })
+  const replaying = replay.active
 
   const agents = useMemo(() => office.data?.agents ?? [], [office.data])
   const contextWindow = office.data?.contextWindow ?? 0
@@ -81,13 +90,13 @@ export function App(): React.JSX.Element {
     pickAgent(agentId)
     setExpandedId(agentId)
   }, [pickAgent])
-  const queue = useDecisionQueue({ agents, boardOpen, onFocus: pickAgent, onExpand: expandAgent })
+  const queue = useDecisionQueue({ agents, boardOpen: boardOpen || replaying, onFocus: pickAgent, onExpand: expandAgent })
   const queueOpen = queue.state !== null
   const openQueueFromPanel = useCallback(() => {
     setRoute(closePanel)
     queue.open()
   }, [queue.open])
-  useJumpKey({ agents, currentId: route.agentId, boardOpen: boardOpen || queueOpen, onPick: pickAgent })
+  useJumpKey({ agents, currentId: route.agentId, boardOpen: boardOpen || queueOpen || replaying, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
   const openHotspot = useCallback(
@@ -121,12 +130,14 @@ export function App(): React.JSX.Element {
         mode={theme.mode}
         paused={boardOpen}
         locateRef={locateRef}
+        {...replayCanvas(replay, openHotspot)}
       />
       {boardOpen ? <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} /> : null}
       <KeyHints />
+      <ReplayOverlay replay={replay} />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
-      <QueueEntryProvider value={{ waiting: waitingQueue(agents).length, open: openQueueFromPanel }}>
+      <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
       <HotspotPanels
         open={route.open}
         office={office}
@@ -141,10 +152,10 @@ export function App(): React.JSX.Element {
       {queue.state ? (
         <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
       ) : null}
-      {selected && showQuickReply && !queueOpen ? (
+      {selected && showQuickReply && !queueOpen && !replaying ? (
         <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
       ) : null}
-      {selected && !showQuickReply && !queueOpen ? <CommandPanel agent={selected} contextWindow={contextWindow} onClose={() => pickAgent(null)} /> : null}
+      {selected && !showQuickReply && !queueOpen && !replaying ? <CommandPanel agent={selected} contextWindow={contextWindow} onClose={() => pickAgent(null)} /> : null}
     </div>
   )
 }
