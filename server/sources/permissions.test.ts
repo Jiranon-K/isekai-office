@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mkdtemp, readdir, readFile, rm, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm, mkdir, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OrderChange } from '@shared/orders'
@@ -158,6 +158,38 @@ describe('changing the local settings file', () => {
   test('two changes at once both land', async () => {
     await Promise.all([changeLocalRule(folder, change('add', 'Read')), changeLocalRule(folder, change('add', 'Glob'))])
     expect(JSON.parse(await readLocal()).permissions.allow.sort()).toEqual(['Glob', 'Read'])
+  })
+})
+
+describe('a settings path that is a symbolic link', () => {
+  async function tryLink(target: string, path: string, type: 'junction' | 'file'): Promise<boolean> {
+    try {
+      await symlink(target, path, type)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  test('a .claude folder that links elsewhere is refused and nothing is written outside', async () => {
+    const outside = join(folder, 'outside')
+    await mkdir(outside)
+    if (!(await tryLink(outside, join(folder, '.claude'), 'junction'))) {
+      return
+    }
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'))).toEqual({ ok: false, error: 'unsafe_path' })
+    expect(await readdir(outside)).toEqual([])
+  })
+
+  test('a settings file that links elsewhere is refused and the target is left alone', async () => {
+    const outside = join(folder, 'outside.json')
+    await writeFile(outside, '{}')
+    await mkdir(join(folder, '.claude'))
+    if (!(await tryLink(outside, localSettingsPath(folder), 'file'))) {
+      return
+    }
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'))).toEqual({ ok: false, error: 'unsafe_path' })
+    expect(await readFile(outside, 'utf8')).toBe('{}')
   })
 })
 

@@ -33,5 +33,6 @@ export const ORDER_ERROR_LABELS: Record<string, string> = {
   bad_request: 'คำขอไม่ถูกต้อง',
   unreadable: 'เปิดไฟล์นี้ไม่ได้',
   write_failed: 'เขียนไฟล์ไม่สำเร็จ ลองใหม่อีกครั้ง',
+  unsafe_path: 'โฟลเดอร์ .claude หรือไฟล์ตั้งค่าเป็น symbolic link จึงไม่แก้ให้',
   server_unreachable: 'ติดต่อ server ไม่ได้'
 }

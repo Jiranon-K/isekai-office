@@ -23,6 +23,7 @@ const ERROR_STATUS: Record<string, number> = {
   unparseable: 409,
   unreadable: 409,
   no_worktree: 409,
+  unsafe_path: 409,
   write_failed: 500
 }
 

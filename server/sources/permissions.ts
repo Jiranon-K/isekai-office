@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, join } from 'node:path'
 import type { OrderChange, OrderResult, RuleLayer, RuleScope } from '@shared/orders'
 
@@ -194,11 +194,30 @@ async function editFile(path: string, change: OrderChange, operations: SettingsF
   return replaceFile(path, `${JSON.stringify(edited, null, 2)}\n`, refusingChangedFile(text, operations))
 }
 
+async function isSymbolicLink(path: string): Promise<boolean> {
+  try {
+    return (await lstat(path)).isSymbolicLink()
+  } catch {
+    return false
+  }
+}
+
+async function linksElsewhere(worktree: string): Promise<boolean> {
+  return (await isSymbolicLink(join(worktree, '.claude'))) || (await isSymbolicLink(localSettingsPath(worktree)))
+}
+
+async function editSafely(worktree: string, change: OrderChange, operations: SettingsFileOperations): Promise<OrderResult> {
+  if (await linksElsewhere(worktree)) {
+    return { ok: false, error: 'unsafe_path' }
+  }
+  return editFile(localSettingsPath(worktree), change, operations)
+}
+
 export function changeLocalRule(worktree: string, change: OrderChange, operations: SettingsFileOperations = REAL_FILE_OPERATIONS): Promise<OrderResult> {
   if (!isAbsolute(worktree)) {
     return Promise.resolve({ ok: false, error: 'no_worktree' })
   }
-  const result = pendingWrite.then(() => editFile(localSettingsPath(worktree), change, operations))
+  const result = pendingWrite.then(() => editSafely(worktree, change, operations))
   pendingWrite = result.catch(() => undefined)
   return result
 }
