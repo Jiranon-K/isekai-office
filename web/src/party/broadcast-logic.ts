@@ -29,6 +29,12 @@ export function initialRows(agentIds: readonly string[]): BroadcastRow[] {
   return agentIds.map((agentId) => ({ agentId, status: 'idle', reason: null }))
 }
 
+export type SendState = { commandAllowed: boolean; running: boolean; chosenCount: number; text: string }
+
+export function canSendBroadcast(state: SendState): boolean {
+  return state.commandAllowed && !state.running && state.chosenCount > 0 && state.text.trim().length > 0
+}
+
 export function textAfterRun(text: string, rows: readonly BroadcastRow[]): string {
   return rows.length > 0 && rows.every((row) => row.status === 'sent') ? '' : text
 }

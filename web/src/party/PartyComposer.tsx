@@ -4,7 +4,8 @@ import { describeResult } from '@/agent/panel-logic'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendCommand } from '@/lib/api'
-import { claimSubmit, releaseSubmit, runBroadcast, textAfterRun } from './broadcast-logic'
+import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
+import { canSendBroadcast, claimSubmit, releaseSubmit, runBroadcast, textAfterRun } from './broadcast-logic'
 import { canReceive, type BroadcastRow, type Party } from './party-logic'
 import { PartyMemberRow } from './PartyMemberRow'
 
@@ -27,6 +28,7 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
   const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set())
   const [rows, setRows] = useState<BroadcastRow[]>([])
   const [running, setRunning] = useState(false)
+  const caps = useSourceCaps()
   const latest = useRef(agents)
   latest.current = agents
   const cancelled = useRef(false)
@@ -38,7 +40,7 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
     }
   }, [])
   const chosen = party.members.filter((member) => canReceive(member) && !unticked.has(member.id))
-  const canSend = !running && chosen.length > 0 && text.trim().length > 0
+  const canSend = canSendBroadcast({ commandAllowed: caps.command, running, chosenCount: chosen.length, text })
 
   async function submit(): Promise<void> {
     if (!claimSubmit(submitting)) {
@@ -80,15 +82,20 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
             key={member.id}
             agent={member}
             ticked={canReceive(member) && !unticked.has(member.id)}
-            locked={running}
+            locked={running || !caps.command}
             row={rows.find((row) => row.agentId === member.id && row.status !== 'idle') ?? null}
             onToggle={() => setUnticked((current) => toggled(current, member.id))}
           />
         ))}
       </ul>
-      <Button size="sm" disabled={!canSend} onClick={() => void submit()}>
+      <Button size="sm" disabled={!canSend} title={caps.command ? undefined : READ_ONLY_REASON} onClick={() => void submit()}>
         {`ส่งให้ ${chosen.length} คน`}
       </Button>
+      {caps.command ? null : (
+        <p role="note" className="text-caption text-muted-foreground">
+          {READ_ONLY_REASON}
+        </p>
+      )}
     </div>
   )
 }

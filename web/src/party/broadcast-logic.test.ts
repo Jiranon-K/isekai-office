@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { OfficeAgent } from '@shared/types'
-import { claimSubmit, describeRow, GONE_REASON, initialRows, releaseSubmit, runBroadcast, textAfterRun, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
+import { canSendBroadcast, claimSubmit, describeRow, GONE_REASON, initialRows, releaseSubmit, runBroadcast, textAfterRun, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
 import { SKIP_REASONS, type BroadcastRow } from './party-logic'
 
 function agent(id: string, state: OfficeAgent['state'] = 'done'): OfficeAgent {
@@ -58,6 +58,24 @@ describe('submit guard', () => {
     claimSubmit(guard)
     releaseSubmit(guard)
     expect(claimSubmit(guard)).toBe(true)
+  })
+})
+
+describe('canSendBroadcast', () => {
+  const ready = { commandAllowed: true, running: false, chosenCount: 2, text: 'hello' }
+
+  test('allows a ready composer', () => {
+    expect(canSendBroadcast(ready)).toBe(true)
+  })
+
+  test('refuses on a read-only source', () => {
+    expect(canSendBroadcast({ ...ready, commandAllowed: false })).toBe(false)
+  })
+
+  test('refuses while running, with nobody chosen or with blank text', () => {
+    expect(canSendBroadcast({ ...ready, running: true })).toBe(false)
+    expect(canSendBroadcast({ ...ready, chosenCount: 0 })).toBe(false)
+    expect(canSendBroadcast({ ...ready, text: '   ' })).toBe(false)
   })
 })
 
