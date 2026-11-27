@@ -1,6 +1,7 @@
 import type { OfficeSnapshot } from '@shared/types'
 import { Badge } from '@/components/badge'
 import { useGuildLog, type Loadable } from '@/lib/api'
+import { ReplayEntry } from '@/replay/ReplayEntry'
 import { GuildLogSection } from './GuildLogSection'
 import { sourceHealth } from './source-health'
 import { useLastHidden } from './use-last-hidden'
@@ -49,6 +50,7 @@ export function HearthPanel({ office, onSelect }: { office: Loadable<OfficeSnaps
           ข้อมูลล่าสุด {formatTime(office.data.at)} · {office.data.agents.length} session
         </p>
       ) : null}
+      <ReplayEntry />
       <GuildLogSection log={log} lastHidden={lastHidden} present={present} onSelect={onSelect} />
     </>
   )

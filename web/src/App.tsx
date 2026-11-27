@@ -29,6 +29,7 @@ import { useDecisionQueue } from '@/agent/use-decision-queue'
 import { waitingQueue } from '@/alerts/jump-logic'
 import { usePartyByAgent, useParties } from '@/party/use-parties'
 import { replayCanvas } from '@/replay/replay-canvas'
+import { ReplayEntryProvider } from '@/replay/ReplayEntry'
 import { ReplayOverlay } from '@/replay/ReplayOverlay'
 import { useReplay } from '@/replay/use-replay'
 
@@ -137,6 +138,7 @@ export function App(): React.JSX.Element {
       <ReplayOverlay replay={replay} />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
+      <ReplayEntryProvider value={{ date: replay.date, enter: replay.enter }}>
       <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
       <HotspotPanels
         open={route.open}
@@ -149,6 +151,7 @@ export function App(): React.JSX.Element {
         onClose={close}
       />
       </QueueEntryProvider>
+      </ReplayEntryProvider>
       {queue.state ? (
         <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
       ) : null}
