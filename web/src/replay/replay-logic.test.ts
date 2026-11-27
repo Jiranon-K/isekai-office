@@ -191,7 +191,21 @@ describe('lanes', () => {
     expect(lanes(events)[0]?.waits).toEqual([{ from: at(10), to: at(11) }])
   })
 
-  test('keeps a wait that crosses a gap as one span', () => {
+  test('splits a presence that crosses a gap', () => {
+    const events = [
+      watch(at(9), true),
+      state(at(10), 'a', null, 'working'),
+      watch(at(11), false),
+      watch(at(13), true),
+      state(at(14), 'a', 'working', null)
+    ]
+    expect(lanes(events)[0]?.present).toEqual([
+      { from: at(10), to: at(11) },
+      { from: at(13), to: at(14) }
+    ])
+  })
+
+  test('splits a wait that crosses a gap so nothing is drawn over it', () => {
     const events = [
       watch(at(9), true),
       state(at(11), 'a', null, 'waiting'),
@@ -199,7 +213,10 @@ describe('lanes', () => {
       watch(at(13), true),
       state(at(14), 'a', 'waiting', 'working')
     ]
-    expect(lanes(events)[0]?.waits).toEqual([{ from: at(11), to: at(14) }])
+    expect(lanes(events)[0]?.waits).toEqual([
+      { from: at(11), to: at(12) },
+      { from: at(13), to: at(14) }
+    ])
   })
 
   test('limits the lanes and counts the rest', () => {

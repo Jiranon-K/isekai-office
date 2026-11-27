@@ -171,6 +171,14 @@ function applyToLane(builder: LaneBuilder, event: StateEvent): void {
   }
 }
 
+function clipToWatched(spans: readonly Span[], watched: readonly Span[]): Span[] {
+  return spans.flatMap((span) =>
+    watched
+      .map((window) => ({ from: Math.max(span.from, window.from), to: Math.min(span.to, window.to) }))
+      .filter((piece) => piece.to > piece.from)
+  )
+}
+
 export function lanes(events: readonly DayEvent[]): Lane[] {
   const builders = new Map<string, LaneBuilder>()
   for (const event of events) {
@@ -186,10 +194,12 @@ export function lanes(events: readonly DayEvent[]): Lane[] {
     applyToLane(builder, event)
   }
   const end = events[events.length - 1]?.at ?? 0
+  const watched = watchedSpans(events)
   return [...builders.values()].map((builder) => {
     pushSpan(builder.lane.present, builder.presentFrom, end)
     pushSpan(builder.lane.waits, builder.waitFrom, end)
-    return builder.lane
+    const { lane } = builder
+    return { ...lane, present: clipToWatched(lane.present, watched), waits: clipToWatched(lane.waits, watched) }
   })
 }
 
