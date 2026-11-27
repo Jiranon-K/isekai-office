@@ -1,5 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { describeResult } from '@/agent/panel-logic'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,6 +29,13 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
   const [running, setRunning] = useState(false)
   const latest = useRef(agents)
   latest.current = agents
+  const cancelled = useRef(false)
+  useEffect(() => {
+    cancelled.current = false
+    return () => {
+      cancelled.current = true
+    }
+  }, [])
   const chosen = party.members.filter((member) => canReceive(member) && !unticked.has(member.id))
   const canSend = !running && chosen.length > 0 && text.trim().length > 0
 
@@ -37,9 +44,16 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
     await runBroadcast(
       chosen.map((member) => member.id),
       text.trim(),
-      { latest: (id) => latest.current.find((agent) => agent.id === id) ?? null, send: sendPrompt, report: setRows }
+      {
+        latest: (id) => latest.current.find((agent) => agent.id === id) ?? null,
+        send: sendPrompt,
+        report: setRows,
+        isCancelled: () => cancelled.current
+      }
     )
-    setRunning(false)
+    if (!cancelled.current) {
+      setRunning(false)
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ export type BroadcastDeps = {
   latest(agentId: string): OfficeAgent | null
   send(agentId: string, text: string): Promise<string | null>
   report(rows: BroadcastRow[]): void
+  isCancelled(): boolean
 }
 
 export const GONE_REASON = 'ไม่อยู่ในห้องแล้ว'
@@ -50,11 +51,20 @@ async function sendOne(agentId: string, text: string, deps: BroadcastDeps): Prom
 
 export async function runBroadcast(agentIds: readonly string[], text: string, deps: BroadcastDeps): Promise<BroadcastRow[]> {
   let rows = initialRows(agentIds)
+  if (deps.isCancelled()) {
+    return rows
+  }
   deps.report(rows)
   for (const agentId of agentIds) {
+    if (deps.isCancelled()) {
+      return rows
+    }
     rows = withRow(rows, { agentId, status: 'sending', reason: null })
     deps.report(rows)
     rows = withRow(rows, await sendOne(agentId, text, deps))
+    if (deps.isCancelled()) {
+      return rows
+    }
     deps.report(rows)
   }
   return rows

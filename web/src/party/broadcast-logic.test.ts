@@ -40,7 +40,8 @@ function setup(agents: OfficeAgent[], failures: Record<string, string | Error> =
       sent.push(agentId)
       return null
     },
-    report: (rows) => snapshots.push(rows)
+    report: (rows) => snapshots.push(rows),
+    isCancelled: () => false
   }
   return { live, sent, snapshots, deps }
 }
@@ -67,6 +68,30 @@ describe('runBroadcast', () => {
     const rows = await runBroadcast(['a', 'b'], 'hello', deps)
     expect(sent).toEqual(['a'])
     expect(rows[1]).toEqual({ agentId: 'b', status: 'skipped', reason: SKIP_REASONS.working })
+  })
+
+  test('stops sending to the remaining members once cancelled', async () => {
+    const { sent, snapshots, deps } = setup([agent('a'), agent('b'), agent('c')])
+    let cancelled = false
+    const originalSend = deps.send
+    deps.send = async (agentId, text) => {
+      cancelled = true
+      return originalSend(agentId, text)
+    }
+    deps.isCancelled = () => cancelled
+    const snapshotsAtCancel = snapshots.length
+    await runBroadcast(['a', 'b', 'c'], 'hello', deps)
+    expect(sent).toEqual(['a'])
+    const afterCancel = snapshots.slice(snapshotsAtCancel).filter((rows) => rows.some((row) => row.agentId === 'b' && row.status !== 'idle'))
+    expect(afterCancel).toEqual([])
+  })
+
+  test('a broadcast cancelled before it starts sends nothing and reports nothing', async () => {
+    const { sent, snapshots, deps } = setup([agent('a'), agent('b')])
+    deps.isCancelled = () => true
+    await runBroadcast(['a', 'b'], 'hello', deps)
+    expect(sent).toEqual([])
+    expect(snapshots).toEqual([])
   })
 
   test('a member that left the room is skipped', async () => {
