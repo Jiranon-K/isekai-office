@@ -19,7 +19,7 @@ export const TOOL_NAMES = [
   'Write'
 ]
 
-export const PICKABLE_TOOLS = ['Bash', 'PowerShell', 'Read', 'Edit', 'Write', 'WebFetch', 'WebSearch', 'Glob', 'Grep']
+export const PICKABLE_TOOLS = ['Bash', 'PowerShell', 'Read', 'Edit', 'WebFetch', 'WebSearch']
 
 export const ORDER_PRESETS: OrderPreset[] = [
   { label: 'bun run check', rule: 'Bash(bun run check)' },
@@ -80,7 +80,11 @@ const SECRET_FOLDERS = ['.ssh', '.aws', '.gnupg']
 
 const ALL_GLOB_PATH = /^(?:\/\/|\/|~\/|\.\/)?(?:\*+\/?)*$/
 
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/
+const NOT_PRINTABLE_ASCII = /[^\u0020-\u007e]/
+
+const IGNORED_FIELD_PREFIX = /^(?:command|file_path|notebook_path|url|path):/
+
+const PATHLESS_TOOLS = ['Write', 'Glob', 'Grep', 'NotebookEdit']
 
 const RULE_SHAPE = /^([A-Za-z][A-Za-z0-9_-]*)(?:\((.*)\))?$/
 
@@ -95,6 +99,14 @@ function isKnownTool(tool: string, hasSpecifier: boolean): boolean {
   return !hasSpecifier && MCP_TOOL.test(tool)
 }
 
+function isIgnoredSpecifier(tool: string, specifier: string): boolean {
+  const trimmed = specifier.trim()
+  if (IGNORED_FIELD_PREFIX.test(trimmed) || trimmed.includes(')(')) {
+    return true
+  }
+  return PATHLESS_TOOLS.includes(tool) && trimmed !== '*'
+}
+
 export function parseRule(rule: string): ParsedRule | null {
   const match = RULE_SHAPE.exec(rule)
   if (!match) {
@@ -102,14 +114,14 @@ export function parseRule(rule: string): ParsedRule | null {
   }
   const tool = match[1] ?? ''
   const specifier = match[2] ?? null
-  if (specifier !== null && specifier.trim() === '') {
+  if (specifier !== null && (specifier.trim() === '' || isIgnoredSpecifier(tool, specifier))) {
     return null
   }
   return isKnownTool(tool, specifier !== null) ? { tool, specifier } : null
 }
 
 export function toRule(text: string): string | null {
-  if (text.length > RULE_MAX_LENGTH || CONTROL_CHARACTERS.test(text)) {
+  if (text.length > RULE_MAX_LENGTH || NOT_PRINTABLE_ASCII.test(text)) {
     return null
   }
   const rule = text.trim()

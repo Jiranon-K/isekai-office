@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { buildRule, isTooBroad, ORDER_PRESETS, RULE_MAX_LENGTH, toRule } from './rules'
+import { buildRule, isTooBroad, ORDER_PRESETS, PICKABLE_TOOLS, RULE_MAX_LENGTH, toRule } from './rules'
 
 describe('toRule', () => {
   test('a bare tool and a tool with a pattern are accepted', () => {
@@ -36,6 +36,37 @@ describe('toRule', () => {
     expect(toRule('Bash ls')).toBeNull()
     expect(toRule('')).toBeNull()
     expect(toRule('mcp__github(x)')).toBeNull()
+  })
+})
+
+const IGNORED_RULES = [
+  'Bash(command:rm *)', 'PowerShell(command:Remove-Item *)', 'Read(file_path:./.env)', 'Edit(file_path:src/a.ts)', 'WebFetch(url:https://example.com)',
+  'Grep(path:docs/**)', 'Read(path:docs/**)',
+  'Write(src/**)', 'Write(./a.ts)', 'Glob(src/**)', 'Grep(docs/**)', 'NotebookEdit(a.ipynb)',
+  'Bash(a)(b)', 'Read(a)(b)'
+]
+
+const INVISIBLE_RULES = ['Bash(ls\u200b)', 'Bash(l\u200bs *)', 'Bash(ls\u00a0*)', 'Bash(\u0440m *)', 'Read(./caf\u00e9)', 'Bash(ls\ufeff)']
+
+describe('rules Claude Code ignores', () => {
+  test.each(IGNORED_RULES)('%s is refused', (rule) => {
+    expect(toRule(rule)).toBeNull()
+  })
+
+  test.each(INVISIBLE_RULES)('a rule with a non-ASCII or zero-width character is refused (%#)', (rule) => {
+    expect(toRule(rule)).toBeNull()
+  })
+
+  test('Write, Glob and Grep with only a wildcard and the Edit and Read forms are still accepted', () => {
+    for (const rule of ['Write(*)', 'Glob', 'Grep', 'Edit(src/**)', 'Read(./src/**)', 'Edit(./Finance (2024)/**)']) {
+      expect(toRule(rule)).toBe(rule)
+    }
+  })
+
+  test('the form cannot pick a tool whose path rules are ignored', () => {
+    for (const tool of ['Write', 'Glob', 'Grep', 'NotebookEdit']) {
+      expect(PICKABLE_TOOLS).not.toContain(tool)
+    }
   })
 })
 
@@ -95,7 +126,7 @@ const TOO_BROAD_ALLOW_RULES = [
   'Bash(find *)', 'Bash(r*)', 'Bash(*m *)',
   'PowerShell(Remove-Item *)', 'PowerShell(iex *)', 'PowerShell(Invoke-Expression *)', 'PowerShell(pwsh *)',
   'Edit(//**)', 'Edit(//**/*)', 'Edit(**/*)', 'Edit(/**)', 'Edit(~/**)',
-  'Edit(.claude/**)', 'Edit(./.claude/settings.json)', 'Write(.git/hooks/*)', 'NotebookEdit(**/.claude/*)', 'Edit(~/.claude/settings.json)', 'Edit(//**/.git/**)',
+  'Edit(.claude/**)', 'Edit(./.claude/settings.json)', 'Edit(.git/hooks/*)', 'Edit(**/.claude/*)', 'Edit(~/.claude/settings.json)', 'Edit(//**/.git/**)',
   'NotebookEdit', 'WebFetch', 'Read', 'Agent', 'Skill', 'PowerShell',
   'WebFetch(domain:*)', 'WebFetch(domain:*.com)',
   'Read(//**)', 'Read(~/.ssh/**)'
