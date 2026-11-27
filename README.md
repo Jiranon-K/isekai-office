@@ -71,7 +71,7 @@ Open `http://localhost:4310`. Demo mode serves made-up sessions and cards, so no
 
 ## Use it with real sessions
 
-The live feed reads agent sessions from the [Orca](https://orca.app) desktop app on macOS and their transcripts from `~/.claude/projects`. The quest board reads a task tracker over MCP.
+The live feed reads agent sessions from the [Orca](https://orca.app) desktop app on macOS and their transcripts from `~/.claude/projects`. Without Orca it reads the transcripts alone, see [Run without Orca](#run-without-orca). The quest board reads a task tracker over MCP.
 
 ```bash
 cp .env.example .env.local
@@ -80,6 +80,37 @@ bun run dev
 
 `.env.local` holds `WORKSPACE_URL` (your tracker) and `BOARD_SPACES` (the project keys to show). Without them the room still works and the board shows an error.
 
+`bun run dev` starts the server with `--watch` and Vite, on any OS, and stops both when you press Ctrl+C. On macOS `bun run dev:service` keeps the old flow that pauses the launchd service while you develop.
+
+## Run without Orca
+
+On Windows, Linux, or a Mac without Orca, the room reads the transcripts Claude Code writes to `~/.claude/projects`. Nothing else has to be installed.
+
+```bash
+SESSION_SOURCE=local bun run start
+```
+
+`SESSION_SOURCE` is `orca`, `local` or `auto`. `auto` is the default: Orca when its binary exists, otherwise the local source. `LOCAL_RECENT_MINUTES` (default 60) is how long a session stays in the room after its last write.
+
+What the local source can do:
+
+- Every Claude Code session you started in any folder shows up within a tick of its first write, titled by its name or summary, and leaves the room after `LOCAL_RECENT_MINUTES` of silence.
+- A session whose last message is from Claude with no tool call is `done`. One with a tool call or a prompt in flight is `working`, at the station for that tool.
+- Chat history opens as usual.
+- It is read only. The composer, quick reply, compact button and the new session form are disabled with the reason, and `POST /api/command` and `POST /api/spawn` answer `409 read_only_source`. Answering prompts or starting sessions needs a terminal the server owns, which is a follow-up.
+
+### Know when Claude is waiting for you
+
+A transcript cannot tell a tool that is running from one stopped at a permission prompt. Claude Code hooks can. Print the snippet:
+
+```bash
+bun run hooks
+```
+
+and paste the `hooks` object it prints into `~/.claude/settings.json`, merging it with hooks you already have. The command only prints; it never edits that file. Each hook runs `scripts/hook.ts`, which posts the event to the room and always exits 0 within a second, so a closed room never fails a Claude Code turn. If the room is not on port 4300, set `ISEKAI_PORT` where Claude Code runs.
+
+With the hooks in place a permission prompt turns the character to `waiting`, answering it turns it back to `working`, and an idle notification leaves a finished session at the bar. Without them everything else still works; the room just never shows `waiting`.
+
 ## Project layout
 
 ```
@@ -87,7 +118,7 @@ server/            Bun HTTP server, one process
   main.ts            routes and static files
   guard.ts           only local requests get in
   feeds/             what the browser asks for: office, board, demo data
-  sources/           where the data comes from: Orca, transcripts, tracker, GitLab
+  sources/           where the data comes from: Orca, local transcripts, hook hints, tracker, GitLab
 shared/types.ts    types used by both sides
 web/src/
   App.tsx            wires the room, the panels and the route together
@@ -101,7 +132,7 @@ web/src/
   components/        shared UI pieces
   lib/               api client, route, theme
 design/            room art scripts and the visual philosophy
-scripts/           dev server and launchd install
+scripts/           dev server, Claude Code hook client, launchd install
 ```
 
 Tests sit next to the file they test (`*.test.ts`).
