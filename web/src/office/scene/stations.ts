@@ -1,7 +1,9 @@
+import { stationForTool, type StationId } from '@shared/stations'
 import type { OfficeAgent } from '@shared/types'
 import type { Facing, Spot } from './layout'
 
-export type StationId = 'desk' | 'archive' | 'crystal' | 'forge'
+export { stationForTool }
+export type { StationId }
 export type GroupId = StationId | 'queue' | 'bar'
 
 export const STATION_IDS: readonly StationId[] = ['desk', 'archive', 'crystal', 'forge']
@@ -31,40 +33,6 @@ export const SPOT_GROUPS: Record<GroupId, readonly Spot[]> = {
   forge: row([32, 34, 36, 38], 5, 'up'),
   queue: [...row([17, 18, 19, 20, 21, 22], 6, 'up'), ...row([17, 18, 19, 20, 21, 22], 9, 'up')],
   bar: [...row([25, 27, 29, 31, 33, 35], 17, 'up', true), ...row([24, 26, 28, 30, 32, 34], 20, 'up')],
-}
-
-const DESK_TOOLS: ReadonlySet<string> = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit'])
-const ARCHIVE_TOOLS: ReadonlySet<string> = new Set(['Read', 'Grep', 'Glob', 'LS'])
-const CRYSTAL_TOOLS: ReadonlySet<string> = new Set([
-  'WebSearch',
-  'WebFetch',
-  'ToolSearch',
-  'TodoWrite',
-  'Agent',
-  'Task',
-  'Skill',
-  'AskUserQuestion',
-])
-const CRYSTAL_PREFIXES: readonly string[] = ['mcp__notion', 'mcp__claude_ai_']
-
-function isWorkspaceTool(tool: string): boolean {
-  return tool.startsWith('mcp__') && tool.includes('workspace')
-}
-
-export function stationForTool(tool: string | null): StationId {
-  if (!tool) {
-    return 'forge'
-  }
-  if (DESK_TOOLS.has(tool)) {
-    return 'desk'
-  }
-  if (ARCHIVE_TOOLS.has(tool)) {
-    return 'archive'
-  }
-  if (CRYSTAL_TOOLS.has(tool) || isWorkspaceTool(tool) || CRYSTAL_PREFIXES.some((prefix) => tool.startsWith(prefix))) {
-    return 'crystal'
-  }
-  return 'forge'
 }
 
 export function groupForAgent(agent: Pick<OfficeAgent, 'state' | 'tool'>): GroupId {
