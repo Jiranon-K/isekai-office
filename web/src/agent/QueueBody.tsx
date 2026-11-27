@@ -7,7 +7,7 @@ import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
 import { decisionLocked } from './panel-logic'
 import { QueueComposer } from './QueueComposer'
 import { QueueHeader } from './QueueHeader'
-import { canAct, type QueueKey, type QueueState } from './queue-logic'
+import { canAct, loadedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
 import { useCommand } from './use-command'
 import type { PrefetchedSession } from './use-prefetched-session'
 import { useQueueKeys } from './use-queue-keys'
@@ -42,8 +42,9 @@ function QueueHints(): React.JSX.Element {
 
 function useQueueSession(agent: OfficeAgent, prefetched: PrefetchedSession | null): ReturnType<typeof useSession> {
   const live = useSession(agent)
-  if (live.data || prefetched?.agentId !== agent.id) {
-    return live
+  const data = loadedScreen(live.data, live.loadedFor, agent.updatedAt)
+  if (data || prefetched?.agentId !== agent.id) {
+    return { ...live, data, loading: data === null && live.error === null ? true : live.loading }
   }
   return { ...live, data: prefetched.detail, loading: false }
 }
@@ -60,6 +61,11 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
   const canWrite = agent.terminal !== null
   const needsComposer = canWrite && agent.state === 'blocked' && choices.length === 0
   const screenLoaded = session.data !== null || session.error !== null
+  const arrival = useRef<{ screenFor: number | null; at: number }>({ screenFor: null, at: 0 })
+  const screenFor = screen === null ? null : agent.updatedAt
+  if (arrival.current.screenFor !== screenFor) {
+    arrival.current = { screenFor, at: Date.now() }
+  }
 
   useEffect(() => {
     if (command.status.kind !== 'sent') {
@@ -89,7 +95,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
       onExpand(agent.id)
       return
     }
-    if (!canAct(state, Date.now(), screenLoaded) || locked) {
+    if (!canAct(restartGuard(state, arrival.current.at), Date.now(), screenLoaded) || locked) {
       return
     }
     if (key.kind === 'skip') {

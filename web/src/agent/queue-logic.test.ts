@@ -8,8 +8,10 @@ import {
   forgetGone,
   isQueueOpenKey,
   keyFor,
+  loadedScreen,
   nextOf,
   queueOrder,
+  restartGuard,
   settle,
   startQueue,
   type QueueKeyEvent,
@@ -255,5 +257,27 @@ describe('open key', () => {
 
   test('ignores other keys', () => {
     expect(isQueueOpenKey(press('b'), false, false)).toBe(false)
+  })
+})
+
+describe('loaded screen', () => {
+  test('is used only when it was fetched for the current agent update', () => {
+    expect(loadedScreen('P1', 100, 100)).toBe('P1')
+    expect(loadedScreen('P1', 100, 200)).toBeNull()
+    expect(loadedScreen('P1', null, 200)).toBeNull()
+    expect(loadedScreen(null, 200, 200)).toBeNull()
+  })
+
+  test('a prompt that changed under the card cannot be answered', () => {
+    const shown = state('a', [], 0)
+    const stale = loadedScreen('P1', 100, 200)
+    expect(canAct(shown, 10_000, stale !== null)).toBe(false)
+  })
+
+  test('a new screen restarts the 400 ms guard', () => {
+    const shown = state('a', [], 0)
+    expect(canAct(restartGuard(shown, 5000), 5100, true)).toBe(false)
+    expect(canAct(restartGuard(shown, 5000), 5400, true)).toBe(true)
+    expect(restartGuard(shown, -1)).toBe(shown)
   })
 })

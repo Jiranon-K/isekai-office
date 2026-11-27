@@ -4,21 +4,26 @@ import { fetchSession, type Loadable } from '@/lib/api'
 
 const SESSION_REFRESH_MS = 5000
 
-export function useSession(agent: OfficeAgent): Loadable<SessionDetail> & { retry(): void } {
-  const [state, setState] = useState<Loadable<SessionDetail>>({ data: null, error: null, loading: true })
+type LoadedSession = Loadable<SessionDetail> & { loadedFor: number | null }
+
+const EMPTY_SESSION: LoadedSession = { data: null, error: null, loading: true, loadedFor: null }
+
+export function useSession(agent: OfficeAgent): LoadedSession & { retry(): void } {
+  const [state, setState] = useState<LoadedSession>(EMPTY_SESSION)
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    setState({ data: null, error: null, loading: true })
+    setState(EMPTY_SESSION)
   }, [agent.id])
 
   useEffect(() => {
     let cancelled = false
+    const requestedFor = agent.updatedAt
     async function load(): Promise<void> {
       try {
         const data = await fetchSession(agent.id)
         if (!cancelled) {
-          setState({ data, error: null, loading: false })
+          setState({ data, error: null, loading: false, loadedFor: requestedFor })
         }
       } catch (error) {
         if (!cancelled) {

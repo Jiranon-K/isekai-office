@@ -119,6 +119,14 @@ export function canAct(state: QueueState, now: number, screenLoaded: boolean): b
   return now - state.shownAt >= ACT_DELAY_MS
 }
 
+export function loadedScreen<Screen>(screen: Screen | null, loadedFor: number | null, updatedAt: number): Screen | null {
+  return screen !== null && loadedFor === updatedAt ? screen : null
+}
+
+export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
+  return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
+}
+
 export function isQueueOpenKey(event: QueueKeyEvent, typing: boolean, boardOpen: boolean): boolean {
   if (event.key !== OPEN_KEY || typing || boardOpen) {
     return false
