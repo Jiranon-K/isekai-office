@@ -220,6 +220,18 @@ describe('the real server route', () => {
     expect(reply.status).toBe(413)
   })
 
+  test('a command on a read only source is refused with 409 read_only_source', async () => {
+    const reply = await postTo(server, '/api/command', JSON.stringify({ agentId: 'a', action: 'allow' }))
+    expect(reply.status).toBe(409)
+    expect(await reply.json()).toEqual({ ok: false, error: 'read_only_source' })
+  })
+
+  test('a spawn on a read only source is refused with 409 read_only_source', async () => {
+    const reply = await postTo(server, '/api/spawn', JSON.stringify({ repo: 'x', name: 'y' }))
+    expect(reply.status).toBe(409)
+    expect(await reply.json()).toEqual({ ok: false, error: 'read_only_source' })
+  })
+
   test('a session id over 128 characters is a bad request', async () => {
     const reply = await postTo(server, '/api/hook', JSON.stringify({ session_id: 'a'.repeat(129), hook_event_name: 'Stop' }))
     expect(reply.status).toBe(400)
