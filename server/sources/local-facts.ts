@@ -34,7 +34,7 @@ function lastStringField(lines: string[], needle: string, type: string | null, f
   return null
 }
 
-function titleFrom(lines: string[]): string | null {
+export function titleFrom(lines: string[]): string | null {
   for (const [type, field] of TITLE_FIELDS) {
     const found = lastStringField(lines, `"${type}"`, type, field)
     if (found) {
@@ -44,8 +44,8 @@ function titleFrom(lines: string[]): string | null {
   return null
 }
 
-export function localFacts(lines: string[]): LocalFacts {
+export function localFacts(lines: string[], knownTitle: string | null = null): LocalFacts {
   const cwd = lastStringField(lines, '"cwd"', null, 'cwd')
-  const title = titleFrom(lines) ?? (cwd ? baseNameOf(cwd) : null)
+  const title = titleFrom(lines) ?? knownTitle ?? (cwd ? baseNameOf(cwd) : null)
   return { cwd, title, contextTokens: parseTranscriptTail(lines.join('\n')).contextTokens }
 }

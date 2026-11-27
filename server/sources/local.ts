@@ -2,7 +2,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { OfficeAgent, SessionDetail } from '@shared/types'
 import { historyAt } from './history'
-import { baseNameOf, localFacts, type LocalFacts } from './local-facts'
+import { baseNameOf, localFacts, titleFrom, type LocalFacts } from './local-facts'
 import { createRecentFiles, type RecentFile, type RecentFilesOptions } from './recent-files'
 import { applyHint, hintStore, type HintStore } from './hints'
 import { stateFromTail, toolFromTail } from './session-state'
@@ -32,6 +32,7 @@ export function createLocalSource(options: LocalOptions): SessionSource {
   const hints = options.hints ?? hintStore
   const recent = createRecentFiles({ refreshMs: REFRESH_MS, ...options })
   const cache = new Map<string, Snapshotted>()
+  const titles = new Map<string, string>()
 
   async function analyse(file: RecentFile): Promise<Snapshotted> {
     const key = `${file.modifiedAt}:${file.size}`
@@ -41,7 +42,11 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     }
     const lines = await readLines(file)
     const state = stateFromTail(lines)
-    const analysed = { key, facts: localFacts(lines), state, tool: state === 'working' ? toolFromTail(lines) : null }
+    const foundTitle = titleFrom(lines)
+    if (foundTitle) {
+      titles.set(file.path, foundTitle)
+    }
+    const analysed = { key, facts: localFacts(lines, titles.get(file.path) ?? null), state, tool: state === 'working' ? toolFromTail(lines) : null }
     cache.set(file.path, analysed)
     return analysed
   }
@@ -51,6 +56,7 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     for (const path of cache.keys()) {
       if (!live.has(path)) {
         cache.delete(path)
+        titles.delete(path)
       }
     }
   }

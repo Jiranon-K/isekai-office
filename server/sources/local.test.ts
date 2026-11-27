@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
+import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OfficeAgent } from '@shared/types'
@@ -165,5 +165,22 @@ describe('recent window setting', () => {
     for (const value of [undefined, '', 'abc', '0', '-1']) {
       expect(recentMsFrom(value)).toBe(60 * MINUTE_MS)
     }
+  })
+})
+
+describe('local source title memory', () => {
+  test('a title that scrolled out of the tail is kept for the file', async () => {
+    const folder = join(projectsDir, 'folder-title-memory')
+    await mkdir(folder, { recursive: true })
+    const path = join(folder, 'sess-title.jsonl')
+    const opening = [line({ type: 'custom-title', customTitle: 'Ship it' }), line({ type: 'user', cwd: '/p/app', message: { content: 'hi' } })]
+    await writeFile(path, `${opening.join('\n')}\n`)
+    const source = sourceOver()
+    const first = (await source.listAgents()).find((agent) => agent.id === 'sess-title')
+    expect(first?.title).toBe('Ship it')
+    const filler = line({ type: 'user', cwd: '/p/app', message: { content: 'x'.repeat(2000) } })
+    await appendFile(path, `${Array(200).fill(filler).join('\n')}\n${assistantEnd('/p/app')}\n`)
+    const second = (await source.listAgents()).find((agent) => agent.id === 'sess-title')
+    expect(second?.title).toBe('Ship it')
   })
 })
