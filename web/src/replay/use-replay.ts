@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { parseReplay, type PanelId } from '@/lib/route'
 import type { GroupId } from '@/office/scene/stations'
 import { clampAt, snapsActors, type ReplaySpeed } from './playback-logic'
+import { reuseAgents } from './replay-stable'
 import { agentsAt, groupOfReplay, nextEventAt, previousEventAt, toOfficeAgent, type ReplayAgent, type ReplayDay } from './replay-logic'
 import { useReplayDay } from './use-replay-day'
 import { useReplayKeys } from './use-replay-keys'
@@ -53,7 +54,10 @@ export function useReplay(panel: PanelBridge): Replay {
   const events = loaded.status === 'ready' ? loaded.events : null
   const at = day ? clampAt(day, position.at ?? day.start) : 0
 
-  const folded = useMemo(() => (events ? agentsAt(events, at) : []), [events, at])
+  const foldedNow = useMemo(() => (events ? agentsAt(events, at) : []), [events, at])
+  const previousFolded = useRef<ReplayAgent[]>([])
+  const folded = reuseAgents(previousFolded.current, foldedNow)
+  previousFolded.current = folded
   const agents = useMemo(() => folded.map(toOfficeAgent), [folded])
   const groupOf = useMemo(() => groupOfReplay(folded), [folded])
   const picked = folded.find((agent) => agent.agentId === pickedId) ?? null
