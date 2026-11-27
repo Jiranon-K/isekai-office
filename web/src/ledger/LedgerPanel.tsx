@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Ledger } from '@shared/ledger'
 import { Button } from '@/components/ui/button'
 import { PanelNote } from '@/room-panels/SessionList'
-import { dateOfDay, formatGold, formatMoney, NO_PRICE_NOTE, unpricedNoteOf, type LedgerDay } from './ledger-logic'
+import { formatGold, formatMoney, NO_PRICE_NOTE, unpricedNoteOf, type LedgerDay } from './ledger-logic'
 import { LedgerRowItem } from './LedgerRowItem'
 import { useLedger } from './use-ledger'
 
@@ -27,6 +27,7 @@ function Body({ ledger }: { ledger: Ledger }): React.JSX.Element {
   const note = unpricedNoteOf(ledger)
   return (
     <>
+      <p className="font-mono text-caption text-muted-foreground">{ledger.date}</p>
       <Total ledger={ledger} />
       <p className="text-caption text-muted-foreground">{NO_PRICE_NOTE}</p>
       {note ? <p className="text-caption text-tint-amber-fg">{note}</p> : null}
@@ -45,7 +46,7 @@ function Body({ ledger }: { ledger: Ledger }): React.JSX.Element {
 
 export function LedgerPanel(): React.JSX.Element {
   const [day, setDay] = useState<LedgerDay>('today')
-  const ledger = useLedger(dateOfDay(day))
+  const ledger = useLedger(day)
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1">

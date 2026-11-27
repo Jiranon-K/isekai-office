@@ -1,7 +1,5 @@
-import { goldOf, localDay, type Ledger, type TokenTotals } from '@shared/ledger'
+import { goldOf, type Ledger, type TokenTotals } from '@shared/ledger'
 import type { Loadable } from '@/lib/api'
-
-const DAY_MS = 24 * 60 * 60 * 1000
 
 export type LedgerState = Loadable<Ledger> & { date: string }
 
@@ -9,8 +7,8 @@ export type LedgerDay = 'today' | 'yesterday'
 
 export const NO_PRICE_NOTE = 'มูลค่าเทียบราคา API ถ้าใช้แพ็กเกจรายเดือนจะไม่ได้ถูกเก็บเงินตามนี้'
 
-export function dateOfDay(day: LedgerDay, now = Date.now()): string {
-  return localDay(new Date(day === 'today' ? now : now - DAY_MS))
+export function ledgerQuery(dayOrDate: string): string {
+  return dayOrDate === 'today' || dayOrDate === 'yesterday' ? `day=${dayOrDate}` : `date=${encodeURIComponent(dayOrDate)}`
 }
 
 export function formatGold(cost: number): string {

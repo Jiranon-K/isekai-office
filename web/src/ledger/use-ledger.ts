@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Ledger } from '@shared/ledger'
 import type { Loadable } from '@/lib/api'
-import { startLoading, type LedgerState } from './ledger-logic'
+import { ledgerQuery, startLoading, type LedgerState } from './ledger-logic'
 
-export async function fetchLedger(date: string): Promise<Ledger> {
-  const response = await fetch(`/api/ledger?date=${encodeURIComponent(date)}`)
+export async function fetchLedger(dayOrDate: string): Promise<Ledger> {
+  const response = await fetch(`/api/ledger?${ledgerQuery(dayOrDate)}`)
   if (!response.ok) {
     throw new Error('ledger_unavailable')
   }

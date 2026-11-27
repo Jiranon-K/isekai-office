@@ -158,6 +158,17 @@ describe('GET /api/ledger', () => {
     expect(mostRunning).toBe(1)
   })
 
+  test('the server decides today and yesterday from its own clock', async () => {
+    const before = new Date()
+    const yesterday = new Date(before.getFullYear(), before.getMonth(), before.getDate() - 1)
+    const dateOf = async (query: string, demo = false) => ((await (await ask(`/api/ledger?${query}`, demo))?.json()) as Ledger).date
+    expect(await dateOf('day=today')).toBe(today())
+    expect(await dateOf('day=yesterday')).toBe(localDay(yesterday))
+    expect(await dateOf('day=yesterday', true)).toBe(localDay(yesterday))
+    expect(await dateOf('date=2026-05-10&day=today')).toBe('2026-05-10')
+    expect((await ask('/api/ledger?day=tomorrow'))?.status).toBe(400)
+  })
+
   test('demo mode serves one unpriced row', async () => {
     const ledger = (await (await ask('/api/ledger', true))?.json()) as Ledger
     expect(ledger.rows.length).toBeGreaterThan(1)

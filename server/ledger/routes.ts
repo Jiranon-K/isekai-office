@@ -10,13 +10,25 @@ function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
 }
 
+function requestedDate(url: URL): string | null {
+  const explicit = url.searchParams.get('date')
+  if (explicit !== null) {
+    return explicit
+  }
+  const day = url.searchParams.get('day') ?? 'today'
+  const now = new Date()
+  if (day === 'today') {
+    return localDay(now)
+  }
+  return day === 'yesterday' ? localDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)) : null
+}
+
 export async function handleLedger(url: URL, context: LedgerContext): Promise<Response | null> {
   if (url.pathname !== '/api/ledger') {
     return null
   }
-  const requested = url.searchParams.get('date')
-  const date = requested ?? localDay(new Date())
-  if (!isDayDate(date) || startOfDay(date) === null) {
+  const date = requestedDate(url)
+  if (date === null || !isDayDate(date) || startOfDay(date) === null) {
     return json({ error: 'bad_date' }, 400)
   }
   if (context.demo) {

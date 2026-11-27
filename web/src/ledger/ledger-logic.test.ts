@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { Ledger, LedgerRow } from '@shared/ledger'
-import { dateOfDay, formatGold, formatMoney, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote, unpricedNoteOf, startLoading } from './ledger-logic'
+import { formatGold, formatMoney, ledgerQuery, formatTokenCount, sessionCost, tokenBreakdown, unpricedNote, unpricedNoteOf, startLoading } from './ledger-logic'
 
 const TOKENS = { input: 1, output: 2, cacheRead: 3, cacheWrite5m: 4, cacheWrite1h: 5 }
 
@@ -44,11 +44,11 @@ describe('ledger formatting', () => {
   })
 })
 
-describe('days', () => {
-  test('yesterday is one calendar day before today', () => {
-    const now = new Date(2026, 4, 10, 12).getTime()
-    expect(dateOfDay('today', now)).toBe('2026-05-10')
-    expect(dateOfDay('yesterday', now)).toBe('2026-05-09')
+describe('ledgerQuery', () => {
+  test('today and yesterday are left to the server and a date is sent as it is', () => {
+    expect(ledgerQuery('today')).toBe('day=today')
+    expect(ledgerQuery('yesterday')).toBe('day=yesterday')
+    expect(ledgerQuery('2026-05-10')).toBe('date=2026-05-10')
   })
 })
 
