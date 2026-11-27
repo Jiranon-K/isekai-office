@@ -72,7 +72,7 @@ export function createLedgerBuilder(options: LedgerBuilderOptions): { build(date
   }
 
   async function rowsOf(file: RecentFile, date: string, agents: OfficeAgent[], pricing: Pricing | null, counted: Set<string>): Promise<LedgerRow[]> {
-    const state = await reader.read(file.path, file.size)
+    const state = await reader.read(file.path, file.size, file.modifiedAt)
     const models = totalsForDay(state, date, counted)
     if (models.size === 0) {
       return []

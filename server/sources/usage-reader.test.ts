@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { appendFileSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { totalsForDay } from './usage'
@@ -27,6 +27,10 @@ function sizeOfFile(): number {
 
 function inputOf(state: Awaited<ReturnType<ReturnType<typeof createUsageReader>['read']>>): number | undefined {
   return totalsForDay(state, DAY).get('claude-sonnet-x')?.input
+}
+
+function digits(value: number) {
+  return { input: value, output: 1, cacheRead: 1, cacheWrite5m: 1, cacheWrite1h: 1 }
 }
 
 describe('usage reader', () => {
@@ -70,6 +74,31 @@ describe('usage reader', () => {
     writeFileSync(path, `${assistantLine('m9', NOON, usageOfSize(5))}\n`)
     expect(inputOf(await reader.read(path, sizeOfFile()))).toBe(5)
     expect(reader.offsetOf(path)).toBe(sizeOfFile())
+  })
+
+  test('a file rewritten at the same size is read again when its modified time changed', async () => {
+    const reader = createUsageReader()
+    writeFileSync(path, `${assistantLine('m1', NOON, digits(1))}
+`)
+    utimesSync(path, new Date(2026, 4, 10, 8), new Date(2026, 4, 10, 8))
+    expect(inputOf(await reader.read(path, sizeOfFile(), statSync(path).mtimeMs))).toBe(1)
+    writeFileSync(path, `${assistantLine('m1', NOON, digits(2))}
+`)
+    utimesSync(path, new Date(2026, 4, 10, 9), new Date(2026, 4, 10, 9))
+    expect(inputOf(await reader.read(path, sizeOfFile(), statSync(path).mtimeMs))).toBe(2)
+  })
+
+  test('a file replaced by a longer one with other first bytes is read again from the start', async () => {
+    const reader = createUsageReader()
+    const header = (note: string) => `${JSON.stringify({ type: 'user', note })}
+`
+    writeFileSync(path, `${header('aaaa')}${assistantLine('m1', NOON, usageOfSize(1))}
+`)
+    expect(inputOf(await reader.read(path, sizeOfFile(), statSync(path).mtimeMs))).toBe(1)
+    writeFileSync(path, `${header('bbbb')}${assistantLine('m7', NOON, usageOfSize(7))}
+${assistantLine('m8', NOON, usageOfSize(8))}
+`)
+    expect(inputOf(await reader.read(path, sizeOfFile(), statSync(path).mtimeMs))).toBe(15)
   })
 
   test('a broken line in the middle is skipped', async () => {
