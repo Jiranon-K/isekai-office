@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendSpawn, useRepos } from '@/lib/api'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
-import { buildSpawnRequest, EMPTY_FIELDS, hasProblem, spawnProblems, type SpawnFields } from './spawn-logic'
+import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, hasProblem, shouldConfirmReplace, spawnProblems, type SpawnFields } from './spawn-logic'
+import { TemplatePicker } from './TemplatePicker'
+import { useTemplates } from './use-templates'
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'failed'; reason: string }
 
@@ -36,6 +38,9 @@ function statusLine(status: Status): React.JSX.Element | null {
 
 function SpawnFields(): React.JSX.Element {
   const repos = useRepos()
+  const templates = useTemplates()
+  const [templateId, setTemplateId] = useState('')
+  const [lastFilled, setLastFilled] = useState('')
   const [fields, setFields] = useState<SpawnFields>(EMPTY_FIELDS)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [touched, setTouched] = useState(false)
@@ -47,6 +52,21 @@ function SpawnFields(): React.JSX.Element {
   const change = (patch: Partial<SpawnFields>): void => {
     setFields({ ...current, ...patch })
     setStatus({ kind: 'idle' })
+  }
+
+  function pickTemplate(id: string): void {
+    const template = templates.templates?.find((item) => item.id === id)
+    if (!template) {
+      setTemplateId('')
+      return
+    }
+    if (shouldConfirmReplace(current.prompt, lastFilled) && !window.confirm('แทนที่ prompt ที่พิมพ์ไว้?')) {
+      return
+    }
+    const applied = applyTemplate(current, template, list.find((repo) => repo.id === repoId)?.name ?? '')
+    setTemplateId(id)
+    setLastFilled(applied.prompt)
+    change(applied)
   }
 
   async function submit(event: React.FormEvent): Promise<void> {
@@ -62,6 +82,8 @@ function SpawnFields(): React.JSX.Element {
       return
     }
     setFields(EMPTY_FIELDS)
+    setTemplateId('')
+    setLastFilled('')
     setTouched(false)
     setStatus({ kind: 'sent' })
   }
@@ -106,6 +128,15 @@ function SpawnFields(): React.JSX.Element {
           placeholder="origin/main"
           aria-invalid={touched && problems.baseBranch}
           onChange={(event) => change({ baseBranch: event.target.value })}
+        />
+      </Field>
+      <Field label="แม่แบบ" hint={templates.error ? 'อ่านแม่แบบไม่ได้' : undefined}>
+        <TemplatePicker
+          templates={templates.templates ?? []}
+          selectedId={templateId}
+          disabled={sending}
+          className={FIELD_CLASS}
+          onPick={pickTemplate}
         />
       </Field>
       <Field label="prompt แรก (ไม่ใส่ก็ได้)" hint={`ไม่เกิน ${PROMPT_MAX} ตัวอักษร`}>
