@@ -117,6 +117,18 @@ describe('restoreRing', () => {
     expect(ring.map((event) => event.agentId)).toEqual(['a'])
   })
 
+  test('a failed prune loses no event and is retried on a later write', async () => {
+    const stuck = join(logDirectory(), '2026-01-01.jsonl')
+    await mkdir(stuck, { recursive: true })
+    await recordWatch(true, NOW)
+    await recordTick([agentAt('a', 'waiting')], snapshotOf([agentAt('a', 'done')], NOW + 1))
+    expect((await readDay(TODAY)).events.map((event) => event.kind)).toEqual(['watch', 'state'])
+    await rm(stuck, { recursive: true })
+    await appendDayEvents('2026-01-01', [{ kind: 'watch', at: 1, on: true }])
+    await recordWatch(false, NOW + 2)
+    expect(await listDays()).toEqual([TODAY])
+  })
+
   test('the date rolling over prunes again on the next write', async () => {
     process.env.LOG_KEEP_DAYS = '3'
     await restoreRing(NOW)

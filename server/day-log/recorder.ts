@@ -23,8 +23,12 @@ async function pruneOnNewDate(at: number): Promise<void> {
   if (date === prunedOn) {
     return
   }
-  prunedOn = date
-  await pruneDays(at)
+  try {
+    await pruneDays(at)
+    prunedOn = date
+  } catch (error) {
+    console.error('day log prune:', error)
+  }
 }
 
 async function write(at: number, states: DayEvent[], stations: DayEvent[]): Promise<void> {
