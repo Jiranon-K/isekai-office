@@ -1,4 +1,4 @@
-import { addTokens, emptyTokens, localDay, type TokenTotals } from '@shared/ledger'
+import { addTokens, emptyTokens, localDay, sumTokens, type TokenTotals } from '@shared/ledger'
 
 export type Usage = { id: string; model: string; day: string; tokens: TokenTotals }
 
@@ -73,6 +73,10 @@ export function addUsage(state: UsageState, usage: Usage): void {
   state.entries.set(usage.id, usage)
 }
 
+function withoutEmpty(totals: Map<string, TokenTotals>): Map<string, TokenTotals> {
+  return new Map([...totals].filter(([, tokens]) => sumTokens(tokens) > 0))
+}
+
 export function totalsForDay(state: UsageState, day: string, counted: Set<string> = new Set()): Map<string, TokenTotals> {
   const combined = new Map<string, TokenTotals>()
   for (const usage of state.entries.values()) {
@@ -82,5 +86,5 @@ export function totalsForDay(state: UsageState, day: string, counted: Set<string
     counted.add(usage.id)
     combined.set(usage.model, addTokens(combined.get(usage.model) ?? emptyTokens(), usage.tokens))
   }
-  return combined
+  return withoutEmpty(combined)
 }

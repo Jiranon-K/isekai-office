@@ -84,3 +84,12 @@ describe('message ids across lines and files', () => {
     expect(secondFile.get('claude-sonnet-x')?.input).toBe(5)
   })
 })
+
+describe('empty usage', () => {
+  const nothing = { input: 0, output: 0, cacheRead: 0, cacheWrite5m: 0, cacheWrite1h: 0 }
+
+  test('a synthetic or zero token line leaves no model entry', () => {
+    const state = feed([assistantLine('a', NOON, nothing, '<synthetic>'), assistantLine('b', NOON, nothing), assistantLine('c', NOON, usageOfSize(1), 'real')])
+    expect([...totalsForDay(state, '2026-05-10').keys()]).toEqual(['real'])
+  })
+})
