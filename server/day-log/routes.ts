@@ -9,7 +9,7 @@ function json(body: unknown, status = 200): Response {
 
 async function daysOf(demo: boolean): Promise<LogDays> {
   const days = demo ? [demoDayDate()] : await listDays()
-  return { days, directory: logDirectory(), keepDays: keepDays() }
+  return { days, directory: demo ? '' : logDirectory(), keepDays: keepDays() }
 }
 
 async function dayOf(date: string | null, demo: boolean): Promise<Response> {

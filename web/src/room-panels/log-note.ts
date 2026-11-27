@@ -4,7 +4,7 @@ import type { LogDays } from '@shared/day-log'
 const WATCH_NOTE = 'บันทึกเฉพาะตอนมีแท็บเปิดอยู่ (ถ้าเปลี่ยนตอนไม่มีแท็บ จะลงเวลาที่แท็บเชื่อมต่อ)'
 
 export function logNote(location: Pick<LogDays, 'directory' | 'keepDays'> | null): string {
-  if (!location) {
+  if (!location || location.directory === '') {
     return WATCH_NOTE
   }
   return `${WATCH_NOTE} บันทึกเก็บไว้ที่ ${location.directory} เป็นเวลา ${location.keepDays} วัน`

@@ -11,6 +11,10 @@ describe('logNote', () => {
     expect(logNote(null)).not.toContain('เก็บไว้ที่')
   })
 
+  test('says nothing about a folder when the directory is empty', () => {
+    expect(logNote({ directory: '', keepDays: 14 })).toBe(logNote(null))
+  })
+
   test('no longer says the log is empty after a restart', () => {
     expect(logNote(null)).not.toContain('ว่างเมื่อ server เริ่มใหม่')
   })

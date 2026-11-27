@@ -45,6 +45,7 @@ describe('GET /api/log/days', () => {
   test('demo mode lists the one made-up day and touches no disk', async () => {
     const body = (await (await get('/api/log/days', true)).json()) as LogDays
     expect(body.days).toEqual([demoDay().date])
+    expect(body.directory).toBe('')
   })
 })
 
