@@ -17,7 +17,7 @@ function orcaHealth(office: Loadable<OfficeSnapshot>): Health {
   if (!office.data) {
     return { label: 'ยังไม่ทราบ', ok: false }
   }
-  return office.data.orcaRunning ? { label: 'ทำงานอยู่', ok: true } : { label: 'ปิดอยู่', ok: false }
+  return office.data.sourceReady ? { label: 'ทำงานอยู่', ok: true } : { label: 'ปิดอยู่', ok: false }
 }
 
 function HealthRow({ name, health }: { name: string; health: Health }): React.JSX.Element {

@@ -54,7 +54,7 @@ function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now:
 
 function officeSnapshot(): OfficeSnapshot {
   const now = Date.now()
-  return { orcaRunning: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, quietAfterMs: 10 * MINUTE, error: null, at: now }
+  return { sourceReady: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, quietAfterMs: 10 * MINUTE, error: null, at: now }
 }
 
 type CardSeed = [key: string, title: string, column: QuestCard['column'], route: string, loop: string | null, extra?: Partial<QuestCard>]

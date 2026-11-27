@@ -17,7 +17,7 @@ export type OfficeAgent = {
 }
 
 export type OfficeSnapshot = {
-  orcaRunning: boolean
+  sourceReady: boolean
   agents: OfficeAgent[]
   contextWindow: number
   quietAfterMs: number

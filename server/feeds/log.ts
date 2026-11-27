@@ -29,7 +29,7 @@ export function appendEvents(log: LogEvent[], events: LogEvent[], limit = LOG_LI
 }
 
 export function recordSnapshot(state: LogState, snapshot: OfficeSnapshot): LogState {
-  if (!snapshot.orcaRunning || snapshot.error) {
+  if (!snapshot.sourceReady || snapshot.error) {
     return state
   }
   if (state.agents === null) {

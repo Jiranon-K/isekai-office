@@ -26,19 +26,19 @@ export function quietAfterMsFrom(value: string | undefined): number {
 const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
 const quietAfterMs = quietAfterMsFrom(process.env.QUIET_AFTER_MINUTES)
 
-let latest: OfficeSnapshot = { orcaRunning: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
+let latest: OfficeSnapshot = { sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
 let logState = EMPTY_LOG_STATE
 let polling = false
 let lastPayload = ''
 
 async function takeSnapshot(): Promise<OfficeSnapshot> {
   if (!(await orcaRunning())) {
-    return { orcaRunning: false, agents: [], contextWindow, quietAfterMs, error: null, at: Date.now() }
+    return { sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: Date.now() }
   }
   try {
-    return { orcaRunning: true, agents: await listAgents(), contextWindow, quietAfterMs, error: null, at: Date.now() }
+    return { sourceReady: true, agents: await listAgents(), contextWindow, quietAfterMs, error: null, at: Date.now() }
   } catch (error) {
-    return { orcaRunning: true, agents: latest.agents, contextWindow, quietAfterMs, error: error instanceof Error ? error.message : String(error), at: Date.now() }
+    return { sourceReady: true, agents: latest.agents, contextWindow, quietAfterMs, error: error instanceof Error ? error.message : String(error), at: Date.now() }
   }
 }
 

@@ -62,7 +62,7 @@ export function App(): React.JSX.Element {
     setExpandedId(null)
     setRoute((current) => selectAgent(current, agentId))
   }, [])
-  const alertAgents = office.data?.orcaRunning ? office.data.agents : null
+  const alertAgents = office.data?.sourceReady ? office.data.agents : null
   useWaitingAlerts(alertAgents, alerts.enabled, pickAgent)
   const now = useNow(CLOCK_MS, alerts.enabled)
   const quietAfterMs = office.data?.quietAfterMs ?? Number.POSITIVE_INFINITY
@@ -92,7 +92,7 @@ export function App(): React.JSX.Element {
       <h1 className="sr-only">Isekai Office</h1>
       <OfficeCanvas
         agents={agents}
-        orcaRunning={office.data?.orcaRunning ?? false}
+        sourceReady={office.data?.sourceReady ?? false}
         contextWindow={contextWindow}
         quiet={quiet}
         selectedId={selected?.id ?? null}

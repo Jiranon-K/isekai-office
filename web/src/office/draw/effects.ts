@@ -41,9 +41,9 @@ export function drawAmbientFlames(
   palette: OfficePalette,
   seconds: number,
   forgeWorkers: number,
-  orcaRunning: boolean,
+  sourceReady: boolean,
 ): void {
-  drawFlames(context, palette, FIREPLACE_BASE, orcaRunning ? 20 : 5, seconds)
+  drawFlames(context, palette, FIREPLACE_BASE, sourceReady ? 20 : 5, seconds)
   drawFlames(context, palette, FORGE_BASE, 10 + Math.min(forgeWorkers, 3) * 4, seconds)
 }
 
