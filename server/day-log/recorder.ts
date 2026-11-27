@@ -56,8 +56,17 @@ export function recordTick(previousAgents: OfficeAgent[] | null, snapshot: Offic
 }
 
 export async function restoreRing(at = Date.now()): Promise<LogEvent[]> {
-  await pruneOnNewDate(at)
-  return readRecentStates(localDate(at), RING_LIMIT)
+  try {
+    await pruneOnNewDate(at)
+  } catch (error) {
+    console.error('day log prune:', error)
+  }
+  try {
+    return await readRecentStates(localDate(at), RING_LIMIT)
+  } catch (error) {
+    console.error('day log restore:', error)
+    return []
+  }
 }
 
 export function resetRecorder(): void {

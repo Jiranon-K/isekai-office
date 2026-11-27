@@ -85,7 +85,11 @@ export async function listDays(): Promise<string[]> {
 export async function pruneDays(now: number): Promise<string[]> {
   const cutoff = localDate(now - keepDays() * DAY_MS)
   const expired = (await listDays()).filter((date) => date < cutoff)
-  await Promise.all(expired.map((date) => rm(dayFile(date), { force: true })))
+  const results = await Promise.allSettled(expired.map((date) => rm(dayFile(date), { force: true })))
+  const failures = results.filter((result) => result.status === 'rejected')
+  if (failures.length > 0) {
+    throw new AggregateError(failures.map((failure) => failure.reason), 'could not prune old day files')
+  }
   return expired
 }
 

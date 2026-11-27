@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { AgentState, OfficeAgent, OfficeSnapshot } from '@shared/types'
 import { localDate } from './events'
 import { recordTick, recordWatch, resetRecorder, restoreRing } from './recorder'
-import { appendDayEvents, listDays, readDay } from './store'
+import { appendDayEvents, listDays, logDirectory, readDay } from './store'
 
 const NOW = new Date(2026, 10, 20, 12).getTime()
 const TODAY = localDate(NOW)
@@ -108,6 +108,13 @@ describe('restoreRing', () => {
     const ring = await restoreRing(NOW)
     expect(ring).toEqual([{ at: NOW, agentId: 'a', title: 'title a', from: 'waiting', to: 'done' }])
     expect(await listDays()).toEqual([TODAY])
+  })
+
+  test('a day file that cannot be removed does not stop the ring from restoring', async () => {
+    await appendDayEvents(TODAY, [{ kind: 'state', repo: null, at: NOW, agentId: 'a', title: 'title a', from: 'waiting', to: 'done' }])
+    await mkdir(join(logDirectory(), '2026-01-01.jsonl'))
+    const ring = await restoreRing(NOW)
+    expect(ring.map((event) => event.agentId)).toEqual(['a'])
   })
 
   test('the date rolling over prunes again on the next write', async () => {
