@@ -1,3 +1,4 @@
+import { stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { OfficeAgent, SessionDetail } from '@shared/types'
@@ -26,6 +27,11 @@ async function readLines(file: RecentFile): Promise<string[]> {
   return (await readTail(file.path, file.size)).split('\n')
 }
 
+async function isUnchanged(file: RecentFile): Promise<boolean> {
+  const info = await stat(file.path).catch(() => null)
+  return info !== null && info.size === file.size && info.mtimeMs === file.modifiedAt
+}
+
 type LocalOptions = Omit<RecentFilesOptions, 'refreshMs'> & { refreshMs?: number; hints?: HintStore }
 
 export function createLocalSource(options: LocalOptions): SessionSource {
@@ -47,7 +53,9 @@ export function createLocalSource(options: LocalOptions): SessionSource {
       titles.set(file.path, foundTitle)
     }
     const analysed = { key, facts: localFacts(lines, titles.get(file.path) ?? null), state, tool: state === 'working' ? toolFromTail(lines) : null }
-    cache.set(file.path, analysed)
+    if (await isUnchanged(file)) {
+      cache.set(file.path, analysed)
+    }
     return analysed
   }
 
@@ -86,7 +94,8 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     const files = await recent.list()
     forget(files)
     hints.prune((options.now ?? Date.now)() - options.recentMs)
-    return Promise.all(files.map(toAgent))
+    const agents = await Promise.all(files.map((file) => toAgent(file).catch(() => null)))
+    return agents.filter((agent) => agent !== null)
   }
 
   async function readSession(id: string): Promise<SessionDetail> {

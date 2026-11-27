@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { rmSync, writeFileSync } from 'node:fs'
 import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -182,5 +183,60 @@ describe('local source title memory', () => {
     await appendFile(path, `${Array(200).fill(filler).join('\n')}\n${assistantEnd('/p/app')}\n`)
     const second = (await source.listAgents()).find((agent) => agent.id === 'sess-title')
     expect(second?.title).toBe('Ship it')
+  })
+})
+
+describe('local source races between listing and reading', () => {
+  function racingSource(onSecondClock: () => void): ReturnType<typeof createLocalSource> {
+    let calls = 0
+    const now = (): number => {
+      calls += 1
+      if (calls === 2) {
+        onSecondClock()
+      }
+      return Date.now()
+    }
+    return createLocalSource({ projectsDir, recentMs: 60 * MINUTE_MS, now })
+  }
+
+  test('a transcript deleted after it was listed is skipped and the other sessions still list', async () => {
+    const folder = join(projectsDir, 'folder-race-delete')
+    await mkdir(folder, { recursive: true })
+    const doomed = join(folder, 'sess-doomed.jsonl')
+    const kept = join(folder, 'sess-kept.jsonl')
+    const text = `${line({ type: 'user', cwd: '/p/app', message: { content: 'hi' } })}\n`
+    await writeFile(doomed, text)
+    await writeFile(kept, text)
+    const source = racingSource(() => rmSync(doomed, { force: true }))
+    const ids = (await source.listAgents()).map((agent) => agent.id)
+    expect(ids).toContain('sess-kept')
+    expect(ids).not.toContain('sess-doomed')
+  })
+
+  test('a file that shrank during the read is not cached under the old key', async () => {
+    const folder = join(projectsDir, 'folder-race-shrink')
+    await mkdir(folder, { recursive: true })
+    const path = join(folder, 'sess-shrunk.jsonl')
+    const text = `${line({ type: 'user', cwd: '/p/app', message: { content: 'hi' } })}\n`
+    const moment = new Date(Date.now() - 5000)
+    moment.setMilliseconds(0)
+    await writeFile(path, text)
+    await utimes(path, moment, moment)
+    let armed = true
+    let calls = 0
+    const now = (): number => {
+      calls += 1
+      if (armed && calls === 2) {
+        armed = false
+        writeFileSync(path, '')
+      }
+      return Date.now()
+    }
+    const source = createLocalSource({ projectsDir, recentMs: 60 * MINUTE_MS, now })
+    await source.listAgents()
+    await writeFile(path, text)
+    await utimes(path, moment, moment)
+    const again = (await source.listAgents()).find((agent) => agent.id === 'sess-shrunk')
+    expect(again?.state).toBe('working')
   })
 })
