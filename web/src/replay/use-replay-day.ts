@@ -1,30 +1,29 @@
-import type { DayEvent } from '@shared/day-log'
 import { useEffect, useState } from 'react'
 import { fetchDayLog } from './replay-api'
-import { buildReplayDay, type ReplayDay } from './replay-logic'
+import { LOADING, visibleDay, type LoadedDay, type StoredDay } from './replay-day-logic'
+import { buildReplayDay } from './replay-logic'
 
-export type LoadedDay =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'ready'; events: DayEvent[]; day: ReplayDay }
-
-const LOADING: LoadedDay = { status: 'loading' }
+export type { LoadedDay } from './replay-day-logic'
 
 export function useReplayDay(date: string | null, loadId: number): LoadedDay {
-  const [loaded, setLoaded] = useState<LoadedDay>(LOADING)
+  const [stored, setStored] = useState<StoredDay | null>(null)
   useEffect(() => {
     if (date === null) {
-      setLoaded(LOADING)
+      setStored(null)
       return
     }
     let current = true
-    setLoaded(LOADING)
+    function keep(result: LoadedDay): void {
+      if (current && date !== null) {
+        setStored({ date, loadId, result })
+      }
+    }
     fetchDayLog(date)
-      .then((log) => current && setLoaded({ status: 'ready', events: log.events, day: buildReplayDay(log.date, log.events) }))
-      .catch(() => current && setLoaded({ status: 'error' }))
+      .then((log) => keep({ status: 'ready', events: log.events, day: buildReplayDay(log.date, log.events) }))
+      .catch(() => keep({ status: 'error' }))
     return () => {
       current = false
     }
   }, [date, loadId])
-  return loaded
+  return date === null ? LOADING : visibleDay(stored, date, loadId)
 }
