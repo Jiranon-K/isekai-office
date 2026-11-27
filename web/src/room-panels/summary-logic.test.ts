@@ -75,6 +75,14 @@ describe('summarise waits', () => {
     expect(summary.waitingMs).toBe(45 * MINUTE)
   })
 
+  test('a wait that began before the tab opened is timed and dated from the moment the tab opened', () => {
+    const summary = summarise(
+      dayOf([state('09:40', null, 'waiting'), watch('09:40', false), watch('10:00', true), state('10:30', 'waiting', 'working'), watch('11:00', false)]),
+      null
+    )
+    expect(summary.longestWait).toEqual({ title: 'title a1', ms: 30 * MINUTE, at: at('10:00') })
+  })
+
   test('waiting followed by blocked is one wait', () => {
     const summary = summarise(
       dayOf([watch('09:00', true), state('09:00', null, 'waiting'), state('09:10', 'waiting', 'blocked'), state('09:30', 'blocked', 'working'), watch('10:00', false)]),

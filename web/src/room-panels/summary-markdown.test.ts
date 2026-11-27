@@ -41,7 +41,7 @@ describe('toMarkdown', () => {
     expect(text).toContain('- session: 3')
     expect(text).toContain('- เสร็จแล้ว: 2')
     expect(text).toContain('- รอรวม: 25 นาที (2 ครั้ง)')
-    expect(text).toContain('- รอนานที่สุด: Fix login · 20 นาที · เริ่ม 10:00 น.')
+    expect(text).toContain('- รอนานที่สุด: Fix login · 20 นาที · นับตั้งแต่ 10:00 น.')
     expect(text).toContain('- รอครั้งกลาง: 13 นาที')
     expect(text).toContain('- ชั่วโมงที่ทำงานมากที่สุด: 10:00–11:00 น.')
     expect(text).toContain('| Fix login | 1 ชม. 30 นาที | 25 นาที | 2 |')

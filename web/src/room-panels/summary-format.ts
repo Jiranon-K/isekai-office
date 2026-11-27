@@ -53,7 +53,7 @@ export function longestWaitText(summary: DaySummary): string | null {
   if (!longest) {
     return null
   }
-  return `${longest.title} · ${formatDuration(longest.ms)} · เริ่ม ${formatClock(longest.at)} น.`
+  return `${longest.title} · ${formatDuration(longest.ms)} · นับตั้งแต่ ${formatClock(longest.at)} น.`
 }
 
 export function medianText(summary: DaySummary): string | null {
