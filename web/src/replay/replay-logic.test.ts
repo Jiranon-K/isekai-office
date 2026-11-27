@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import type { DayEvent } from '@shared/day-log'
 import type { AgentState } from '@shared/types'
 import type { StationId } from '@shared/stations'
+import { gaps } from './replay-geometry'
+import { stepPlayback } from './playback-logic'
 import { agentsAt, buildReplayDay, groupOfReplay, isWatched, lanes, limitLanes, nextEventAt, nextWatchedAt, previousEventAt, toOfficeAgent, watchedSpans } from './replay-logic'
 
 const HOUR = 3_600_000
@@ -103,9 +105,20 @@ describe('watchedSpans and isWatched', () => {
     ])
   })
 
-  test('has no spans without watch events or on an empty day', () => {
-    expect(watchedSpans([state(at(9), 'a', null, 'working')])).toEqual([])
+  test('has no spans on an empty day', () => {
     expect(watchedSpans([])).toEqual([])
+  })
+
+  test('treats a day without watch events as watched from the first to the last event', () => {
+    const events = [state(at(9), 'a', null, 'working'), state(at(10), 'a', 'working', 'done')]
+    expect(watchedSpans(events)).toEqual([{ from: at(9), to: at(10) }])
+  })
+
+  test('plays a day without watch events to its end instead of ending at once', () => {
+    const events = [state(at(9), 'a', null, 'working'), state(at(10), 'a', 'working', 'done')]
+    const day = buildReplayDay('2026-11-27', events)
+    expect(stepPlayback(day, at(9), 100, 30)).toEqual({ at: at(9) + 3000, ended: false })
+    expect(gaps(day)).toEqual([])
   })
 
   test('treats the edges as watched and the middle of a gap as not', () => {

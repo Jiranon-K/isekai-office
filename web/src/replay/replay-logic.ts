@@ -87,7 +87,19 @@ export function agentsAt(events: readonly DayEvent[], at: number): ReplayAgent[]
   return [...present.values()]
 }
 
+function wholeDay(events: readonly DayEvent[]): Span[] {
+  const first = events[0]
+  const last = events[events.length - 1]
+  if (!first || !last || last.at <= first.at) {
+    return []
+  }
+  return [{ from: first.at, to: last.at }]
+}
+
 export function watchedSpans(events: readonly DayEvent[]): Span[] {
+  if (!events.some((event) => event.kind === 'watch')) {
+    return wholeDay(events)
+  }
   const spans: Span[] = []
   let openAt: number | null = null
   let lastSeen = 0
