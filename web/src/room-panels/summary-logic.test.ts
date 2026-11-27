@@ -130,6 +130,12 @@ describe('summarise sessions', () => {
     expect(summary.agents.find((agent) => agent.agentId === 'a2')?.finished).toBe(false)
   })
 
+  test('an agent whose only event today is leaving is not a session', () => {
+    const summary = summarise(dayOf([...events, state('09:30', 'working', null, 'a4')]), null)
+    expect(summary.sessions).toBe(2)
+    expect(summary.agents.some((agent) => agent.agentId === 'a4')).toBe(false)
+  })
+
   test('adds working time per agent and sorts agents by waiting time', () => {
     const summary = summarise(dayOf([...events, state('10:40', null, 'waiting', 'a3'), state('10:50', 'waiting', 'working', 'a3')]), null)
     expect(summary.agents[0]?.agentId).toBe('a3')

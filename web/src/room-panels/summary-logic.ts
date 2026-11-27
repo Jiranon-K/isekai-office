@@ -110,7 +110,7 @@ type Identity = { title: string; repo: string | null }
 function identitiesOf(events: readonly DayEvent[]): Map<string, Identity> {
   const identities = new Map<string, Identity>()
   for (const event of events) {
-    if (event.kind === 'state') {
+    if (event.kind === 'state' && event.to !== null) {
       identities.set(event.agentId, { title: event.title, repo: event.repo })
     }
   }
