@@ -1,6 +1,7 @@
 import type { GuildLog, OfficeSnapshot } from '@shared/types'
 import { activeSource } from '../sources/select'
-import { EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
+import { recordTick, recordWatch, restoreRing } from '../day-log/recorder'
+import { appendEvents, EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
 
 const POLL_MS = 2_000
 
@@ -47,7 +48,9 @@ async function takeSnapshot(): Promise<OfficeSnapshot> {
 
 async function tick(): Promise<void> {
   latest = await takeSnapshot()
+  const previousAgents = logState.agents
   logState = recordSnapshot(logState, latest)
+  void recordTick(previousAgents, latest)
   const payload = JSON.stringify({ ...latest, at: 0 })
   if (payload !== lastPayload) {
     lastPayload = payload
@@ -60,6 +63,7 @@ async function tick(): Promise<void> {
     return
   }
   polling = false
+  void recordWatch(false)
 }
 
 export function subscribe(listener: Listener): () => void {
@@ -69,6 +73,7 @@ export function subscribe(listener: Listener): () => void {
   }
   if (!polling) {
     polling = true
+    void recordWatch(true)
     void tick()
   }
   return () => {
@@ -82,4 +87,9 @@ export function currentSnapshot(): OfficeSnapshot {
 
 export function currentLog(): GuildLog {
   return guildLog(logState.events)
+}
+
+export async function restoreLog(): Promise<void> {
+  const restored = await restoreRing()
+  logState = { agents: logState.agents, events: appendEvents(restored, logState.events) }
 }

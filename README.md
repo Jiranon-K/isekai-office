@@ -54,6 +54,7 @@ How it stays small:
 
 - **One Bun process.** No database, no queue, no Electron. State lives in the tools it reads from.
 - **It only works while you look.** The server polls for sessions only while a browser tab is connected, and stops when the last one closes.
+- **The guild log is a file, not a database.** While a tab is open, each tick appends to `<data dir>/log/YYYY-MM-DD.jsonl` (data dir: `ISEKAI_DATA_DIR`, default `~/.isekai-office`). Days older than `LOG_KEEP_DAYS` (14) are deleted, and station events stop for a day past `LOG_DAY_MAX_BYTES` (5 MB). Session titles are stored in plain text.
 - **The canvas sleeps.** Drawing stops when the tab is hidden or the quest board covers the room.
 - **Transcripts are read once.** A session file is parsed again only when its size or modified time changes, and at most 200 entries are kept.
 - **Rooms are pictures.** Each world is one 640x384 PNG drawn ahead of time, not a scene built at run time.

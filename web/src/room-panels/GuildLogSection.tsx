@@ -2,6 +2,7 @@ import type { LogEvent } from '@shared/types'
 import { Badge } from '@/components/badge'
 import type { Loadable } from '@/lib/api'
 import { PanelNote } from './SessionList'
+import { logNote, useLogLocation } from './log-note'
 import { eventText, splitAtLastSeen, waitedMs, waitText } from './log-logic'
 
 type GuildLogSectionProps = {
@@ -58,6 +59,7 @@ function LogRow({ events, index, present, onSelect }: { events: LogEvent[]; inde
 
 export function GuildLogSection({ log, lastHidden, present, onSelect }: GuildLogSectionProps): React.JSX.Element {
   const events = log.data?.events ?? []
+  const location = useLogLocation()
   const { newer } = splitAtLastSeen(events, lastHidden)
   return (
     <section aria-label="บันทึกของกิลด์" className="flex flex-col gap-2 border-t border-border pt-3">
@@ -71,7 +73,7 @@ export function GuildLogSection({ log, lastHidden, present, onSelect }: GuildLog
           ))}
         </ul>
       ) : null}
-      <p className="text-caption text-muted-foreground">บันทึกเฉพาะตอนมีแท็บเปิดอยู่ (ถ้าเปลี่ยนตอนไม่มีแท็บ จะลงเวลาที่แท็บเชื่อมต่อ) และว่างเมื่อ server เริ่มใหม่</p>
+      <p className="text-caption text-muted-foreground">{logNote(location)}</p>
     </section>
   )
 }
