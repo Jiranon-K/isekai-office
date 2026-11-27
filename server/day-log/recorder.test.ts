@@ -87,6 +87,17 @@ describe('recordTick', () => {
     expect(stations).toHaveLength(1)
   })
 
+  test('station events lost to a failed append are written by the next tick', async () => {
+    const edit = agentAt('a', 'working', 'Edit')
+    const file = join(logDirectory(), `${TODAY}.jsonl`)
+    await mkdir(file, { recursive: true })
+    await recordTick([edit], snapshotOf([edit], NOW))
+    await rm(file, { recursive: true })
+    await recordTick([edit], snapshotOf([edit], NOW + 1))
+    const stations = (await readDay(TODAY)).events.filter((event) => event.kind === 'station')
+    expect(stations).toHaveLength(1)
+  })
+
   test('under the cap station events are written after the state events', async () => {
     await recordTick([agentAt('a', 'waiting')], snapshotOf([agentAt('a', 'working', 'Edit')], NOW))
     expect((await readDay(TODAY)).events.map((event) => event.kind)).toEqual(['state', 'station'])

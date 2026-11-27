@@ -40,10 +40,10 @@ async function write(at: number, states: DayEvent[], stations: DayEvent[]): Prom
 }
 
 export function recordWatch(on: boolean, at = Date.now()): Promise<void> {
-  if (on) {
-    memory = NO_STATIONS
-  }
   return enqueue(async () => {
+    if (on) {
+      memory = NO_STATIONS
+    }
     await pruneOnNewDate(at)
     await appendDayEvents(localDate(at), [watchEvent(at, on)])
   })
@@ -55,17 +55,18 @@ export function recordTick(previousAgents: OfficeAgent[] | null, snapshot: Offic
   }
   const changes = previousAgents === null ? [] : diffEvents(previousAgents, snapshot.agents, snapshot.at)
   const states = stateEvents(changes, previousAgents ?? [], snapshot.agents)
-  const date = localDate(snapshot.at)
-  if (date !== memoryDate) {
-    memory = NO_STATIONS
-    memoryDate = date
-  }
-  const stations = stationEvents(memory, snapshot.agents, snapshot.at)
-  memory = stations.memory
-  if (states.length === 0 && stations.events.length === 0) {
-    return Promise.resolve()
-  }
-  return enqueue(() => write(snapshot.at, states, stations.events))
+  return enqueue(async () => {
+    const date = localDate(snapshot.at)
+    if (date !== memoryDate) {
+      memory = NO_STATIONS
+      memoryDate = date
+    }
+    const stations = stationEvents(memory, snapshot.agents, snapshot.at)
+    if (states.length > 0 || stations.events.length > 0) {
+      await write(snapshot.at, states, stations.events)
+    }
+    memory = stations.memory
+  })
 }
 
 export async function restoreRing(at = Date.now()): Promise<LogEvent[]> {
