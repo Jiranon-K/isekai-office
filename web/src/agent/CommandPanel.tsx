@@ -125,6 +125,7 @@ export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProp
           />
         ) : null}
         <CommandComposer
+          agent={agent}
           disabled={readonly}
           status={command.status}
           onPrompt={(text) => command.run('prompt', text)}

@@ -44,7 +44,7 @@ export const HOTSPOTS: readonly Hotspot[] = [
     rects: [tiles(3, 0.2, 2, 1.8), tiles(8, 0.2, 2, 1.8)],
     action: { kind: 'toggleMode' },
   },
-  { id: 'door', label: 'ประตู', hint: 'เรียกคนใหม่และเลือกโลก', rects: [tiles(17.9, 21.6, 4.2, 2.4)], action: PANEL },
+  { id: 'door', label: 'ประตู', hint: 'เรียกคนใหม่ แม่แบบ และเลือกโลก', rects: [tiles(17.9, 21.6, 4.2, 2.4)], action: PANEL },
   { id: 'orb', label: 'ลูกแก้ว', hint: 'context load ของทุก session', rects: [tiles(31.5, 8.2, 6, 2.6)], action: PANEL },
   {
     id: 'barShelf',

@@ -15,6 +15,7 @@ import { restoreLog } from './feeds/office'
 import { demoOrdersFeeds } from './feeds/demo-orders'
 import { changeOrders, readOrders, realOrdersFeeds } from './orders'
 import { handleLedger } from './ledger/routes'
+import { handleTemplates } from './templates-routes'
 
 const PORT = Number(process.env.PORT ?? 4300)
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
@@ -145,6 +146,10 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/log') {
     return json(await feeds.log())
+  }
+  const templates = await handleTemplates(request, DEMO)
+  if (templates) {
+    return templates
   }
   const dayLog = await handleDayLog(url, DEMO)
   if (dayLog) {
