@@ -34,7 +34,7 @@ export function revisionOf(text: string | null): string {
 
 function parseStored(text: string): TemplateSnapshot | null {
   try {
-    const templates = toTemplates(JSON.parse(text))
+    const templates = toTemplates(JSON.parse(text.replace(/^\uFEFF/, '')))
     return templates === null ? null : { templates, revision: revisionOf(text) }
   } catch {
     return null

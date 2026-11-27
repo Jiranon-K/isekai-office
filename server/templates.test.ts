@@ -62,6 +62,11 @@ describe('template store', () => {
     expect(await readFile(templatesPath(), 'utf8')).toBe('{ not json')
   })
 
+  test('a file saved with a byte order mark reads like one without', async () => {
+    await writeFile(templatesPath(), `\uFEFF${JSON.stringify({ templates: [SAVED] })}`, 'utf8')
+    expect(await readTemplates(false)).toEqual({ status: 200, body: { templates: [SAVED], revision: expect.any(String) } })
+  })
+
   test('a file with an invalid list is reported as unparseable', async () => {
     await writeFile(templatesPath(), JSON.stringify({ templates: [{ id: 'X' }] }), 'utf8')
     expect((await readTemplates(false)).status).toBe(500)
