@@ -168,7 +168,7 @@ async function renameWithRetry(operations: SettingsFileOperations, from: string,
   }
 }
 
-async function replaceFile(path: string, text: string, operations: SettingsFileOperations): Promise<OrderResult> {
+export async function replaceFile(path: string, text: string, operations: SettingsFileOperations): Promise<OrderResult> {
   const temporary = `${path}.${process.pid}.${Date.now()}.tmp`
   try {
     await operations.makeFolder(dirname(path))
