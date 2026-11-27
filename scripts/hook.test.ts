@@ -67,6 +67,20 @@ describe('hook client', () => {
     expect(received).toEqual({ session_id: 'a', hook_event_name: 'Notification', notification_type: 'permission_prompt', message: 'needs permission' })
   })
 
+  test('a stdin that stalls and a server that hangs still end the script within 1.5 seconds', async () => {
+    const hanging = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Promise<Response>(() => {}) })
+    const started = performance.now()
+    const child = Bun.spawn(['bun', HOOK_SCRIPT], { stdin: 'pipe', stdout: 'pipe', stderr: 'pipe', env: { ...process.env, ISEKAI_PORT: String(hanging.port) } })
+    await Bun.sleep(800)
+    child.stdin.write('{"session_id":"a","hook_event_name":"Stop"}')
+    child.stdin.end()
+    const code = await child.exited
+    const elapsed = performance.now() - started
+    await hanging.stop(true)
+    expect(code).toBe(0)
+    expect(elapsed).toBeLessThan(1500)
+  })
+
   test('the script exits 0 on empty input and on input that is not json', async () => {
     expect((await runHook('', { ISEKAI_PORT: '1' })).code).toBe(0)
     expect((await runHook('not json', { ISEKAI_PORT: '1' })).code).toBe(0)

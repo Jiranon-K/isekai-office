@@ -1,6 +1,8 @@
 const DEFAULT_PORT = 4300
 const REQUEST_TIMEOUT_MS = 1_000
 
+export const HOOK_DEADLINE_MS = 1_000
+
 export function hookUrl(port: string | undefined): string {
   const parsed = Number(port)
   const resolved = Number.isInteger(parsed) && parsed > 0 && parsed < 65536 ? parsed : DEFAULT_PORT
