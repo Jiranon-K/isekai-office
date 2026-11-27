@@ -9,7 +9,7 @@ export function useMenuTemplates(): QuestTemplate[] {
   useEffect(() => {
     let current = true
     fetchTemplates()
-      .then((list) => current && setTemplates(list))
+      .then((list) => current && setTemplates(list.templates))
       .catch(() => current && setTemplates([]))
     return () => {
       current = false

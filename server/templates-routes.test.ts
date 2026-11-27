@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BUILT_IN_TEMPLATES } from '@shared/templates'
+import { BUILT_IN_TEMPLATES, NO_FILE_REVISION } from '@shared/templates'
 import { isAllowedRequest } from './guard'
 import { handleTemplates } from './templates-routes'
 
@@ -42,28 +42,39 @@ describe('templates routes', () => {
   test('get returns the built-in list when no file exists', async () => {
     const response = await handleTemplates(new Request(URL_OF), false)
     expect(response?.status).toBe(200)
-    expect(await response?.json()).toEqual({ templates: BUILT_IN_TEMPLATES })
+    expect(await response?.json()).toEqual({ templates: BUILT_IN_TEMPLATES, revision: NO_FILE_REVISION })
   })
 
   test('put saves the list and get returns it', async () => {
-    const saved = await handleTemplates(put({ templates: [template('a')] }), false)
+    const saved = await handleTemplates(put({ templates: [template('a')], revision: NO_FILE_REVISION }), false)
     expect(saved?.status).toBe(200)
     const response = await handleTemplates(new Request(URL_OF), false)
-    expect(await response?.json()).toEqual({ templates: [template('a')] })
+    expect(await response?.json()).toEqual({ templates: [template('a')], revision: expect.any(String) })
   })
 
   test('put refuses 31 templates, a duplicate id, an empty name and a dashed branch with 400 and writes nothing', async () => {
     const thirtyOne = Array.from({ length: 31 }, (_, index) => template(`t-${index}`))
     const bodies = [
-      { templates: thirtyOne },
-      { templates: [template('a'), template('a')] },
-      { templates: [{ ...template('a'), name: '' }] },
-      { templates: [{ ...template('a'), baseBranch: '-evil' }] }
+      { templates: thirtyOne, revision: NO_FILE_REVISION },
+      { templates: [template('a'), template('a')], revision: NO_FILE_REVISION },
+      { templates: [{ ...template('a'), name: '' }], revision: NO_FILE_REVISION },
+      { templates: [{ ...template('a'), baseBranch: '-evil' }], revision: NO_FILE_REVISION }
     ]
     for (const body of bodies) {
       expect((await handleTemplates(put(body), false))?.status).toBe(400)
     }
     expect(await readdir(folder)).toEqual([])
+  })
+
+  test('put with a stale revision answers 409 and keeps the saved list', async () => {
+    await handleTemplates(put({ templates: [template('a')], revision: NO_FILE_REVISION }), false)
+    const loaded = await (await handleTemplates(new Request(URL_OF), false))?.json()
+    await handleTemplates(put({ templates: [template('a'), template('b')], revision: loaded.revision }), false)
+    const stale = await handleTemplates(put({ templates: [], revision: loaded.revision }), false)
+    expect(stale?.status).toBe(409)
+    expect(await stale?.json()).toEqual({ ok: false, error: 'stale' })
+    const current = await (await handleTemplates(new Request(URL_OF), false))?.json()
+    expect(current.templates).toEqual([template('a'), template('b')])
   })
 
   test('put refuses a body that is not json', async () => {
@@ -83,16 +94,16 @@ describe('templates routes', () => {
   })
 
   test('demo serves the built-ins and does not write', async () => {
-    expect((await handleTemplates(put({ templates: [template('a')] }), true))?.status).toBe(200)
+    expect((await handleTemplates(put({ templates: [template('a')], revision: NO_FILE_REVISION }), true))?.status).toBe(200)
     const response = await handleTemplates(new Request(URL_OF), true)
-    expect(await response?.json()).toEqual({ templates: BUILT_IN_TEMPLATES })
+    expect(await response?.json()).toEqual({ templates: BUILT_IN_TEMPLATES, revision: NO_FILE_REVISION })
     expect(await readdir(folder)).toEqual([])
   })
 })
 
 describe('templates guard', () => {
   test('a put from another origin is refused', () => {
-    const request = put({ templates: [] })
+    const request = put({ templates: [], revision: NO_FILE_REVISION })
     request.headers.set('origin', 'https://evil.example')
     expect(isAllowedRequest(request, PORTS)).toBe(false)
   })
@@ -103,6 +114,6 @@ describe('templates guard', () => {
   })
 
   test('a put from the app origin is allowed', () => {
-    expect(isAllowedRequest(put({ templates: [] }), PORTS)).toBe(true)
+    expect(isAllowedRequest(put({ templates: [], revision: NO_FILE_REVISION }), PORTS)).toBe(true)
   })
 })

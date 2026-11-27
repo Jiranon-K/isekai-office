@@ -10,6 +10,8 @@ export type QuestTemplate = {
 
 export type TemplateList = { templates: QuestTemplate[] }
 
+export type TemplateSnapshot = TemplateList & { revision: string }
+
 export type TemplateValues = { name: string; repo: string; branch: string }
 
 export const TEMPLATE_LIMIT = 30
@@ -17,6 +19,7 @@ export const TEMPLATE_ID_PATTERN = /^[a-z0-9-]{1,40}$/
 export const TEMPLATE_PREFIX_PATTERN = /^[a-z0-9][a-z0-9-]{0,19}$/
 export const TEMPLATE_NAME_MAX = 40
 export const DEFAULT_BRANCH = 'main'
+export const NO_FILE_REVISION = 'none'
 
 export const BUILT_IN_TEMPLATES: QuestTemplate[] = [
   {

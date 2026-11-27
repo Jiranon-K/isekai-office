@@ -37,6 +37,7 @@ export function TemplatesPanel(): React.JSX.Element {
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [changed, setChanged] = useState(false)
   const templates = store.templates
 
   if (store.error) {
@@ -48,10 +49,11 @@ export function TemplatesPanel(): React.JSX.Element {
 
   async function commit(next: QuestTemplate[]): Promise<boolean> {
     setSaving(true)
-    const saved = await store.save(next)
+    const outcome = await store.save(next)
     setSaving(false)
-    setFailed(!saved)
-    return saved
+    setFailed(outcome === 'failed')
+    setChanged(outcome === 'stale')
+    return outcome === 'saved'
   }
 
   async function saveDraft(): Promise<void> {
@@ -70,6 +72,7 @@ export function TemplatesPanel(): React.JSX.Element {
     setEditing(next)
     setTouched(false)
     setFailed(false)
+    setChanged(false)
   }
 
   function remove(template: QuestTemplate): void {
@@ -92,6 +95,7 @@ export function TemplatesPanel(): React.JSX.Element {
           />
         ))}
       </ul>
+      {changed ? <p role="alert" className="text-small text-destructive">รายการแม่แบบเปลี่ยนไปจากอีกหน้าต่าง โหลดรายการใหม่แล้ว ลองอีกครั้ง</p> : null}
       {failed && !editing ? <p role="alert" className="text-small text-destructive">บันทึกแม่แบบไม่ได้ ลองใหม่อีกครั้ง</p> : null}
       {editing ? (
         <TemplateEditor
