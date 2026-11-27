@@ -4,7 +4,7 @@ import { formatGold, formatMoney, sessionCost } from './ledger-logic'
 import { useLedger } from './use-ledger'
 
 export function SessionGold({ agent }: { agent: OfficeAgent }): React.JSX.Element | null {
-  const ledger = useLedger('today', true)
+  const ledger = useLedger('today', true, true)
   const cost = sessionCost(ledger.data, agent)
   if (cost === null) {
     return null
