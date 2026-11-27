@@ -59,6 +59,12 @@ How it stays small:
 - **Transcripts are read once.** A session file is parsed again only when its size or modified time changes, and at most 200 entries are kept.
 - **Rooms are pictures.** Each world is one 640x384 PNG drawn ahead of time, not a scene built at run time.
 
+## Token bill
+
+The bar shelf has a `บิล` tab with the token spend of each session and of the day. It reads the same transcripts as the local source and counts every `message.id` once.
+
+Prices are not in the source, because they change. Copy `pricing.example.json` to `<data dir>/pricing.json` (`ISEKAI_DATA_DIR`, default `~/.isekai-office`) and fill it in from your provider's pricing page. Each number is the price per million tokens, and the first entry whose `match` is part of the model name is used. Without the file, or for a model with no entry, the tab shows tokens and no cost. 1 gold is 0.01 of the currency. The value is the API price for the tokens, not what a monthly plan charges.
+
 ## Try it
 
 You need [Bun](https://bun.sh).
