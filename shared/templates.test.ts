@@ -95,6 +95,18 @@ describe('toTemplates', () => {
     expect(toTemplates({ templates: [template({ prompt: 'x'.repeat(PROMPT_MAX) })] })).toHaveLength(1)
   })
 
+  test('refuses a name or prompt that is only whitespace', () => {
+    expect(toTemplates({ templates: [template({ name: '   ' })] })).toBeNull()
+    expect(toTemplates({ templates: [template({ prompt: ' \n\t ' })] })).toBeNull()
+    expect(toTemplates({ templates: [template({ name: ' a ' })] })).toHaveLength(1)
+  })
+
+  test('refuses a name with a control character', () => {
+    expect(toTemplates({ templates: [template({ name: 'a\nb' })] })).toBeNull()
+    expect(toTemplates({ templates: [template({ name: 'a\u0000b' })] })).toBeNull()
+    expect(toTemplates({ templates: [template({ name: 'a b' })] })).toHaveLength(1)
+  })
+
   test('refuses a base branch that starts with a dash or has bad characters', () => {
     expect(toTemplates({ templates: [template({ baseBranch: '-x' })] })).toBeNull()
     expect(toTemplates({ templates: [template({ baseBranch: 'a b' })] })).toBeNull()

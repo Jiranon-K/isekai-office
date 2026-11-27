@@ -62,6 +62,18 @@ function nullableText(value: unknown): string | null | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
+function hasControlCharacter(text: string): boolean {
+  return [...text].some((character) => character.charCodeAt(0) < 0x20)
+}
+
+function isValidName(name: unknown): name is string {
+  return typeof name === 'string' && name.trim().length > 0 && name.length <= TEMPLATE_NAME_MAX && !hasControlCharacter(name)
+}
+
+function isValidPrompt(prompt: unknown): prompt is string {
+  return typeof prompt === 'string' && prompt.trim().length > 0 && prompt.length <= PROMPT_MAX
+}
+
 function toTemplate(item: unknown): QuestTemplate | null {
   if (typeof item !== 'object' || item === null) {
     return null
@@ -74,10 +86,10 @@ function toTemplate(item: unknown): QuestTemplate | null {
   if (typeof id !== 'string' || !TEMPLATE_ID_PATTERN.test(id)) {
     return null
   }
-  if (typeof name !== 'string' || name.length < 1 || name.length > TEMPLATE_NAME_MAX) {
+  if (!isValidName(name)) {
     return null
   }
-  if (typeof prompt !== 'string' || prompt.length < 1 || prompt.length > PROMPT_MAX) {
+  if (!isValidPrompt(prompt)) {
     return null
   }
   if (baseBranch === undefined || (baseBranch !== null && !isValidBaseBranch(baseBranch))) {
