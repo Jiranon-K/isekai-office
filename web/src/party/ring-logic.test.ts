@@ -32,4 +32,25 @@ describe('ringedPartyKey', () => {
   test('an unknown id rings nothing', () => {
     expect(ringedPartyKey(members, 'zzz', 'yyy')).toBeNull()
   })
+
+  test('nothing hovered or selected does not read the members at all', () => {
+    const unreadable: Iterable<{ id: string; partyKey: string | null }> = {
+      [Symbol.iterator]() {
+        throw new Error('members were read')
+      }
+    }
+    expect(ringedPartyKey(unreadable, null, null)).toBeNull()
+  })
+
+  test('stops reading once both party keys are found', () => {
+    let read = 0
+    function* counted(): Generator<{ id: string; partyKey: string | null }> {
+      for (const member of members) {
+        read += 1
+        yield member
+      }
+    }
+    expect(ringedPartyKey(counted(), 'a', 'b')).toBe('epic:Checkout')
+    expect(read).toBe(1)
+  })
 })
