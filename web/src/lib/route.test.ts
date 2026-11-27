@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { HOTSPOTS } from '@/office/scene/hotspots'
-import { closePanel, formatRoute, isPanelId, mergeQuery, openPanel, parseRoute, selectAgent, togglePanel, type Route } from './route'
+import { closePanel, formatRoute, isPanelId, mergeQuery, openPanel, parseReplay, parseRoute, withReplay, selectAgent, togglePanel, type Route } from './route'
 
 const EMPTY: Route = { open: null, agentId: null }
 
@@ -127,5 +127,37 @@ describe('mergeQuery', () => {
 
   test('drops keys it does not know', () => {
     expect(mergeQuery('?view=board&utm=x', { open: 'questBoard', agentId: null })).toBe('?view=board')
+  })
+})
+
+describe('replay parameters', () => {
+  test('reads the day and the moment', () => {
+    expect(parseReplay('?replay=2026-11-27&at=1795000000000')).toEqual({ date: '2026-11-27', at: 1795000000000 })
+  })
+
+  test('reads a day without a moment', () => {
+    expect(parseReplay('?replay=2026-11-27')).toEqual({ date: '2026-11-27', at: null })
+  })
+
+  test('is not a replay without a valid day', () => {
+    expect(parseReplay('')).toBeNull()
+    expect(parseReplay('?replay=yesterday&at=5')).toBeNull()
+    expect(parseReplay('?at=5')).toBeNull()
+  })
+
+  test('ignores a moment that is not a whole number or is negative', () => {
+    expect(parseReplay('?replay=2026-11-27&at=abc')?.at).toBeNull()
+    expect(parseReplay('?replay=2026-11-27&at=-4')?.at).toBeNull()
+    expect(parseReplay('?replay=2026-11-27&at=1.5')?.at).toBeNull()
+  })
+
+  test('mergeQuery keeps the replay across a route change', () => {
+    expect(mergeQuery('?replay=2026-11-27&at=500&open=hearth', { open: 'hearth', agentId: null })).toBe('?open=hearth&replay=2026-11-27&at=500')
+  })
+
+  test('withReplay writes and clears the two keys and leaves the rest', () => {
+    expect(withReplay('?open=hearth', { date: '2026-11-27', at: 1234.6 })).toBe('?open=hearth&replay=2026-11-27&at=1235')
+    expect(withReplay('?open=hearth&replay=2026-11-27&at=5', null)).toBe('?open=hearth')
+    expect(withReplay('?replay=2026-11-27&at=5', { date: '2026-11-26', at: null })).toBe('?replay=2026-11-26')
   })
 })
