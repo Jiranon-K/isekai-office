@@ -1,0 +1,144 @@
+import type { OfficeAgent } from '@shared/types'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/kbd'
+import { parseChoices } from './choice-logic'
+import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
+import { decisionLocked } from './panel-logic'
+import { QueueComposer } from './QueueComposer'
+import { QueueHeader } from './QueueHeader'
+import { canAct, type QueueKey, type QueueState } from './queue-logic'
+import { useCommand } from './use-command'
+import type { PrefetchedSession } from './use-prefetched-session'
+import { useQueueKeys } from './use-queue-keys'
+import { useSession } from './use-session'
+
+const MOVE_ON_MS = 1500
+
+type QueueBodyProps = {
+  agent: OfficeAgent
+  state: QueueState
+  position: number
+  total: number
+  now: number
+  prefetched: PrefetchedSession | null
+  onSkip(): void
+  onAnswered(): void
+  onExpand(agentId: string): void
+  onClose(): void
+}
+
+function QueueHints(): React.JSX.Element {
+  return (
+    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
+      <span><Kbd>1-9</Kbd> ตอบ</span>
+      <span><Kbd>x</Kbd> ปฏิเสธ</span>
+      <span><Kbd>s</Kbd> ข้าม</span>
+      <span><Kbd>o</Kbd> แผงเต็ม</span>
+      <span><Kbd>Esc</Kbd> ปิด</span>
+    </p>
+  )
+}
+
+function useQueueSession(agent: OfficeAgent, prefetched: PrefetchedSession | null): ReturnType<typeof useSession> {
+  const live = useSession(agent)
+  if (live.data || prefetched?.agentId !== agent.id) {
+    return live
+  }
+  return { ...live, data: prefetched.detail, loading: false }
+}
+
+export function QueueBody(props: QueueBodyProps): React.JSX.Element {
+  const { agent, state, onSkip, onAnswered, onExpand, onClose } = props
+  const session = useQueueSession(agent, props.prefetched)
+  const command = useCommand(agent.id)
+  const [answeredAt, setAnsweredAt] = useState<number | null>(null)
+  const answering = useRef(false)
+  const screen = session.data?.screen ?? null
+  const choices = useMemo(() => (screen ? parseChoices(screen) : []), [screen])
+  const locked = decisionLocked(command.status.kind, answeredAt, agent.updatedAt)
+  const canWrite = agent.terminal !== null
+  const needsComposer = canWrite && agent.state === 'blocked' && choices.length === 0
+  const screenLoaded = session.data !== null || session.error !== null
+
+  useEffect(() => {
+    if (command.status.kind !== 'sent') {
+      return
+    }
+    const timer = setTimeout(onAnswered, MOVE_ON_MS)
+    return () => clearTimeout(timer)
+  }, [command.status.kind, onAnswered])
+
+  async function answer(send: () => Promise<boolean>): Promise<boolean> {
+    if (answering.current) {
+      return false
+    }
+    answering.current = true
+    setAnsweredAt(agent.updatedAt)
+    const sent = await send()
+    answering.current = sent
+    return sent
+  }
+
+  function onKey(key: QueueKey): void {
+    if (key.kind === 'close') {
+      onClose()
+      return
+    }
+    if (key.kind === 'expand') {
+      onExpand(agent.id)
+      return
+    }
+    if (!canAct(state, Date.now(), screenLoaded) || locked) {
+      return
+    }
+    if (key.kind === 'skip') {
+      onSkip()
+      return
+    }
+    if (!canWrite || needsComposer || screen === null) {
+      return
+    }
+    if (key.kind === 'deny') {
+      void answer(() => command.run('deny'))
+      return
+    }
+    const send = choices.length > 0 ? () => command.run('choose', undefined, key.choice) : () => command.run('allow')
+    void answer(send)
+  }
+
+  useQueueKeys({ choices, onKey })
+
+  return (
+    <>
+      <QueueHeader agent={agent} position={props.position} total={props.total} now={props.now} onClose={onClose} />
+      {needsComposer ? (
+        <p className="max-h-40 overflow-auto rounded-md bg-muted p-2 text-small whitespace-pre-wrap">{agent.lastMessage ?? 'ไม่มีข้อความล่าสุด'}</p>
+      ) : (
+        <ScreenLines session={session} choices={choices} />
+      )}
+      {!canWrite ? (
+        <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
+          ตอบจากที่นี่ไม่ได้
+        </p>
+      ) : needsComposer ? (
+        <QueueComposer disabled={locked} status={command.status} onEscape={onClose} onPrompt={(text) => answer(() => command.run('prompt', text))} />
+      ) : choices.length > 0 ? (
+        <ChoiceList choices={choices} status={command.status} disabled={locked} onChoose={(choice) => onKey({ kind: 'choose', choice })} onDeny={() => onKey({ kind: 'deny' })} />
+      ) : (
+        <Decision status={command.status} disabled={locked} onAllow={() => onKey({ kind: 'choose', choice: 1 })} onDeny={() => onKey({ kind: 'deny' })} />
+      )}
+      {command.status.kind === 'sent' ? (
+        <p role="status" className="text-caption text-tint-green-fg">
+          ส่งคำตอบแล้ว กำลังไปคนถัดไป
+        </p>
+      ) : null}
+      <div className="flex items-center gap-2">
+        <QueueHints />
+        <Button variant="outline" size="sm" className="ml-auto" disabled={locked} onClick={() => onKey({ kind: 'skip' })}>
+          ข้าม
+        </Button>
+      </div>
+    </>
+  )
+}
