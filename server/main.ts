@@ -10,6 +10,7 @@ import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
 import { handleHook } from './hook'
 import { readOnlyReply } from './read-only'
+import { handleDayLog } from './day-log/routes'
 import { restoreLog } from './feeds/office'
 
 const PORT = Number(process.env.PORT ?? 4300)
@@ -130,6 +131,10 @@ async function route(request: Request): Promise<Response> {
   }
   if (url.pathname === '/api/log') {
     return json(await feeds.log())
+  }
+  const dayLog = await handleDayLog(url, DEMO)
+  if (dayLog) {
+    return dayLog
   }
   if (url.pathname === '/api/board') {
     return json(await feeds.board(url.searchParams.has('refresh')))
