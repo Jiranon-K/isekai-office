@@ -1,0 +1,66 @@
+import type { DayEvent } from '@shared/day-log'
+import type { LogEvent, OfficeAgent, OfficeSnapshot } from '@shared/types'
+import { diffEvents } from '../feeds/log'
+import { dayMaxBytes } from './config'
+import { localDate, NO_STATIONS, stateEvents, stationEvents, watchEvent, type StationMemory } from './events'
+import { appendDayEvents, dayFileBytes, pruneDays, readRecentStates } from './store'
+
+const RING_LIMIT = 100
+
+let memory: StationMemory = NO_STATIONS
+let queue: Promise<void> = Promise.resolve()
+let prunedOn = ''
+
+function enqueue(task: () => Promise<void>): Promise<void> {
+  queue = queue.then(task).catch((error: unknown) => {
+    console.error('day log:', error)
+  })
+  return queue
+}
+
+async function pruneOnNewDate(at: number): Promise<void> {
+  const date = localDate(at)
+  if (date === prunedOn) {
+    return
+  }
+  prunedOn = date
+  await pruneDays(at)
+}
+
+async function write(at: number, states: DayEvent[], stations: DayEvent[]): Promise<void> {
+  await pruneOnNewDate(at)
+  const date = localDate(at)
+  const roomLeft = stations.length === 0 || (await dayFileBytes(date)) <= dayMaxBytes()
+  await appendDayEvents(date, roomLeft ? [...states, ...stations] : states)
+}
+
+export function recordWatch(on: boolean, at = Date.now()): Promise<void> {
+  return enqueue(async () => {
+    await pruneOnNewDate(at)
+    await appendDayEvents(localDate(at), [watchEvent(at, on)])
+  })
+}
+
+export function recordTick(previousAgents: OfficeAgent[] | null, snapshot: OfficeSnapshot): Promise<void> {
+  if (!snapshot.sourceReady || snapshot.error) {
+    return Promise.resolve()
+  }
+  const changes = previousAgents === null ? [] : diffEvents(previousAgents, snapshot.agents, snapshot.at)
+  const states = stateEvents(changes, previousAgents ?? [], snapshot.agents)
+  const stations = stationEvents(memory, snapshot.agents, snapshot.at)
+  memory = stations.memory
+  if (states.length === 0 && stations.events.length === 0) {
+    return Promise.resolve()
+  }
+  return enqueue(() => write(snapshot.at, states, stations.events))
+}
+
+export async function restoreRing(at = Date.now()): Promise<LogEvent[]> {
+  await pruneOnNewDate(at)
+  return readRecentStates(localDate(at), RING_LIMIT)
+}
+
+export function resetRecorder(): void {
+  memory = NO_STATIONS
+  prunedOn = ''
+}

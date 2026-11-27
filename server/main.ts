@@ -10,6 +10,7 @@ import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
 import { handleHook } from './hook'
 import { readOnlyReply } from './read-only'
+import { restoreLog } from './feeds/office'
 
 const PORT = Number(process.env.PORT ?? 4300)
 const PUBLIC_PORT = Number(process.env.PUBLIC_PORT ?? 4300)
@@ -155,6 +156,10 @@ async function route(request: Request): Promise<Response> {
     return new Response('Open http://localhost:4300 (Vite dev server)', { status: 404 })
   }
   return staticFile(url.pathname)
+}
+
+if (!DEMO) {
+  await restoreLog()
 }
 
 Bun.serve({ hostname: '127.0.0.1', port: PORT, idleTimeout: 0, fetch: route })
