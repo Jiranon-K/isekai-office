@@ -8,7 +8,7 @@ import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
 import { decisionLocked } from './panel-logic'
 import { QueueComposer } from './QueueComposer'
 import { QueueHeader } from './QueueHeader'
-import { answerLockHeld, canAnswer, canWriteTo, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
+import { answerLockHeld, canAnswer, keyAnswers, canWriteTo, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
 import { useCommand } from './use-command'
 import type { PrefetchedSession } from './use-prefetched-session'
 import { useQueueKeys } from './use-queue-keys'
@@ -111,11 +111,11 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
       onExpand(agent.id)
       return
     }
-    if (!answerAllowed()) {
-      return
-    }
     if (key.kind === 'skip') {
       onSkip()
+      return
+    }
+    if (!keyAnswers(key) || !answerAllowed()) {
       return
     }
     if (!canWrite || needsComposer || screen === null) {
@@ -157,7 +157,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
       ) : null}
       <div className="flex items-center gap-2">
         <QueueHints />
-        <Button variant="outline" size="sm" className="ml-auto" disabled={locked} onClick={() => onKey({ kind: 'skip' })}>
+        <Button variant="outline" size="sm" className="ml-auto" onClick={() => onKey({ kind: 'skip' })}>
           ข้าม
         </Button>
       </div>

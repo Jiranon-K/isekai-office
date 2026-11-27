@@ -10,6 +10,7 @@ import {
   currentOf,
   forgetGone,
   isQueueOpenKey,
+  keyAnswers,
   keyFor,
   loadedScreen,
   nextOf,
@@ -352,5 +353,18 @@ describe('canAnswer', () => {
 
   test('is false while the decision is locked', () => {
     expect(canAnswer(state('a', [], 0), 10_000, true, true)).toBe(false)
+  })
+})
+
+describe('keyAnswers', () => {
+  test('only choose and deny answer a prompt', () => {
+    expect(keyAnswers({ kind: 'choose', choice: 1 })).toBe(true)
+    expect(keyAnswers({ kind: 'deny' })).toBe(true)
+  })
+
+  test('skip, expand and close never wait for the screen', () => {
+    expect(keyAnswers({ kind: 'skip' })).toBe(false)
+    expect(keyAnswers({ kind: 'expand' })).toBe(false)
+    expect(keyAnswers({ kind: 'close' })).toBe(false)
   })
 })

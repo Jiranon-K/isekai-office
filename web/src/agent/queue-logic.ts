@@ -149,6 +149,10 @@ export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
   return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
 }
 
+export function keyAnswers(key: QueueKey): boolean {
+  return key.kind === 'choose' || key.kind === 'deny'
+}
+
 export function canAnswer(state: QueueState, now: number, screenLoaded: boolean, locked: boolean): boolean {
   return !locked && canAct(state, now, screenLoaded)
 }
