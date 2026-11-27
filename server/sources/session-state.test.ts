@@ -57,6 +57,11 @@ describe('stateFromTail', () => {
     }
   })
 
+  test('a tail with text but no conversational record is working', () => {
+    expect(stateFromTail(['ssage\":{\"content\":\"xxxxxxxx'])).toBe('working')
+    expect(stateFromTail([JSON.stringify({ type: 'last-prompt' })])).toBe('working')
+  })
+
   test('an empty file is done', () => {
     expect(stateFromTail([])).toBe('done')
     expect(stateFromTail([''])).toBe('done')

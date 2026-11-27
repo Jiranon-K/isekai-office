@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { contextWindowFrom, quietAfterMsFrom } from '../feeds/office'
 import { worktreeFromId } from './orca'
-import { parseTranscriptTail, pickTranscript, sessionContext, sessionName, transcriptFolder } from './transcripts'
+import { parseTranscriptTail, pickTranscript, readTail, sessionContext, sessionName, transcriptFolder } from './transcripts'
 
 const NOW = 1_800_000_000_000
 const HOUR_MS = 60 * 60 * 1000
@@ -180,5 +180,19 @@ describe('context window setting', () => {
     expect(contextWindowFrom(undefined)).toBe(1_000_000)
     expect(contextWindowFrom('abc')).toBe(1_000_000)
     expect(contextWindowFrom('0')).toBe(1_000_000)
+  })
+})
+
+describe('readTail', () => {
+  test('a last line larger than the tail comes back as a fragment instead of nothing', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'tail-'))
+    const path = join(folder, 'big.jsonl')
+    const content = `${assistantLine(1, 0, 0)}
+${JSON.stringify({ type: 'user', message: { content: 'x'.repeat(5000) } })}
+`
+    await writeFile(path, content)
+    const tail = await readTail(path, Buffer.byteLength(content), 1000)
+    await rm(folder, { recursive: true, force: true })
+    expect(tail.trim()).not.toBe('')
   })
 })

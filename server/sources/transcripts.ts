@@ -61,8 +61,8 @@ export async function readTail(path: string, size: number, bytes = TAIL_BYTES): 
     return Bun.file(path).text()
   }
   const text = await Bun.file(path).slice(size - bytes, size).text()
-  const firstBreak = text.indexOf('\n')
-  return firstBreak === -1 ? '' : text.slice(firstBreak + 1)
+  const rest = text.slice(text.indexOf('\n') + 1)
+  return text.includes('\n') && rest.trim() !== '' ? rest : text
 }
 
 async function factsFor(path: string, modifiedMs: number, size: number): Promise<TranscriptFacts> {

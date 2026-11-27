@@ -68,7 +68,7 @@ function endsTurn(record: TranscriptRecord): boolean {
 export function stateFromTail(lines: string[]): AgentState {
   const last = conversation(lines).at(-1)
   if (!last) {
-    return 'done'
+    return lines.some((line) => line.trim() !== '') ? 'working' : 'done'
   }
   if (last.type === 'assistant') {
     return endsTurn(last) ? 'done' : 'working'
