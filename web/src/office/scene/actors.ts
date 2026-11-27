@@ -182,6 +182,7 @@ export function syncActors(
   grid: WalkGrid,
   snap: boolean,
   contextWindow: number,
+  groupOf: (agent: OfficeAgent) => GroupId = groupForAgent,
 ): void {
   retireMissing(actors, new Set(agents.map((agent) => agent.id)), grid, snap)
   const occupancy = new Map<GroupId, Set<number>>()
@@ -193,7 +194,7 @@ export function syncActors(
     actor.label = agent.title
     actor.state = agent.state
     actor.mana = manaRatio(agent.contextTokens, contextWindow)
-    const groupId = groupForAgent(agent)
+    const groupId = groupOf(agent)
     if (actor.groupId === groupId && !actor.leaving) {
       const occupied = occupancy.get(groupId) ?? new Set<number>()
       occupancy.set(groupId, occupied)

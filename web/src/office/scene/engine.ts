@@ -15,6 +15,7 @@ import {
   type RoomRect,
 } from './hotspots'
 import { createWalkGrid } from './layout'
+import type { GroupId } from './stations'
 import { peakLoad } from './mana'
 import { readPalette, type OfficePalette } from '../draw/palette'
 import { renderFrame, type RoomLayers } from '../draw/render'
@@ -37,6 +38,8 @@ export type OfficeInput = {
   boardWaiting: number
   openHotspot: HotspotId | null
   partyByAgent: ReadonlyMap<string, Party>
+  groupOf?: (agent: OfficeAgent) => GroupId
+  snap?: boolean
 }
 
 export type OfficeEngine = {
@@ -166,7 +169,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
   const handleVisibility = (): void => requestFrame()
   const handleMotionChange = (): void => {
     if (input) {
-      syncActors(actors, input.sourceReady ? input.agents : [], grid, reducedQuery.matches, input.contextWindow)
+      syncActors(actors, input.sourceReady ? input.agents : [], grid, reducedQuery.matches || input.snap === true, input.contextWindow, input.groupOf)
     }
     requestFrame()
   }
@@ -183,7 +186,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     if (themeChanged) {
       paletteDirty = true
     }
-    syncActors(actors, next.sourceReady ? next.agents : [], grid, reducedQuery.matches, next.contextWindow)
+    syncActors(actors, next.sourceReady ? next.agents : [], grid, reducedQuery.matches || next.snap === true, next.contextWindow, next.groupOf)
     markQuiet(actors, next.quiet)
     markParties(actors, next.partyByAgent)
     requestFrame()
