@@ -11,6 +11,7 @@ import type {
 } from '@shared/types'
 import { mergeToolRuns, sessionHistory } from './history'
 import { runJson } from '../run'
+import type { SessionSource } from './source'
 import { sessionContext } from './transcripts'
 
 const ORCA = process.env.ORCA_BIN ?? '/Applications/Orca.app/Contents/Resources/bin/orca'
@@ -224,4 +225,12 @@ export async function createWorktree(request: SpawnRequest): Promise<SpawnResult
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }
+}
+
+export const orcaSource: SessionSource = {
+  id: 'orca',
+  caps: { command: true, spawn: true, screen: true },
+  ready: orcaRunning,
+  listAgents,
+  readSession
 }

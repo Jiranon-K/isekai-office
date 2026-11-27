@@ -7,7 +7,7 @@ function agentIn(id: string, state: AgentState): OfficeAgent {
 }
 
 function snapshotOf(agents: OfficeAgent[], at: number, extra: Partial<OfficeSnapshot> = {}): OfficeSnapshot {
-  return { sourceReady: true, agents, contextWindow: 1, quietAfterMs: 1, error: null, at, ...extra }
+  return { source: 'orca', caps: { command: true, spawn: true, screen: true }, sourceReady: true, agents, contextWindow: 1, quietAfterMs: 1, error: null, at, ...extra }
 }
 
 function eventAt(at: number): LogEvent {

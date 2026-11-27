@@ -16,7 +16,13 @@ export type OfficeAgent = {
   terminal: string | null
 }
 
+export type SourceId = 'orca' | 'local'
+
+export type SourceCaps = { command: boolean; spawn: boolean; screen: boolean }
+
 export type OfficeSnapshot = {
+  source: SourceId
+  caps: SourceCaps
   sourceReady: boolean
   agents: OfficeAgent[]
   contextWindow: number

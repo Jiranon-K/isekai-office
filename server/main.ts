@@ -4,7 +4,7 @@ import { toCommand } from './command'
 import { board } from './feeds/board'
 import { demoBoard, demoCommand, demoLog, demoRepos, demoSession, demoSnapshot, demoSpawn, demoSubscribe } from './feeds/demo'
 import { currentLog, currentSnapshot, subscribe } from './feeds/office'
-import { createWorktree, listRepos, readSession, sendCommand } from './sources/orca'
+import { createWorktree, listRepos, orcaSource, sendCommand } from './sources/orca'
 import { handleSpawn } from './spawn'
 import { isAllowedRequest } from './guard'
 
@@ -16,7 +16,7 @@ const DEV = process.argv.includes('--dev')
 const DEMO = process.env.DEMO === '1'
 const feeds = DEMO
   ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand, repos: demoRepos, spawn: demoSpawn }
-  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
+  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: orcaSource.readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
 const encoder = new TextEncoder()
 
 function json(body: unknown, status = 200): Response {

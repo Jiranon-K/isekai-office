@@ -1,5 +1,5 @@
 import type { GuildLog, OfficeSnapshot } from '@shared/types'
-import { listAgents, orcaRunning } from '../sources/orca'
+import { orcaSource } from '../sources/orca'
 import { EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
 
 const POLL_MS = 2_000
@@ -26,19 +26,22 @@ export function quietAfterMsFrom(value: string | undefined): number {
 const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
 const quietAfterMs = quietAfterMsFrom(process.env.QUIET_AFTER_MINUTES)
 
-let latest: OfficeSnapshot = { sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
+const source = orcaSource
+
+let latest: OfficeSnapshot = { source: source.id, caps: source.caps, sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
 let logState = EMPTY_LOG_STATE
 let polling = false
 let lastPayload = ''
 
 async function takeSnapshot(): Promise<OfficeSnapshot> {
-  if (!(await orcaRunning())) {
-    return { sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: Date.now() }
+  const base = { source: source.id, caps: source.caps, contextWindow, quietAfterMs, at: Date.now() }
+  if (!(await source.ready())) {
+    return { ...base, sourceReady: false, agents: [], error: null }
   }
   try {
-    return { sourceReady: true, agents: await listAgents(), contextWindow, quietAfterMs, error: null, at: Date.now() }
+    return { ...base, sourceReady: true, agents: await source.listAgents(), error: null }
   } catch (error) {
-    return { sourceReady: true, agents: latest.agents, contextWindow, quietAfterMs, error: error instanceof Error ? error.message : String(error), at: Date.now() }
+    return { ...base, sourceReady: true, agents: latest.agents, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
