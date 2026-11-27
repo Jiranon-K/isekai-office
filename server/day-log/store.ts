@@ -10,6 +10,8 @@ import { localDate, stateOnly } from './events'
 const DAY_MS = 86_400_000
 const TAIL_BYTES = 256 * 1024
 const EXTENSION = '.jsonl'
+const NEWLINE_BYTE = 10
+const checkedFiles = new Set<string>()
 
 export function logDirectory(): string {
   return join(dataDir(), 'log')
@@ -44,12 +46,31 @@ export function parseDayText(text: string): DayEvent[] {
     .filter((event) => event !== null)
 }
 
+async function endsMidLine(file: string): Promise<boolean> {
+  const handle = Bun.file(file)
+  if (!(await handle.exists()) || handle.size === 0) {
+    return false
+  }
+  const lastByte = new Uint8Array(await handle.slice(handle.size - 1).arrayBuffer())
+  return lastByte[0] !== NEWLINE_BYTE
+}
+
+async function lineBreakFor(file: string): Promise<string> {
+  if (checkedFiles.has(file)) {
+    return ''
+  }
+  return (await endsMidLine(file)) ? '\n' : ''
+}
+
 export async function appendDayEvents(date: string, events: DayEvent[]): Promise<void> {
   if (events.length === 0) {
     return
   }
   await mkdir(logDirectory(), { recursive: true })
-  await appendFile(dayFile(date), events.map((event) => `${JSON.stringify(event)}\n`).join(''))
+  const file = dayFile(date)
+  const lineBreak = await lineBreakFor(file)
+  await appendFile(file, lineBreak + events.map((event) => `${JSON.stringify(event)}\n`).join(''))
+  checkedFiles.add(file)
 }
 
 export async function dayFileBytes(date: string): Promise<number> {

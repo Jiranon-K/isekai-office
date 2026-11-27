@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DayEvent } from '@shared/day-log'
@@ -31,6 +31,13 @@ describe('append and read back', () => {
     await appendDayEvents('2026-11-03', [stateAt(3)])
     const lines = (await readFile(join(logDirectory(), '2026-11-03.jsonl'), 'utf8')).trim().split('\n')
     expect(lines).toHaveLength(3)
+    expect((await readDay('2026-11-03')).events.map((event) => event.at)).toEqual([1, 2, 3])
+  })
+
+  test('a file that ends in a torn line does not swallow the next batch', async () => {
+    await mkdir(logDirectory(), { recursive: true })
+    await writeFile(join(logDirectory(), '2026-11-03.jsonl'), `${JSON.stringify(stateAt(1))}\n{"kind":"sta`)
+    await appendDayEvents('2026-11-03', [stateAt(2), stateAt(3)])
     expect((await readDay('2026-11-03')).events.map((event) => event.at)).toEqual([1, 2, 3])
   })
 
