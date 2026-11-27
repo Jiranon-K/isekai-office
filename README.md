@@ -33,6 +33,7 @@ All screenshots use the built-in demo data.
 - **Waiting agents ask for you.** The tab title counts them, a bell turns on browser notifications, and a popover on the character shows the terminal prompt with allow and deny.
 - **Chat history.** Open any agent to read its conversation, with tool calls folded into one line.
 - **Quest board.** An inbox of what waits for you, the stages of an agent loop, and a release checklist.
+- **Quest templates.** Saved first prompts for the door form, with `{{name}}`, `{{repo}}` and `{{branch}}` placeholders. They live in `<data dir>/templates.json` (`GET` and `PUT /api/templates`); three built-ins are used until you save a list.
 - **Four worlds**, each with a day and a night.
 
 ## Light on memory
