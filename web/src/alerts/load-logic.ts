@@ -1,4 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
+import { canReceive } from '@/agent/receive-logic'
 import { manaRatio } from '@/office/scene/mana'
 import type { AlertText } from './alert-logic'
 
@@ -43,5 +44,5 @@ export function loadAlertText(agent: OfficeAgent, contextWindow: number): AlertT
 }
 
 export function canSendCompact(agent: OfficeAgent): boolean {
-  return agent.terminal !== null && agent.state === 'done'
+  return canReceive(agent)
 }

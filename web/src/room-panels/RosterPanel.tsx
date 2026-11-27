@@ -1,4 +1,4 @@
-import type { OfficeSnapshot } from '@shared/types'
+import type { BoardSnapshot, OfficeSnapshot } from '@shared/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { countAgents } from '@/lib/agent-counts'
 import type { Loadable } from '@/lib/api'
@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils'
 import { QueueEntryButton } from '@/agent/QueueEntryButton'
 import { rosterOrder } from './panel-data'
 import { SessionList } from './SessionList'
+import { PartyRoster } from '@/party/PartyRoster'
 
-type RosterPanelProps = { office: Loadable<OfficeSnapshot>; quiet: ReadonlyMap<string, number>; onSelect(agentId: string): void }
+type RosterPanelProps = { office: Loadable<OfficeSnapshot>; board: Loadable<BoardSnapshot>; quiet: ReadonlyMap<string, number>; onSelect(agentId: string): void }
 
 function Count({ label, value, emphasised = false }: { label: string; value: number; emphasised?: boolean }): React.JSX.Element {
   return (
@@ -28,7 +29,7 @@ function RosterSkeleton(): React.JSX.Element {
   )
 }
 
-export function RosterPanel({ office, quiet, onSelect }: RosterPanelProps): React.JSX.Element {
+export function RosterPanel({ office, board, quiet, onSelect }: RosterPanelProps): React.JSX.Element {
   if (!office.data) {
     return office.loading ? <RosterSkeleton /> : <p className="text-small text-muted-foreground">ยังอ่านรายชื่อ session ไม่ได้</p>
   }
@@ -41,7 +42,14 @@ export function RosterPanel({ office, quiet, onSelect }: RosterPanelProps): Reac
         <Count label="รอคุณ" value={counts.needsYou} emphasised={counts.needsYou > 0} />
       </dl>
       <QueueEntryButton />
-      <SessionList agents={rosterOrder(office.data.agents)} empty="ยังไม่มี session" quiet={quiet} onSelect={onSelect} />
+      <PartyRoster
+        agents={office.data.agents}
+        board={board.data}
+        contextWindow={office.data.contextWindow}
+        quiet={quiet}
+        onSelect={onSelect}
+        flat={<SessionList agents={rosterOrder(office.data.agents)} empty="ยังไม่มี session" quiet={quiet} onSelect={onSelect} />}
+      />
     </>
   )
 }

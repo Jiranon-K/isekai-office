@@ -2,6 +2,7 @@ import type { Actor } from '../scene/actors'
 import { fill } from './draw'
 import { manaColor } from '../scene/mana'
 import type { OfficePalette } from './palette'
+import type { PartyColour } from '@/party/party-logic'
 import { STATION_IDS, STATION_LABELS, STATION_LABEL_POSITIONS } from '../scene/stations'
 import { toScreenPoint, type ViewMetrics } from '../scene/view'
 
@@ -35,7 +36,9 @@ type Plate = {
   weight: number
 }
 
-function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): void {
+type PlateBox = { left: number; top: number; width: number; height: number }
+
+function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): PlateBox {
   const fontSize = plateFontSize(view, plate.ratio)
   context.font = `${plate.weight} ${fontSize}px ${palette.font}`
   context.textAlign = 'center'
@@ -48,6 +51,21 @@ function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, vi
   fill(context, palette, plate.background, left, Math.round(point.y), width, height)
   context.fillStyle = palette.color(plate.textColor)
   context.fillText(plate.text, Math.round(point.x), Math.round(point.y + height / 2))
+  return { left, top: Math.round(point.y), width, height }
+}
+
+const PENNANT_WIDTH_UNITS = 3
+const PENNANT_HEIGHT_UNITS = 4
+const PENNANT_GAP_UNITS = 1
+
+function drawPennant(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: PlateBox, colour: PartyColour): void {
+  const border = Math.max(1, Math.round(view.scale * 0.5))
+  const width = Math.round(view.scale * PENNANT_WIDTH_UNITS)
+  const height = Math.round(view.scale * PENNANT_HEIGHT_UNITS)
+  const left = plate.left - Math.round(view.scale * PENNANT_GAP_UNITS) - width - border
+  const top = plate.top + Math.round((plate.height - height) / 2)
+  fill(context, palette, 'outline', left - border, top - border, width + border * 2, height + border * 2)
+  fill(context, palette, colour, left, top, width, height)
 }
 
 export function drawActorPlate(
@@ -58,7 +76,7 @@ export function drawActorPlate(
   selected: boolean,
 ): void {
   const isAgent = actor.kind === 'agent'
-  drawPlate(context, palette, view, {
+  const plate = drawPlate(context, palette, view, {
     text: isAgent ? truncateTitle(actor.label) : actor.label,
     roomX: actor.x,
     roomY: actor.y + 2,
@@ -67,6 +85,9 @@ export function drawActorPlate(
     background: selected ? 'accent' : 'plate',
     weight: isAgent ? 700 : 500,
   })
+  if (actor.partyColour) {
+    drawPennant(context, palette, view, plate, actor.partyColour)
+  }
 }
 
 const MANA_WIDTH_UNITS = 16

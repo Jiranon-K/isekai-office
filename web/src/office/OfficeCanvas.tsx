@@ -2,6 +2,7 @@ import type { AgentState, OfficeAgent } from '@shared/types'
 import { useCallback } from 'react'
 import type { Mode, World } from '@/lib/theme'
 import { HOTSPOTS, type Hotspot, type HotspotId } from './scene/hotspots'
+import type { Party } from '@/party/party-logic'
 import { useOfficeCanvas, type AgentLocator } from './use-office-canvas'
 
 type OfficeCanvasProps = {
@@ -14,6 +15,7 @@ type OfficeCanvasProps = {
   onHotspot: (id: HotspotId) => void
   openHotspot: HotspotId | null
   boardWaiting: number
+  partyByAgent: ReadonlyMap<string, Party>
   world: World
   mode: Mode
   paused: boolean

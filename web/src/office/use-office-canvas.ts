@@ -96,10 +96,10 @@ export function useOfficeCanvas(input: OfficeInput, { onSelect, onHotspot, locat
 
   useRevealKey(engineRef)
 
-  const { agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot } = input
+  const { agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent } = input
   useEffect(() => {
-    engineRef.current?.update({ agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot })
-  }, [agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot])
+    engineRef.current?.update({ agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent })
+  }, [agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent])
 
   useEffect(() => {
     if (openHotspot && canvasRef.current) {
@@ -123,6 +123,7 @@ export function useOfficeCanvas(input: OfficeInput, { onSelect, onHotspot, locat
     const target = engineRef.current?.pick(event.clientX, event.clientY) ?? null
     event.currentTarget.style.cursor = target ? 'pointer' : 'default'
     engineRef.current?.setHover(target?.kind === 'hotspot' ? target.id : null)
+    engineRef.current?.setHoverAgent(target?.kind === 'agent' ? target.id : null)
   }, [])
 
   const highlight = useCallback((id: HotspotId | null) => {
@@ -131,7 +132,10 @@ export function useOfficeCanvas(input: OfficeInput, { onSelect, onHotspot, locat
       revealHotspot(canvasRef.current, id)
     }
   }, [])
-  const handlePointerLeave = useCallback(() => engineRef.current?.setHover(null), [])
+  const handlePointerLeave = useCallback(() => {
+    engineRef.current?.setHover(null)
+    engineRef.current?.setHoverAgent(null)
+  }, [])
 
   return { containerRef, canvasRef, handleClick, handlePointerMove, handlePointerLeave, highlight }
 }

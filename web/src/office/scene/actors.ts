@@ -5,6 +5,7 @@ import { DOOR_ENTRY, NPC_SPOTS, TILE_SIZE, type Facing, type Spot } from './layo
 import { findPath, type TilePoint, type WalkGrid } from './pathfinding'
 import { groupForAgent, SPOT_GROUPS, type GroupId } from './stations'
 import { lookFromId, type Look } from '../draw/sprites'
+import type { Party, PartyColour } from '@/party/party-logic'
 
 export type ActorMode = 'walk' | 'idle' | 'work'
 
@@ -24,6 +25,8 @@ export type Actor = {
   state: AgentState | null
   mana: number | null
   quiet: boolean
+  partyKey: string | null
+  partyColour: PartyColour | null
   npcMode: 'idle' | 'work'
   leaving: boolean
   walked: number
@@ -56,6 +59,8 @@ function createActor(id: string, kind: Actor['kind'], label: string, look: Look,
     state: null,
     mana: null,
     quiet: false,
+    partyKey: null,
+    partyColour: null,
     npcMode: 'idle',
     leaving: false,
     walked: 0,
@@ -205,6 +210,14 @@ export function syncActors(
 export function markQuiet(actors: Map<string, Actor>, quiet: ReadonlyMap<string, number>): void {
   for (const actor of actors.values()) {
     actor.quiet = actor.kind === 'agent' && quiet.has(actor.id)
+  }
+}
+
+export function markParties(actors: Map<string, Actor>, partyByAgent: ReadonlyMap<string, Party>): void {
+  for (const actor of actors.values()) {
+    const party = actor.kind === 'agent' ? partyByAgent.get(actor.id) : undefined
+    actor.partyKey = party?.key ?? null
+    actor.partyColour = party?.colour ?? null
   }
 }
 

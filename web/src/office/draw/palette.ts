@@ -83,6 +83,12 @@ export const COLOR_NAMES = [
   'receptionist-trim',
   'receptionist-accent',
   'receptionist-legs',
+  'party-1',
+  'party-2',
+  'party-3',
+  'party-4',
+  'party-5',
+  'party-6',
 ] as const
 
 export type ColorName = (typeof COLOR_NAMES)[number]

@@ -84,10 +84,22 @@
   --office-receptionist-trim: var(--amber-300);
   --office-receptionist-accent: var(--yellow-400);
   --office-receptionist-legs: var(--blue-900);
+  --office-party-1: var(--blue-600);
+  --office-party-2: var(--pink-600);
+  --office-party-3: var(--teal-600);
+  --office-party-4: var(--yellow-600);
+  --office-party-5: var(--violet-600);
+  --office-party-6: var(--red-600);
 }
 
 :root.dark {
   --office-shade: color-mix(in oklab, var(--blue-950) 66%, transparent);
+  --office-party-1: var(--blue-300);
+  --office-party-2: var(--pink-300);
+  --office-party-3: var(--teal-300);
+  --office-party-4: var(--yellow-300);
+  --office-party-5: var(--violet-300);
+  --office-party-6: var(--red-300);
 }
 
 :root[data-world="grove"] {
