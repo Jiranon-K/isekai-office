@@ -16,7 +16,7 @@ const SUMMARY: DaySummary = {
   longestWait: { title: 'Fix login', ms: 20 * MINUTE, at: new Date(2026, 4, 10, 10, 0).getTime() },
   busiestHour: 10,
   agents: [{ agentId: 'a1', title: 'Fix login', repo: null, workingMs: 90 * MINUTE, waitingMs: 25 * MINUTE, waits: 2, longestWaitMs: 20 * MINUTE, finished: true }],
-  spend: { amount: 1.5, currency: 'USD' }
+  spend: { amount: 1.5, currency: 'USD', unpricedSessions: 0 }
 }
 
 describe('formatting', () => {
@@ -52,6 +52,12 @@ describe('toMarkdown', () => {
     expect(spendText(SUMMARY)).toBe('◎ 150 (1.50 USD)')
     expect(toMarkdown(SUMMARY)).toContain('- ค่าใช้จ่าย: ◎ 150 (1.50 USD)')
     expect(spendText({ ...SUMMARY, spend: null })).toBeNull()
+  })
+
+  test('a spend that leaves out unpriced sessions says how many', () => {
+    const partial = { ...SUMMARY, spend: { amount: 1.5, currency: 'USD', unpricedSessions: 2 } }
+    expect(spendText(partial)).toBe('◎ 150 (1.50 USD) · ไม่รวม 2 session ที่ไม่มีราคา')
+    expect(toMarkdown(partial)).toContain('- ค่าใช้จ่าย: ◎ 150 (1.50 USD) · ไม่รวม 2 session ที่ไม่มีราคา')
   })
 
   test('leaves the spend line out without a spend', () => {

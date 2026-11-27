@@ -39,7 +39,9 @@ export function spendText(summary: DaySummary): string | null {
   if (!summary.spend) {
     return null
   }
-  return `${formatGold(summary.spend.amount)} (${formatMoney(summary.spend.amount, summary.spend.currency || null)})`
+  const text = `${formatGold(summary.spend.amount)} (${formatMoney(summary.spend.amount, summary.spend.currency || null)})`
+  const unpriced = summary.spend.unpricedSessions
+  return unpriced > 0 ? `${text} · ไม่รวม ${unpriced} session ที่ไม่มีราคา` : text
 }
 
 export function isEmptyDay(summary: DaySummary): boolean {

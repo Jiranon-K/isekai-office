@@ -24,8 +24,8 @@ function dayOf(events: DayEvent[]): DayLog {
   return { date: '2026-05-10', events }
 }
 
-function ledgerOf(total: number | null): Ledger {
-  return { date: '2026-05-10', currency: 'USD', rows: [], total, unpricedRows: 0, at: 0 }
+function ledgerOf(total: number | null, unpricedRows = 0): Ledger {
+  return { date: '2026-05-10', currency: 'USD', rows: [], total, unpricedRows, at: 0 }
 }
 
 describe('summarise waits', () => {
@@ -142,9 +142,13 @@ describe('summarise spend and empty days', () => {
   const events = [watch('09:00', true), state('09:00', null, 'working'), watch('10:00', false)]
 
   test('has a spend line only when the ledger has a total', () => {
-    expect(summarise(dayOf(events), ledgerOf(1.5)).spend).toEqual({ amount: 1.5, currency: 'USD' })
+    expect(summarise(dayOf(events), ledgerOf(1.5)).spend).toEqual({ amount: 1.5, currency: 'USD', unpricedSessions: 0 })
     expect(summarise(dayOf(events), ledgerOf(null)).spend).toBeNull()
     expect(summarise(dayOf(events), null).spend).toBeNull()
+  })
+
+  test('carries the count of sessions the ledger could not price', () => {
+    expect(summarise(dayOf(events), ledgerOf(1.5, 2)).spend?.unpricedSessions).toBe(2)
   })
 
   test('a day with no events has no sessions, no median and no longest wait', () => {

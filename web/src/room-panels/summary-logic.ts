@@ -25,7 +25,7 @@ export type DaySummary = {
   longestWait: { title: string; ms: number; at: number } | null
   busiestHour: number | null
   agents: AgentDay[]
-  spend: { amount: number; currency: string } | null
+  spend: { amount: number; currency: string; unpricedSessions: number } | null
 }
 
 type Wait = { agentId: string; title: string; ms: number; at: number }
@@ -136,7 +136,7 @@ function spendOf(ledger: Ledger | null): DaySummary['spend'] {
   if (!ledger || ledger.total === null) {
     return null
   }
-  return { amount: ledger.total, currency: ledger.currency ?? '' }
+  return { amount: ledger.total, currency: ledger.currency ?? '', unpricedSessions: ledger.unpricedRows }
 }
 
 function longestOf(waits: readonly Wait[]): DaySummary['longestWait'] {
