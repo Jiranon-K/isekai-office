@@ -130,6 +130,13 @@ export function prefetchedScreen<Screen>(prefetched: { agentId: string; updatedA
   return loadedScreen(prefetched.detail, prefetched.updatedAt, updatedAt)
 }
 
+export function answerLockHeld(answeredFor: number | null, updatedAt: number, screenLoaded: boolean): boolean {
+  if (answeredFor === null) {
+    return false
+  }
+  return answeredFor === updatedAt || !screenLoaded
+}
+
 export function restartGuard(state: QueueState, arrivedAt: number): QueueState {
   return arrivedAt > state.shownAt ? { ...state, shownAt: arrivedAt } : state
 }

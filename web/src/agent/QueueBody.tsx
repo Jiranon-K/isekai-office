@@ -7,7 +7,7 @@ import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
 import { decisionLocked } from './panel-logic'
 import { QueueComposer } from './QueueComposer'
 import { QueueHeader } from './QueueHeader'
-import { canAct, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
+import { answerLockHeld, canAct, loadedScreen, prefetchedScreen, restartGuard, type QueueKey, type QueueState } from './queue-logic'
 import { useCommand } from './use-command'
 import type { PrefetchedSession } from './use-prefetched-session'
 import { useQueueKeys } from './use-queue-keys'
@@ -55,7 +55,7 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
   const session = useQueueSession(agent, props.prefetched)
   const command = useCommand(agent.id)
   const [answeredAt, setAnsweredAt] = useState<number | null>(null)
-  const answering = useRef(false)
+  const answeredFor = useRef<number | null>(null)
   const screen = session.data?.screen ?? null
   const choices = useMemo(() => (screen ? parseChoices(screen) : []), [screen])
   const locked = decisionLocked(command.status.kind, answeredAt, agent.updatedAt)
@@ -77,13 +77,14 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
   }, [command.status.kind, onAnswered])
 
   async function answer(send: () => Promise<boolean>): Promise<boolean> {
-    if (answering.current) {
+    if (answerLockHeld(answeredFor.current, agent.updatedAt, screen !== null)) {
       return false
     }
-    answering.current = true
-    setAnsweredAt(agent.updatedAt)
+    const answeredAtStart = agent.updatedAt
+    answeredFor.current = answeredAtStart
+    setAnsweredAt(answeredAtStart)
     const sent = await send()
-    answering.current = sent
+    answeredFor.current = sent ? answeredAtStart : null
     return sent
   }
 

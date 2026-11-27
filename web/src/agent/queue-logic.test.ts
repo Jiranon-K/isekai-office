@@ -3,6 +3,7 @@ import type { AgentState, Choice, OfficeAgent } from '@shared/types'
 import {
   afterAnswer,
   afterSkip,
+  answerLockHeld,
   canAct,
   currentOf,
   forgetGone,
@@ -297,5 +298,23 @@ describe('prefetched screen', () => {
   test('is dropped for another agent or when nothing was prefetched', () => {
     expect(prefetchedScreen(prefetched, 'c', 100)).toBeNull()
     expect(prefetchedScreen(null, 'b', 100)).toBeNull()
+  })
+})
+
+describe('answer lock', () => {
+  test('is free when nothing was answered', () => {
+    expect(answerLockHeld(null, 100, true)).toBe(false)
+  })
+
+  test('holds while the agent has not moved on', () => {
+    expect(answerLockHeld(100, 100, true)).toBe(true)
+  })
+
+  test('holds after the agent moved on until the fresh screen has loaded', () => {
+    expect(answerLockHeld(100, 200, false)).toBe(true)
+  })
+
+  test('frees for a still-waiting agent once its new screen has loaded', () => {
+    expect(answerLockHeld(100, 200, true)).toBe(false)
   })
 })
