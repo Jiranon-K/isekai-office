@@ -29,5 +29,9 @@ export const ORDER_ERROR_LABELS: Record<string, string> = {
   invalid_rule: 'รูปแบบกฎไม่ถูกต้อง',
   unparseable: 'อ่านไฟล์นี้ไม่ได้',
   no_worktree: 'session นี้ไม่มี worktree ที่แก้ได้',
+  not_found: 'ไม่พบ session นี้',
+  bad_request: 'คำขอไม่ถูกต้อง',
+  unreadable: 'เปิดไฟล์นี้ไม่ได้',
+  write_failed: 'เขียนไฟล์ไม่สำเร็จ ลองใหม่อีกครั้ง',
   server_unreachable: 'ติดต่อ server ไม่ได้'
 }

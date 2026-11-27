@@ -115,6 +115,42 @@ describe('changing the local settings file', () => {
     expect(await readdir(join(folder, '.claude'))).toEqual(['settings.local.json'])
   })
 
+  test('a rename refused because another process holds the file is retried and then lands', async () => {
+    await writeLocal(JSON.stringify({ permissions: { allow: ['Read'] } }))
+    let attempts = 0
+    const busy: SettingsFileOperations = {
+      ...REAL_FILE_OPERATIONS,
+      rename: async (from, to) => {
+        attempts += 1
+        if (attempts <= 3) {
+          throw Object.assign(new Error('busy'), { code: attempts === 1 ? 'EPERM' : 'EBUSY' })
+        }
+        await REAL_FILE_OPERATIONS.rename(from, to)
+      }
+    }
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'), busy)).toEqual({ ok: true, error: null })
+    expect(attempts).toBe(4)
+    expect(JSON.parse(await readLocal()).permissions.allow).toEqual(['Read', 'Bash(bun test)'])
+  })
+
+  test('a rename that stays busy gives up after the retries and a rename that fails otherwise is not retried', async () => {
+    await writeLocal(JSON.stringify({ permissions: { allow: ['Read'] } }))
+    let attempts = 0
+    const failingWith = (code: string): SettingsFileOperations => ({
+      ...REAL_FILE_OPERATIONS,
+      rename: async () => {
+        attempts += 1
+        throw Object.assign(new Error('no'), { code })
+      }
+    })
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'), failingWith('EBUSY'))).toEqual({ ok: false, error: 'write_failed' })
+    expect(attempts).toBe(4)
+    attempts = 0
+    expect(await changeLocalRule(folder, change('add', 'Bash(bun test)'), failingWith('EACCES'))).toEqual({ ok: false, error: 'write_failed' })
+    expect(attempts).toBe(1)
+    expect(await readdir(join(folder, '.claude'))).toEqual(['settings.local.json'])
+  })
+
   test('a relative worktree path is refused', async () => {
     expect(await changeLocalRule('relative/path', change('add', 'Bash(bun test)'))).toEqual({ ok: false, error: 'no_worktree' })
   })
