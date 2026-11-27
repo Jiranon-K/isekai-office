@@ -105,6 +105,19 @@ describe('watchedSpans and isWatched', () => {
     ])
   })
 
+  test('opens a span at the first event when the day starts with an off', () => {
+    const events = [state(at(0, 5), 'a', null, 'working'), watch(at(1), false), watch(at(9), true), watch(at(10), false)]
+    expect(watchedSpans(events)).toEqual([
+      { from: at(0, 5), to: at(1) },
+      { from: at(9), to: at(10) }
+    ])
+  })
+
+  test('ignores an off that follows an off once the first span exists', () => {
+    const events = [watch(at(9), true), watch(at(10), false), watch(at(11), false)]
+    expect(watchedSpans(events)).toEqual([{ from: at(9), to: at(10) }])
+  })
+
   test('has no spans on an empty day', () => {
     expect(watchedSpans([])).toEqual([])
   })

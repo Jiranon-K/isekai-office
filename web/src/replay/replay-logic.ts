@@ -96,22 +96,34 @@ function wholeDay(events: readonly DayEvent[]): Span[] {
   return [{ from: first.at, to: last.at }]
 }
 
+type WatchEvent = Extract<DayEvent, { kind: 'watch' }>
+
+function applyWatch(spans: Span[], openAt: number | null, lastSeen: number, event: WatchEvent, dayStart: number): number | null {
+  if (event.on) {
+    if (openAt !== null) {
+      spans.push({ from: openAt, to: lastSeen })
+    }
+    return event.at
+  }
+  if (openAt !== null) {
+    spans.push({ from: openAt, to: event.at })
+  } else if (spans.length === 0) {
+    spans.push({ from: dayStart, to: event.at })
+  }
+  return null
+}
+
 export function watchedSpans(events: readonly DayEvent[]): Span[] {
   if (!events.some((event) => event.kind === 'watch')) {
     return wholeDay(events)
   }
   const spans: Span[] = []
+  const dayStart = events[0]?.at ?? 0
   let openAt: number | null = null
   let lastSeen = 0
   for (const event of events) {
-    if (event.kind === 'watch' && event.on && openAt !== null) {
-      spans.push({ from: openAt, to: lastSeen })
-      openAt = event.at
-    } else if (event.kind === 'watch' && event.on) {
-      openAt = event.at
-    } else if (event.kind === 'watch' && openAt !== null) {
-      spans.push({ from: openAt, to: event.at })
-      openAt = null
+    if (event.kind === 'watch') {
+      openAt = applyWatch(spans, openAt, lastSeen, event, dayStart)
     }
     lastSeen = event.at
   }
