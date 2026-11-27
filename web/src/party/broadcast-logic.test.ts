@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { OfficeAgent } from '@shared/types'
-import { claimSubmit, describeRow, GONE_REASON, initialRows, releaseSubmit, runBroadcast, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
+import { claimSubmit, describeRow, GONE_REASON, initialRows, releaseSubmit, runBroadcast, textAfterRun, UNREACHABLE_REASON, type BroadcastDeps } from './broadcast-logic'
 import { SKIP_REASONS, type BroadcastRow } from './party-logic'
 
 function agent(id: string, state: OfficeAgent['state'] = 'done'): OfficeAgent {
@@ -58,6 +58,26 @@ describe('submit guard', () => {
     claimSubmit(guard)
     releaseSubmit(guard)
     expect(claimSubmit(guard)).toBe(true)
+  })
+})
+
+describe('textAfterRun', () => {
+  const sent: BroadcastRow = { agentId: 'a', status: 'sent', reason: null }
+
+  test('clears the text when every row was sent', () => {
+    expect(textAfterRun('hello', [sent, { ...sent, agentId: 'b' }])).toBe('')
+  })
+
+  test('keeps the text when a row failed so it can be retried', () => {
+    expect(textAfterRun('hello', [sent, { agentId: 'b', status: 'failed', reason: 'x' }])).toBe('hello')
+  })
+
+  test('keeps the text when a row was skipped', () => {
+    expect(textAfterRun('hello', [sent, { agentId: 'b', status: 'skipped', reason: 'x' }])).toBe('hello')
+  })
+
+  test('keeps the text when there were no rows', () => {
+    expect(textAfterRun('hello', [])).toBe('hello')
   })
 })
 

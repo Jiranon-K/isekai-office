@@ -29,6 +29,10 @@ export function initialRows(agentIds: readonly string[]): BroadcastRow[] {
   return agentIds.map((agentId) => ({ agentId, status: 'idle', reason: null }))
 }
 
+export function textAfterRun(text: string, rows: readonly BroadcastRow[]): string {
+  return rows.length > 0 && rows.every((row) => row.status === 'sent') ? '' : text
+}
+
 export function describeRow(row: BroadcastRow): string | null {
   if (row.status === 'sending') {
     return 'กำลังส่ง'

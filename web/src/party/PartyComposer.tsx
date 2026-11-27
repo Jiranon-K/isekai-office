@@ -4,7 +4,7 @@ import { describeResult } from '@/agent/panel-logic'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendCommand } from '@/lib/api'
-import { claimSubmit, releaseSubmit, runBroadcast } from './broadcast-logic'
+import { claimSubmit, releaseSubmit, runBroadcast, textAfterRun } from './broadcast-logic'
 import { canReceive, type BroadcastRow, type Party } from './party-logic'
 import { PartyMemberRow } from './PartyMemberRow'
 
@@ -45,7 +45,7 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
       return
     }
     setRunning(true)
-    await runBroadcast(
+    const finished = await runBroadcast(
       chosen.map((member) => member.id),
       text.trim(),
       {
@@ -57,6 +57,9 @@ export function PartyComposer({ party, agents }: PartyComposerProps): React.JSX.
     )
     releaseSubmit(submitting)
     if (!cancelled.current) {
+      if (textAfterRun(text, finished) === '') {
+        setText('')
+      }
       setRunning(false)
     }
   }
