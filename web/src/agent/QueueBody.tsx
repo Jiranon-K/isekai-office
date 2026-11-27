@@ -24,7 +24,7 @@ type QueueBodyProps = {
   now: number
   prefetched: PrefetchedSession | null
   onSkip(): void
-  onAnswered(): void
+  onAnswered(agentId: string): void
   onExpand(agentId: string): void
   onClose(): void
 }
@@ -75,9 +75,9 @@ export function QueueBody(props: QueueBodyProps): React.JSX.Element {
     if (command.status.kind !== 'sent') {
       return
     }
-    const timer = setTimeout(onAnswered, MOVE_ON_MS)
+    const timer = setTimeout(() => onAnswered(agent.id), MOVE_ON_MS)
     return () => clearTimeout(timer)
-  }, [command.status.kind, onAnswered])
+  }, [command.status.kind, onAnswered, agent.id])
 
   async function answer(send: () => Promise<boolean>): Promise<boolean> {
     if (answerLockHeld(answeredFor.current, agent.updatedAt, screen !== null)) {

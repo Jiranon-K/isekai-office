@@ -90,6 +90,10 @@ export function afterAnswer(state: QueueState, agents: readonly OfficeAgent[], n
   return moveOn(state, agents, now)
 }
 
+export function afterAnswerFor(state: QueueState, agents: readonly OfficeAgent[], now: number, answeredId: string): QueueState {
+  return answeredId === state.currentId ? moveOn(state, agents, now) : state
+}
+
 export function afterSkip(state: QueueState, agents: readonly OfficeAgent[], now: number): QueueState {
   return moveOn(state, agents, now)
 }

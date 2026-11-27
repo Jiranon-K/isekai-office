@@ -13,7 +13,7 @@ type DecisionQueueProps = {
   state: QueueState
   agents: readonly OfficeAgent[]
   onSkip(): void
-  onAnswered(): void
+  onAnswered(agentId: string): void
   onExpand(agentId: string): void
   onClose(): void
 }

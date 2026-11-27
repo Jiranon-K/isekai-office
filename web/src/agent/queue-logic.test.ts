@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import type { AgentState, Choice, OfficeAgent } from '@shared/types'
 import {
   afterAnswer,
+  afterAnswerFor,
   afterSkip,
   answerLockHeld,
   canAct,
@@ -366,5 +367,17 @@ describe('keyAnswers', () => {
     expect(keyAnswers({ kind: 'skip' })).toBe(false)
     expect(keyAnswers({ kind: 'expand' })).toBe(false)
     expect(keyAnswers({ kind: 'close' })).toBe(false)
+  })
+})
+
+describe('afterAnswerFor', () => {
+  test('moves on when the answered agent is the current one', () => {
+    const shown = startQueue(THREE, 0)
+    expect(afterAnswerFor(shown, THREE, 500, 'a').currentId).toBe('b')
+  })
+
+  test('ignores an answer for an agent that is no longer current', () => {
+    const shown = startQueue(THREE, 0)
+    expect(afterAnswerFor(shown, THREE, 500, 'b')).toBe(shown)
   })
 })

@@ -2,7 +2,7 @@ import type { OfficeAgent } from '@shared/types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isTyping } from '@/lib/keyboard'
 import { waitingQueue } from '@/alerts/jump-logic'
-import { afterAnswer, afterSkip, isQueueOpenKey, settle, startQueue, type QueueState } from './queue-logic'
+import { afterAnswerFor, afterSkip, isQueueOpenKey, settle, startQueue, type QueueState } from './queue-logic'
 
 type DecisionQueueOptions = {
   agents: readonly OfficeAgent[]
@@ -16,7 +16,7 @@ export type DecisionQueueControls = {
   open(): void
   close(): void
   skip(): void
-  answered(): void
+  answered(agentId: string): void
   expand(agentId: string): void
 }
 
@@ -44,8 +44,8 @@ export function useDecisionQueue(options: DecisionQueueOptions): DecisionQueueCo
     setState((current) => (current ? afterSkip(current, latest.current.agents, Date.now()) : current))
   }, [])
 
-  const answered = useCallback(() => {
-    setState((current) => (current ? afterAnswer(current, latest.current.agents, Date.now()) : current))
+  const answered = useCallback((agentId: string) => {
+    setState((current) => (current ? afterAnswerFor(current, latest.current.agents, Date.now(), agentId) : current))
   }, [])
 
   const expand = useCallback((agentId: string) => {
