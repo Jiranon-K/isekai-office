@@ -3,7 +3,7 @@ import { mkdtemp, readdir, readFile, rm, mkdir, symlink, writeFile } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OrderChange } from '@shared/orders'
-import { changeLocalRule, localSettingsPath, readLayers, REAL_FILE_OPERATIONS, type SettingsFileOperations } from './permissions'
+import { changeLocalRule, layerFromDocument, localSettingsPath, readLayers, REAL_FILE_OPERATIONS, type SettingsFileOperations } from './permissions'
 
 let folder = ''
 
@@ -213,5 +213,18 @@ describe('reading the layers', () => {
     const layers = await readLayers(null, join(folder, 'nohome'))
     expect(layers).toHaveLength(3)
     expect(layers.every((layer) => layer.error === null && layer.allow.length === 0)).toBe(true)
+  })
+
+  test('a list that is present but not an array of strings makes the layer unparseable', () => {
+    const wrongShapes = [{ allow: 'Read' }, { deny: { a: 1 } }, { ask: [1] }, { allow: ['Read', null] }, { allow: null }]
+    for (const permissions of wrongShapes) {
+      expect(layerFromDocument('local', { permissions })).toEqual({ scope: 'local', allow: [], deny: [], ask: [], error: 'unparseable' })
+    }
+    expect(layerFromDocument('local', { permissions: [] }).error).toBe('unparseable')
+  })
+
+  test('absent lists and well formed lists stay readable', () => {
+    expect(layerFromDocument('local', {})).toEqual({ scope: 'local', allow: [], deny: [], ask: [], error: null })
+    expect(layerFromDocument('local', { permissions: { allow: ['Read'], defaultMode: 'plan' } })).toEqual({ scope: 'local', allow: ['Read'], deny: [], ask: [], error: null })
   })
 })

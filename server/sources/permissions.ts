@@ -64,23 +64,29 @@ function emptyLayer(scope: RuleScope, error: string | null): RuleLayer {
   return { scope, allow: [], deny: [], ask: [], error }
 }
 
-function listFrom(permissions: SettingsDocument, key: string): string[] {
+function listFrom(permissions: SettingsDocument, key: string): string[] | null {
+  if (!(key in permissions)) {
+    return []
+  }
   const list = permissions[key]
-  return isStringList(list) ? list : []
+  return isStringList(list) ? list : null
 }
 
 export function layerFromDocument(scope: RuleScope, document: SettingsDocument): RuleLayer {
   const permissions = document.permissions
-  if (!isRecord(permissions)) {
+  if (permissions === undefined) {
     return emptyLayer(scope, null)
   }
-  return {
-    scope,
-    allow: listFrom(permissions, 'allow'),
-    deny: listFrom(permissions, 'deny'),
-    ask: listFrom(permissions, 'ask'),
-    error: null
+  if (!isRecord(permissions)) {
+    return emptyLayer(scope, 'unparseable')
   }
+  const allow = listFrom(permissions, 'allow')
+  const deny = listFrom(permissions, 'deny')
+  const ask = listFrom(permissions, 'ask')
+  if (allow === null || deny === null || ask === null) {
+    return emptyLayer(scope, 'unparseable')
+  }
+  return { scope, allow, deny, ask, error: null }
 }
 
 export async function readLayer(scope: RuleScope, path: string): Promise<RuleLayer> {
