@@ -30,7 +30,7 @@ function formatTime(at: number): string {
   return new Date(at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-export function HearthPanel({ office, onSelect }: { office: Loadable<OfficeSnapshot>; onSelect(agentId: string): void }): React.JSX.Element {
+export function HearthStatus({ office, onSelect }: { office: Loadable<OfficeSnapshot>; onSelect(agentId: string): void }): React.JSX.Element {
   const log = useGuildLog(true, office.data?.at ?? 0)
   const lastHidden = useLastHidden()
   const present = new Set((office.data?.agents ?? []).map((agent) => agent.id))

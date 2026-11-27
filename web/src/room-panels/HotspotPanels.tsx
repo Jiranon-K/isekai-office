@@ -5,7 +5,7 @@ import type { Theme } from '@/lib/theme'
 import { hotspotById } from '@/office/scene/hotspots'
 import { ArchivePanel } from './ArchivePanel'
 import { BarPanel } from './BarPanel'
-import { HearthPanel } from './HearthPanel'
+import { HearthTabs } from './HearthTabs'
 import { HotspotPopover, type PanelSide } from './HotspotPopover'
 import { OrbPanel } from './OrbPanel'
 import { RosterPanel } from './RosterPanel'
@@ -48,7 +48,7 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <BarPanel agents={agents} board={props.board.data} onSelect={props.onSelectAgent} />
   }
   if (id === 'hearth') {
-    return <HearthPanel office={props.office} onSelect={props.onSelectAgent} />
+    return <HearthTabs office={props.office} onSelect={props.onSelectAgent} />
   }
   return <ArchivePanel board={props.board} />
 }
