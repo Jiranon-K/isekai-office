@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { PROMPT_MAX } from '@shared/spawn'
 import type { QuestTemplate } from '@shared/templates'
 import { agentTemplateValues, insertAtCursor, insertTemplate, worktreeName } from './template-insert-logic'
 
@@ -31,10 +32,30 @@ describe('agentTemplateValues', () => {
   })
 })
 
+describe('insertTemplate size limit', () => {
+  const values = agentTemplateValues({ repo: 'cozu', worktree: '/w/fix-login' })
+  const inserted = 'Review fix-login in cozu against main'
+
+  test('refuses an insert that would pass the prompt limit', () => {
+    const text = 'x'.repeat(PROMPT_MAX - inserted.length + 1)
+    expect(insertTemplate(text, text.length, text.length, TEMPLATE, values)).toBeNull()
+  })
+
+  test('accepts an insert that reaches the limit exactly', () => {
+    const text = 'x'.repeat(PROMPT_MAX - inserted.length)
+    expect(insertTemplate(text, text.length, text.length, TEMPLATE, values)?.text.length).toBe(PROMPT_MAX)
+  })
+
+  test('counts a replaced selection as removed', () => {
+    const text = 'x'.repeat(PROMPT_MAX)
+    expect(insertTemplate(text, 0, text.length, TEMPLATE, values)?.text).toBe(inserted)
+  })
+})
+
 describe('insertTemplate with missing values', () => {
   test('keeps the placeholders of values the agent does not have', () => {
     const values = agentTemplateValues({ repo: null, worktree: null })
-    expect(insertTemplate('', 0, 0, TEMPLATE, values).text).toBe('Review {{name}} in {{repo}} against main')
+    expect(insertTemplate('', 0, 0, TEMPLATE, values)?.text).toBe('Review {{name}} in {{repo}} against main')
   })
 })
 
@@ -59,6 +80,6 @@ describe('insertAtCursor', () => {
 describe('insertTemplate', () => {
   test('inserts the filled prompt using the agent values', () => {
     const values = agentTemplateValues({ repo: 'cozu', worktree: '/w/fix-login' })
-    expect(insertTemplate('go: ', 4, 4, TEMPLATE, values).text).toBe('go: Review fix-login in cozu against main')
+    expect(insertTemplate('go: ', 4, 4, TEMPLATE, values)?.text).toBe('go: Review fix-login in cozu against main')
   })
 })

@@ -1,5 +1,6 @@
 import type { OfficeAgent } from '@shared/types'
 import type { QuestTemplate } from '@shared/templates'
+import { PROMPT_MAX } from '@shared/spawn'
 import { useRef, useState } from 'react'
 import { SendIcon, StopIcon2 } from '@/components/icons'
 import { Spinner } from '@/components/spinner'
@@ -38,6 +39,7 @@ function StatusLine({ status }: { status: CommandStatus }): React.JSX.Element | 
 
 export function CommandComposer({ agent, disabled, status, onPrompt, onEscape }: CommandComposerProps): React.JSX.Element {
   const [text, setText] = useState('')
+  const [refused, setRefused] = useState(false)
   const box = useRef<HTMLTextAreaElement>(null)
   const sending = status.kind === 'sending'
   const canSend = !disabled && !sending && text.trim().length > 0
@@ -56,6 +58,10 @@ export function CommandComposer({ agent, disabled, status, onPrompt, onEscape }:
     const start = box.current?.selectionStart ?? text.length
     const end = box.current?.selectionEnd ?? text.length
     const inserted = insertTemplate(text, start, end, template, agentTemplateValues(agent))
+    setRefused(inserted === null)
+    if (inserted === null) {
+      return
+    }
     setText(inserted.text)
     requestAnimationFrame(() => {
       box.current?.focus()
@@ -69,7 +75,10 @@ export function CommandComposer({ agent, disabled, status, onPrompt, onEscape }:
         ref={box}
         value={text}
         disabled={disabled}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => {
+          setText(event.target.value)
+          setRefused(false)
+        }}
         onKeyDown={(event) => {
           if (!shouldSubmitOnKey(event.key, event.shiftKey, event.nativeEvent.isComposing)) {
             return
@@ -84,6 +93,7 @@ export function CommandComposer({ agent, disabled, status, onPrompt, onEscape }:
       />
       <div className="flex items-center gap-2">
         <StatusLine status={status} />
+        {refused ? <p role="alert" className="text-caption text-tint-red-fg">แม่แบบยาวเกิน {PROMPT_MAX} ตัวอักษร ไม่ได้แทรก</p> : null}
         <TemplateMenu disabled={disabled || sending} onPick={insert} />
         <Button variant="outline" size="sm" className="ml-auto" disabled={disabled || sending} onClick={onEscape}>
           <StopIcon2 />

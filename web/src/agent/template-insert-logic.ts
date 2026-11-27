@@ -1,3 +1,4 @@
+import { PROMPT_MAX } from '@shared/spawn'
 import type { OfficeAgent } from '@shared/types'
 import { fillTemplate, templateValues, type QuestTemplate, type TemplateValues } from '@shared/templates'
 
@@ -21,6 +22,7 @@ export function insertAtCursor(text: string, start: number, end: number, inserti
   return { text: `${text.slice(0, from)}${insertion}${text.slice(to)}`, cursor: from + insertion.length }
 }
 
-export function insertTemplate(text: string, start: number, end: number, template: QuestTemplate, values: TemplateValues): Inserted {
-  return insertAtCursor(text, start, end, fillTemplate(template.prompt, values))
+export function insertTemplate(text: string, start: number, end: number, template: QuestTemplate, values: TemplateValues): Inserted | null {
+  const inserted = insertAtCursor(text, start, end, fillTemplate(template.prompt, values))
+  return inserted.text.length > PROMPT_MAX ? null : inserted
 }
