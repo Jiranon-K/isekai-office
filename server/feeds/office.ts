@@ -1,5 +1,5 @@
 import type { GuildLog, OfficeSnapshot } from '@shared/types'
-import { orcaSource } from '../sources/orca'
+import { activeSource } from '../sources/select'
 import { EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
 
 const POLL_MS = 2_000
@@ -26,7 +26,7 @@ export function quietAfterMsFrom(value: string | undefined): number {
 const contextWindow = contextWindowFrom(process.env.CONTEXT_WINDOW_TOKENS)
 const quietAfterMs = quietAfterMsFrom(process.env.QUIET_AFTER_MINUTES)
 
-const source = orcaSource
+const source = activeSource
 
 let latest: OfficeSnapshot = { source: source.id, caps: source.caps, sourceReady: false, agents: [], contextWindow, quietAfterMs, error: null, at: 0 }
 let logState = EMPTY_LOG_STATE

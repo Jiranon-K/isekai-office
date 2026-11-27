@@ -113,7 +113,10 @@ export function parseHistory(text: string, limit = HISTORY_LIMIT): SessionEntry[
 }
 
 export async function sessionHistory(worktree: string, session: string, projectsDir?: string): Promise<SessionEntry[] | null> {
-  const path = join(transcriptFolder(worktree, projectsDir), `${session}.jsonl`)
+  return historyAt(join(transcriptFolder(worktree, projectsDir), `${session}.jsonl`))
+}
+
+export async function historyAt(path: string): Promise<SessionEntry[] | null> {
   const info = await stat(path).catch(() => null)
   if (!info) {
     return null

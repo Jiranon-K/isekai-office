@@ -79,6 +79,10 @@ export function lastTool(entries: RawEntry[]): string | null {
   return tools.at(-1)?.name ?? null
 }
 
+export async function orcaBinaryExists(): Promise<boolean> {
+  return Bun.file(ORCA).exists()
+}
+
 export async function orcaRunning(): Promise<boolean> {
   try {
     const status = await orca<{ app: { running: boolean }; runtime: { reachable: boolean } }>(['status'])
