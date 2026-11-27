@@ -1,3 +1,4 @@
+import { isDayDate } from '@shared/day-log'
 import { HOTSPOTS, type HotspotId } from '@/office/scene/hotspots'
 
 export type PanelId = Exclude<HotspotId, 'windows'>
@@ -76,6 +77,47 @@ export function mergeQuery(search: string, route: Route): string {
       next.set(key, value)
     }
   }
+  keepReplay(current, next)
   const query = next.toString()
+  return query ? `?${query}` : ''
+}
+
+export type ReplayRoute = { date: string; at: number | null }
+
+const REPLAY_KEYS = ['replay', 'at']
+
+export function parseReplay(search: string): ReplayRoute | null {
+  const params = new URLSearchParams(search)
+  const date = params.get('replay')
+  if (!isDayDate(date)) {
+    return null
+  }
+  const at = Number(params.get('at'))
+  return { date, at: params.get('at') !== null && Number.isInteger(at) && at >= 0 ? at : null }
+}
+
+function keepReplay(current: URLSearchParams, next: URLSearchParams): void {
+  const replay = parseReplay(current.toString())
+  if (replay === null) {
+    return
+  }
+  next.set('replay', replay.date)
+  if (replay.at !== null) {
+    next.set('at', String(replay.at))
+  }
+}
+
+export function withReplay(search: string, replay: ReplayRoute | null): string {
+  const params = new URLSearchParams(search)
+  for (const key of REPLAY_KEYS) {
+    params.delete(key)
+  }
+  if (replay !== null) {
+    params.set('replay', replay.date)
+  }
+  if (replay !== null && replay.at !== null) {
+    params.set('at', String(Math.round(replay.at)))
+  }
+  const query = params.toString()
   return query ? `?${query}` : ''
 }
