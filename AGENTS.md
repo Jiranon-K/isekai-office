@@ -4,6 +4,13 @@ A pixel-art guild hall that shows AI coding agent sessions as characters. Bun se
 Vite, Tailwind 4, a canvas 2D room. The UI text is Thai. Read `README.md` for the product and the
 project layout.
 
+## Commands
+
+- `bun run check`: typecheck, all tests, and the production build.
+- `bun run typecheck`: TypeScript check only.
+- `bun test <path>`: run the tests for one file, for example `bun test server/archive/scan.test.ts`.
+- `bun run demo`: build, then run the server in demo mode at `http://localhost:4310`.
+
 ## Workflow: pstack
 
 pstack is the workflow for every task. Its skills are plain Markdown on this machine, under the
@@ -55,6 +62,8 @@ state its bundle or memory cost in the report.
 - Keep a file under 300 lines. Extract a module when one grows.
 - Imports go at the top, grouped: runtime, external packages, internal modules.
 - Prefer editing an existing file over creating a new one.
+- Put a feature's files in its own folder.
+- Copy code until its third use, then extract a shared helper.
 - Make the smallest change that solves the problem. Fix root causes, no temporary fixes.
 - Tests sit next to the file they test (`*.test.ts`).
 - Types used by both sides live in `shared/types.ts`.
@@ -72,6 +81,10 @@ state its bundle or memory cost in the report.
 ## Git
 
 - Work on a branch, never on `main`. One agent per file at a time.
+- A branch lives at most 2 days.
+- One layer per PR. Types and mock data first, then UI, then the real API wiring.
+- PR text starts with Why, then What, then Verified (the command and its result). Add a
+  screenshot for any UI change.
 - Commit messages and PR text are in English.
 
 ## Done
