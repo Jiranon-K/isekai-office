@@ -52,6 +52,7 @@ function makeActor(inConflict: boolean): Actor {
     groupId: 'desk',
     spotIndex: 0,
     state: 'working',
+    stateSince: null,
     mana: 0.4,
     quiet: false,
     inConflict,

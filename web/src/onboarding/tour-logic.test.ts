@@ -3,7 +3,7 @@ import type { AgentState, OfficeAgent } from '@shared/types'
 import { readTourDone, TOUR_KEY, TOUR_STEP_COUNT, tourStep, writeTourDone, type TourStorage } from './tour-logic'
 
 function agent(id: string, state: AgentState): OfficeAgent {
-  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
+  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0 }
 }
 
 function memoryStorage(entries: Record<string, string> = {}): TourStorage & { entries: Record<string, string> } {

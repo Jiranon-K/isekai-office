@@ -31,6 +31,7 @@ export type OfficeInput = {
   agents: readonly OfficeAgent[]
   sourceReady: boolean
   contextWindow: number
+  now: number
   quiet: ReadonlyMap<string, number>
   selectedId: string | null
   world: World
@@ -139,6 +140,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       actors: actors.values(),
       selectedId: input.selectedId,
       hoveredAgentId,
+      now: input.now,
       ringedPartyKey: ringedPartyKey(actors.values(), hoveredAgentId, input.selectedId),
       seconds: now / 1000,
       animate,
