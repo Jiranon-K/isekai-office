@@ -10,6 +10,8 @@ import { ROOM_HEIGHT, ROOM_WIDTH } from '../scene/layout'
 import type { OfficePalette } from './palette'
 import { drawSignals, type Signals } from './signals'
 import { drawStateLabel } from './state-label'
+import { drawHearthGlow } from './hearth-glow'
+import { hearthTone } from '../scene/hearth-alert'
 import {
   FACING_ROWS,
   FRAMES,
@@ -136,6 +138,7 @@ export function renderFrame(input: FrameInput): void {
   if (!layers.painted) {
     drawAmbientFlames(context, palette, animate ? seconds : 0, workers.forge.length, input.sourceReady)
   }
+  drawHearthGlow(context, palette, anchors.firebox, hearthTone(sorted, input.now, input.sourceReady), seconds, animate)
   for (const actor of sorted) {
     drawGround(context, palette, actor, actor.id === input.selectedId, seconds, animate)
     drawPartyRing(context, palette, actor, input.ringedPartyKey)
