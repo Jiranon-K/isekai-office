@@ -26,6 +26,12 @@ function useRoomFrame(): RoomFrame {
   return frame
 }
 
+export function roomRectToViewport(rect: { x: number; y: number; width: number; height: number }): DOMRect {
+  const frame = measure()
+  const box = toScreenBox(computeView(frame.width, frame.height, 1), rect)
+  return new DOMRect(frame.left + box.left, frame.top + box.top, box.width, box.height)
+}
+
 export function useRoomBox(rect: { x: number; y: number; width: number; height: number }): ScreenBox {
   const frame = useRoomFrame()
   const box = toScreenBox(computeView(frame.width, frame.height, 1), rect)

@@ -7,6 +7,7 @@ import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
 import { useConflicts } from '@/room-panels/use-conflicts'
 import { useRecordHidden } from '@/room-panels/use-last-hidden'
+import { ReceptionGuide } from '@/onboarding/ReceptionGuide'
 import { useBoard, useOfficeFeed } from '@/lib/api'
 import { closePanel, mergeQuery, openPanel, parseRoute, selectAgent, togglePanel } from '@/lib/route'
 import { toggleMode, useTheme } from '@/lib/theme'
@@ -167,6 +168,7 @@ export function App(): React.JSX.Element {
       />
       {boardOpen ? <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} /> : null}
       <KeyHints />
+      <ReceptionGuide agents={agents} locateRef={locateRef} hidden={boardOpen || replaying} />
       <ReplayOverlay replay={replay} />
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
