@@ -2,7 +2,7 @@ import type { GuildLog, OfficeSnapshot } from '@shared/types'
 import { activeSource } from '../sources/select'
 import { recordTick, recordWatch, restoreRing } from '../day-log/recorder'
 import { appendEvents, EMPTY_LOG_STATE, guildLog, recordSnapshot } from './log'
-import { stampStateSince, type StateSinceMemory } from './state-since'
+import { readStateSince, type StateSinceMemory } from './state-since'
 
 const POLL_MS = 2_000
 
@@ -38,20 +38,19 @@ const stateSinceMemory: StateSinceMemory = new Map()
 
 async function takeSnapshot(): Promise<OfficeSnapshot> {
   const managed = source.managedStats?.()
-  const now = Date.now()
   const base = {
     source: source.id,
     caps: source.caps,
     contextWindow,
     quietAfterMs,
     ...(managed ? { managedCount: managed.count, managedCap: managed.cap } : {}),
-    at: now
+    at: Date.now()
   }
   if (!(await source.ready())) {
     return { ...base, sourceReady: false, agents: [], error: null }
   }
   try {
-    return { ...base, sourceReady: true, agents: stampStateSince(stateSinceMemory, await source.listAgents(), now), error: null }
+    return { ...base, sourceReady: true, agents: await readStateSince(stateSinceMemory, () => source.listAgents()), error: null }
   } catch (error) {
     return { ...base, sourceReady: true, agents: latest.agents, error: error instanceof Error ? error.message : String(error) }
   }

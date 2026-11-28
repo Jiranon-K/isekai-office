@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { AgentState, SourceAgent } from '@shared/types'
-import { stampStateSince, type StateSinceMemory } from './state-since'
+import { readStateSince, stampStateSince, type StateSinceMemory } from './state-since'
 
 function agentIn(id: string, state: AgentState): SourceAgent {
   return { id, title: `title ${id}`, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
@@ -42,11 +42,25 @@ describe('stampStateSince', () => {
     expect(agents.map((agent) => agent.stateSince)).toEqual([1_000, 2_000])
   })
 
-  test('forgets agents that left the list, so a returning agent starts a new time', () => {
+  test('keeps the time of a session that stays when another session leaves', () => {
+    const memory: StateSinceMemory = new Map()
+    stampStateSince(memory, [agentIn('a', 'working'), agentIn('b', 'working')], 1_000)
+    const [stays] = stampStateSince(memory, [agentIn('a', 'working')], 2_000)
+    expect(stays?.stateSince).toBe(1_000)
+  })
+
+  test('removes a session that left the list', () => {
     const memory: StateSinceMemory = new Map()
     stampStateSince(memory, [agentIn('a', 'working'), agentIn('b', 'working')], 1_000)
     stampStateSince(memory, [agentIn('a', 'working')], 2_000)
     expect(memory.has('b')).toBe(false)
+    expect(memory.has('a')).toBe(true)
+  })
+
+  test('a session that returns after leaving starts a new time', () => {
+    const memory: StateSinceMemory = new Map()
+    stampStateSince(memory, [agentIn('a', 'working'), agentIn('b', 'working')], 1_000)
+    stampStateSince(memory, [agentIn('a', 'working')], 2_000)
     const [, returning] = stampStateSince(memory, [agentIn('a', 'working'), agentIn('b', 'working')], 3_000)
     expect(returning?.stateSince).toBe(3_000)
   })
@@ -56,5 +70,25 @@ describe('stampStateSince', () => {
     const source = agentIn('a', 'done')
     const [agent] = stampStateSince(memory, [source], 7)
     expect(agent).toEqual({ ...source, stateSince: 7 })
+  })
+})
+
+describe('readStateSince', () => {
+  test('a failed read keeps every entry', async () => {
+    const memory: StateSinceMemory = new Map()
+    stampStateSince(memory, [agentIn('a', 'working'), agentIn('b', 'waiting')], 1_000)
+    await expect(readStateSince(memory, () => Promise.reject(new Error('source down')))).rejects.toThrow('source down')
+    expect(memory.get('a')?.since).toBe(1_000)
+    expect(memory.get('b')?.since).toBe(1_000)
+  })
+
+  test('takes the time after the read has finished', async () => {
+    const memory: StateSinceMemory = new Map()
+    const startedAt = Date.now()
+    const [agent] = await readStateSince(memory, async () => {
+      await Bun.sleep(20)
+      return [agentIn('a', 'working')]
+    })
+    expect(agent?.stateSince).toBeGreaterThanOrEqual(startedAt + 10)
   })
 })

@@ -41,6 +41,7 @@ function makeActor(inConflict: boolean): Actor {
     id: 'a1',
     kind: 'agent',
     label: 'cart',
+    repo: null,
     look: { characterClass: 'knight', skin: 1, hair: 1 },
     x: 100,
     y: 120,

@@ -13,6 +13,7 @@ export type Actor = {
   id: string
   kind: 'agent' | 'npc'
   label: string
+  repo: string | null
   look: Look
   x: number
   y: number
@@ -49,6 +50,7 @@ function createActor(id: string, kind: Actor['kind'], label: string, look: Look,
     id,
     kind,
     label,
+    repo: null,
     look,
     x: world.x,
     y: world.y,
@@ -196,6 +198,7 @@ export function syncActors(
     const actor = existing ?? createActor(agent.id, 'agent', agent.title, lookFromId(agent.id), DOOR_ENTRY)
     actors.set(agent.id, actor)
     actor.label = agent.title
+    actor.repo = agent.repo
     actor.state = agent.state
     actor.stateSince = agent.stateSince
     actor.mana = manaRatio(agent.contextTokens, contextWindow)
