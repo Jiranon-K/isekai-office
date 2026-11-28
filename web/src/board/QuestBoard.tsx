@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Loadable } from '@/lib/api'
+import { useSourceCaps } from '@/lib/source-caps'
 import { BoardError } from './BoardError'
 import { BoardFilters } from './BoardFilters'
 import { BoardSearch } from './BoardSearch'
 import { COLUMN_ORDER } from './board-logic'
 import { LoopLanes } from './LoopLanes'
 import { boardView, filterOptions } from './monitor-logic'
+import { NextWaitingButton } from './NextWaitingButton'
 import { ReleaseChecklist } from './ReleaseChecklist'
 import { StatusColumns } from './StatusColumns'
 import { useBoardQuery } from './use-board-query'
@@ -44,7 +46,8 @@ function SkeletonColumns(): React.JSX.Element {
 
 type LoadedProps = QuestBoardProps & { snapshot: BoardSnapshot; query: BoardQuery; onTabChange(tab: BoardTab): void }
 
-function Loaded({ board, snapshot, query, agents, onSendToAgent, onTabChange }: LoadedProps): React.JSX.Element {
+function Loaded({ board, snapshot, query, agents, onSendToAgent, onClose, onTabChange }: LoadedProps): React.JSX.Element {
+  const caps = useSourceCaps()
   const view = boardView(snapshot, agents, query.filter)
   const waiting = searchItems(view.waiting, query.search)
   const items = searchItems(filteredItems(snapshot, agents, query.filter), query.search)
@@ -67,6 +70,14 @@ function Loaded({ board, snapshot, query, agents, onSendToAgent, onTabChange }: 
       </TabsList>
       {board.error ? <BoardError error={board.error} onRetry={board.refresh} /> : null}
       <TabsContent value="inbox">
+        <NextWaitingButton
+          agents={agents}
+          readOnly={!caps.command}
+          onPick={(agentId) => {
+            onSendToAgent(agentId)
+            onClose()
+          }}
+        />
         <WaitingLane items={waiting} agents={agents} onSendToAgent={onSendToAgent} />
       </TabsContent>
       <TabsContent value="loop">
