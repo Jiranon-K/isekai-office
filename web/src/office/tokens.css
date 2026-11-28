@@ -90,6 +90,15 @@
   --office-party-4: var(--yellow-600);
   --office-party-5: var(--violet-600);
   --office-party-6: var(--red-600);
+  --office-tag-0: var(--red-300);
+  --office-tag-1: var(--amber-300);
+  --office-tag-2: var(--green-300);
+  --office-tag-3: var(--teal-300);
+  --office-tag-4: var(--blue-300);
+  --office-tag-5: var(--violet-300);
+  --office-tag-6: var(--pink-300);
+  --office-tag-7: var(--yellow-300);
+  --office-tag-none: var(--sand-400);
 }
 
 :root.dark {
