@@ -3,7 +3,7 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { appendFile, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { OfficeAgent } from '@shared/types'
+import type { SourceAgent } from '@shared/types'
 import { createHintStore } from './hints'
 import { createLocalSource, recentMsFrom } from './local'
 
@@ -47,7 +47,7 @@ function sourceOver(): ReturnType<typeof createLocalSource> {
   return createLocalSource({ projectsDir, recentMs: 60 * MINUTE_MS })
 }
 
-async function agentNamed(id: string): Promise<OfficeAgent | undefined> {
+async function agentNamed(id: string): Promise<SourceAgent | undefined> {
   return (await sourceOver().listAgents()).find((agent) => agent.id === id)
 }
 
@@ -134,7 +134,7 @@ describe('local source window and history', () => {
 })
 
 describe('local source hooks', () => {
-  async function stateWith(hint: { state: 'working' | 'waiting' | 'done'; at: number } | null): Promise<OfficeAgent | undefined> {
+  async function stateWith(hint: { state: 'working' | 'waiting' | 'done'; at: number } | null): Promise<SourceAgent | undefined> {
     const hints = createHintStore()
     if (hint) {
       hints.apply({ sessionId: 'sess-hint', hint })

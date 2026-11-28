@@ -3,6 +3,7 @@ import type {
   CommandRequest,
   CommandResult,
   OfficeAgent,
+  SourceAgent,
   OrcaRepo,
   SessionDetail,
   SessionEntry,
@@ -112,7 +113,7 @@ async function currentTool(id: string): Promise<string | null> {
   }
 }
 
-export async function listAgents(): Promise<OfficeAgent[]> {
+export async function listAgents(): Promise<SourceAgent[]> {
   const [{ agents }, panes] = await Promise.all([
     orca<{ agents: RawAgent[] }>(['agent', 'list']),
     terminalsByPane()

@@ -17,6 +17,7 @@ function makeAgent(id: string, worktree: string | null): OfficeAgent {
     lastMessage: null,
     updatedAt: 1,
     activeAt: 1,
+    stateSince: 0,
     terminal: null
   }
 }

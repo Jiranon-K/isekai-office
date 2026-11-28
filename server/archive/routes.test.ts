@@ -35,6 +35,7 @@ function makeAgent(id: string, session: string | null = id): OfficeAgent {
     lastMessage: null,
     updatedAt: 1000,
     activeAt: 1000,
+    stateSince: 0,
     terminal: null
   }
 }

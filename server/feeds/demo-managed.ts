@@ -2,7 +2,7 @@ import type {
   AgentState,
   CommandRequest,
   CommandResult,
-  OfficeAgent,
+  SourceAgent,
   OrcaRepo,
   SessionDetail,
   SessionEntry,
@@ -34,7 +34,7 @@ const DEMO_REPO_NAMES: Record<string, string> = {
 export function createDemoManagedStore(repos: OrcaRepo[] = []): {
   spawn(request?: SpawnRequest): SpawnResult
   command(terminal: string, request?: CommandRequest): CommandResult
-  agents(): OfficeAgent[]
+  agents(): SourceAgent[]
   readSession(id: string): SessionDetail | null
   count(): number
   cap(): number
@@ -140,8 +140,8 @@ export function createDemoManagedStore(repos: OrcaRepo[] = []): {
     return { ok: true, error: null }
   }
 
-  function agents(): OfficeAgent[] {
-    return [...sessions.values()].map((session): OfficeAgent => ({
+  function agents(): SourceAgent[] {
+    return [...sessions.values()].map((session): SourceAgent => ({
       id: session.id,
       title: session.title,
       repo: session.repo,

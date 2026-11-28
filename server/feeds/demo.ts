@@ -8,6 +8,7 @@ import type {
   LoopStage,
   MergeRequestFacts,
   OfficeAgent,
+  SourceAgent,
   OfficeSnapshot,
   OrcaRepo,
   SpawnRequest,
@@ -18,6 +19,7 @@ import type {
 } from '@shared/types'
 import { managedIdFromTerminal } from '../managed/runner'
 import { createDemoManagedStore } from './demo-managed'
+import { stampStateSince, type StateSinceMemory } from './state-since'
 
 const MINUTE = 60_000
 const TASK_URL = 'https://workspace.example.com/tasks/'
@@ -38,7 +40,7 @@ const AGENT_SEEDS: AgentSeed[] = [
 
 const QUIET_DEMO_MINUTES: Record<string, number> = { a4: 14 }
 
-function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now: number): OfficeAgent {
+function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now: number): SourceAgent {
   return {
     id,
     title,
@@ -62,6 +64,7 @@ const DEMO_REPOS: OrcaRepo[] = [
 ]
 const demoManaged = createDemoManagedStore(DEMO_REPOS)
 const demoListeners = new Set<(snapshot: OfficeSnapshot) => void>()
+const demoStateSince: StateSinceMemory = new Map()
 
 function officeSnapshot(): OfficeSnapshot {
   const now = Date.now()
@@ -69,7 +72,7 @@ function officeSnapshot(): OfficeSnapshot {
     source: 'orca',
     caps: { command: true, spawn: true, screen: true },
     sourceReady: true,
-    agents: [...AGENT_SEEDS.map((seed) => agentFrom(seed, now)), ...demoManaged.agents()],
+    agents: stampStateSince(demoStateSince, [...AGENT_SEEDS.map((seed) => agentFrom(seed, now)), ...demoManaged.agents()], now),
     contextWindow: 1_000_000,
     quietAfterMs: 10 * MINUTE,
     managedCount: demoManaged.count(),

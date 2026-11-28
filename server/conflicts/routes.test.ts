@@ -44,6 +44,7 @@ function makeAgent(id: string, worktree: string | null, state: OfficeAgent['stat
     lastMessage: null,
     updatedAt: 5000,
     activeAt: 5000,
+    stateSince: 0,
     terminal: null
   }
 }

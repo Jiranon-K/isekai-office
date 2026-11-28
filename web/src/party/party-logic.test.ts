@@ -26,6 +26,7 @@ function agent(id: string, overrides: Partial<OfficeAgent> = {}): OfficeAgent {
     lastMessage: null,
     updatedAt: 0,
     activeAt: 0,
+    stateSince: 0,
     terminal: `t-${id}`,
     ...overrides
   }

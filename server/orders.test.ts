@@ -11,7 +11,7 @@ import { localSettingsPath } from './sources/permissions'
 function agentWith(worktree: string | null): OfficeAgent {
   return {
     id: 'a1', title: 't', repo: null, workspace: null, worktree, session: null, contextTokens: null,
-    state: 'working', tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null
+    state: 'working', tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0
   }
 }
 

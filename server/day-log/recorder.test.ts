@@ -13,7 +13,7 @@ let folder = ''
 const saved = { dir: process.env.ISEKAI_DATA_DIR, cap: process.env.LOG_DAY_MAX_BYTES, keep: process.env.LOG_KEEP_DAYS }
 
 function agentAt(id: string, state: AgentState, tool: string | null = null): OfficeAgent {
-  return { id, title: `title ${id}`, repo: 'web', workspace: null, worktree: null, session: null, contextTokens: null, state, tool, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
+  return { id, title: `title ${id}`, repo: 'web', workspace: null, worktree: null, session: null, contextTokens: null, state, tool, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0 }
 }
 
 function snapshotOf(agents: OfficeAgent[], at: number, extra: Partial<OfficeSnapshot> = {}): OfficeSnapshot {

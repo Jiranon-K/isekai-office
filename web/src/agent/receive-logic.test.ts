@@ -16,6 +16,7 @@ function agent(state: AgentState, terminal: string | null): OfficeAgent {
     lastMessage: null,
     updatedAt: 0,
     activeAt: 0,
+    stateSince: 0,
     terminal
   }
 }

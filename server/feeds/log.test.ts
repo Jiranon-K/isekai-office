@@ -3,7 +3,7 @@ import type { AgentState, LogEvent, OfficeAgent, OfficeSnapshot } from '@shared/
 import { appendEvents, diffEvents, guildLog, recordSnapshot, type LogState } from './log'
 
 function agentIn(id: string, state: AgentState): OfficeAgent {
-  return { id, title: `title ${id}`, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
+  return { id, title: `title ${id}`, repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0 }
 }
 
 function snapshotOf(agents: OfficeAgent[], at: number, extra: Partial<OfficeSnapshot> = {}): OfficeSnapshot {

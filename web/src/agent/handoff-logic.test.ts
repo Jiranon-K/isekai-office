@@ -16,6 +16,7 @@ function makeAgent(overrides: Partial<OfficeAgent> = {}): OfficeAgent {
     lastMessage: 'I need the staging vault path before I can continue.',
     updatedAt: 1000,
     activeAt: 1000,
+    stateSince: 0,
     terminal: 'demo-a6',
     ...overrides
   }

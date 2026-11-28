@@ -18,7 +18,7 @@ describe('agentsAt', () => {
   })
 
   test('puts a working agent at the station it was recorded at', () => {
-    expect(agentsAt(events, at(10))).toEqual([{ agentId: 'a', title: 'title a', repo: 'web', state: 'working', station: 'archive' }])
+    expect(agentsAt(events, at(10))).toEqual([{ agentId: 'a', title: 'title a', repo: 'web', state: 'working', station: 'archive', stateSince: at(9, 30) }])
   })
 
   test('includes an event that happened exactly at the moment', () => {
@@ -27,6 +27,10 @@ describe('agentsAt', () => {
 
   test('drops the station when the agent stops working', () => {
     expect(agentsAt(events, at(10, 30))[0]).toMatchObject({ state: 'waiting', station: null })
+  })
+
+  test('sets the time of the event that started the current state', () => {
+    expect(agentsAt(events, at(10, 30))[0]).toMatchObject({ state: 'waiting', stateSince: at(10, 5) })
   })
 
   test('does not include an agent after it left', () => {
@@ -114,7 +118,7 @@ describe('buildReplayDay', () => {
 })
 
 describe('toOfficeAgent and groupOfReplay', () => {
-  const replayAgent = { agentId: 'a', title: 'one', repo: 'web', state: 'working' as const, station: 'archive' as const }
+  const replayAgent = { agentId: 'a', title: 'one', repo: 'web', state: 'working' as const, station: 'archive' as const, stateSince: 0 }
 
   test('fills the rest with nulls', () => {
     expect(toOfficeAgent(replayAgent)).toMatchObject({ id: 'a', title: 'one', repo: 'web', terminal: null, contextTokens: null, tool: null, session: null })

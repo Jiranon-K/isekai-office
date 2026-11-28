@@ -1,4 +1,4 @@
-import type { AgentState, OfficeAgent, SessionDetail, SessionEntry } from '@shared/types'
+import type { AgentState, SourceAgent, SessionDetail, SessionEntry } from '@shared/types'
 import { baseNameOf } from '../sources/local-facts'
 import type { ParsedStreamEvent } from './protocol'
 
@@ -177,7 +177,7 @@ export function applyStreamEvent(session: ManagedSession, event: ParsedStreamEve
   return true
 }
 
-export function sessionToAgent(session: ManagedSession): OfficeAgent {
+export function sessionToAgent(session: ManagedSession): SourceAgent {
   return {
     id: session.id,
     title: session.title,
