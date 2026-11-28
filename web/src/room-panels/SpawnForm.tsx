@@ -78,14 +78,15 @@ function SpawnFields({ handoffDraft, onClearHandoff }: SpawnFormProps): React.JS
   const [touched, setTouched] = useState(false)
 
   useEffect(() => {
-    if (handoffDraft !== null && handoffDraft !== appliedDraftRef.current) {
-      appliedDraftRef.current = handoffDraft
-      setFields(fieldsFromDraft(handoffDraft))
-      setTemplateId('')
-      setLastFilled('')
-      setTouched(false)
-      setStatus({ kind: 'idle' })
+    if (handoffDraft === null || handoffDraft === appliedDraftRef.current) {
+      return
     }
+    appliedDraftRef.current = handoffDraft
+    setFields(fieldsFromDraft(handoffDraft))
+    setTemplateId('')
+    setLastFilled('')
+    setTouched(false)
+    setStatus({ kind: 'idle' })
   }, [handoffDraft])
 
   const list = repos.data ?? []

@@ -11,7 +11,7 @@ import { COPIED_RESET_MS, executeHandoff, handoffLabel, type HandoffStatus } fro
 type HandoffButtonProps = {
   agent: OfficeAgent
   onHandoff(draft: HandoffDraft): void
-  onManualCopy?(prompt: string): void
+  onManualCopy?(prompt: string | null): void
 }
 
 type HandoffCopyFallbackProps = {
@@ -61,35 +61,41 @@ export function HandoffCopyFallback({ prompt, onClose }: HandoffCopyFallbackProp
 export function HandoffButton({ agent, onHandoff, onManualCopy }: HandoffButtonProps): React.JSX.Element {
   const caps = useSourceCaps()
   const [status, setStatus] = useState<HandoffStatus>('idle')
-  const [inlinePrompt, setInlinePrompt] = useState<string | null>(null)
   const mountedRef = useRef(true)
-  const activeAgentIdRef = useRef(agent.id)
+  const requestIdRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function clearResetTimer(): void {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
 
   useEffect(() => {
     mountedRef.current = true
     return () => {
       mountedRef.current = false
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current)
-      }
+      requestIdRef.current += 1
+      clearResetTimer()
     }
   }, [])
 
   useEffect(() => {
-    activeAgentIdRef.current = agent.id
+    requestIdRef.current += 1
+    clearResetTimer()
     setStatus('idle')
-    setInlinePrompt(null)
   }, [agent.id])
 
   async function handleClick(): Promise<void> {
     if (status === 'loading') {
       return
     }
-    const targetId = agent.id
+    const requestId = ++requestIdRef.current
+    clearResetTimer()
     setStatus('loading')
     const outcome = await executeHandoff(agent, caps.spawn, fetchSession, clipboardWriter())
-    if (!mountedRef.current || activeAgentIdRef.current !== targetId) {
+    if (!mountedRef.current || requestIdRef.current !== requestId) {
       return
     }
     if (outcome.kind === 'spawn') {
@@ -98,42 +104,29 @@ export function HandoffButton({ agent, onHandoff, onManualCopy }: HandoffButtonP
       return
     }
     if (outcome.kind === 'copied') {
-      setInlinePrompt(null)
+      onManualCopy?.(null)
       setStatus('copied')
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current)
-      }
+      clearResetTimer()
       timerRef.current = setTimeout(() => {
-        if (mountedRef.current) {
+        if (mountedRef.current && requestIdRef.current === requestId) {
           setStatus('idle')
         }
       }, COPIED_RESET_MS)
       return
     }
     setStatus('idle')
-    if (onManualCopy) {
-      onManualCopy(outcome.draft.prompt)
-      return
-    }
-    setInlinePrompt(outcome.draft.prompt)
+    onManualCopy?.(outcome.draft.prompt)
   }
 
   return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        size="xs"
-        disabled={status === 'loading'}
-        onClick={() => void handleClick()}
-      >
-        {status === 'loading' ? <Spinner className="size-3" /> : handoffLabel(caps.spawn, status)}
-      </Button>
-      {inlinePrompt !== null ? (
-        <div className="basis-full">
-          <HandoffCopyFallback prompt={inlinePrompt} onClose={() => setInlinePrompt(null)} />
-        </div>
-      ) : null}
-    </>
+    <Button
+      type="button"
+      variant="outline"
+      size="xs"
+      disabled={status === 'loading'}
+      onClick={() => void handleClick()}
+    >
+      {status === 'loading' ? <Spinner className="size-3" /> : handoffLabel(caps.spawn, status)}
+    </Button>
   )
 }
