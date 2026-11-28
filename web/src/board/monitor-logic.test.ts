@@ -17,7 +17,7 @@ function inLoop(status: string, overrides: Partial<QuestCard> = {}, loop: Partia
 function agentWith(overrides: Partial<OfficeAgent>): OfficeAgent {
   return {
     id: 'a1', title: 'work', repo: null, workspace: null, worktree: null, session: null, contextTokens: null,
-    state: 'working', tool: null, lastMessage: null, updatedAt: 1, activeAt: 1, terminal: null, ...overrides, stateSince: 0
+    state: 'working', tool: null, lastMessage: null, updatedAt: 1, activeAt: 1, stateSince: 0, terminal: null, ...overrides
   }
 }
 
