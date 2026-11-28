@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { HandoffDraft } from '@shared/handoff'
 import { Deferred } from '@/components/deferred'
+import { Kbd } from '@/components/kbd'
 import { questBoardMark } from '@/room-panels/panel-data'
 import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
@@ -20,7 +21,7 @@ import { useQuietAlerts } from '@/alerts/use-quiet-alerts'
 import { quietMinutesById } from '@/alerts/quiet-logic'
 import { useWaitingAlerts } from '@/alerts/use-waiting-alerts'
 import { KeyHints } from '@/room-panels/KeyHints'
-import type { HotspotId } from '@/office/scene/hotspots'
+import { hotspotById, type HotspotId } from '@/office/scene/hotspots'
 import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { QueueEntryProvider } from '@/agent/QueueEntryButton'
@@ -79,7 +80,7 @@ export function App(): React.JSX.Element {
   const [handoffDraft, setHandoffDraft] = useState<HandoffDraft | null>(null)
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
   const boardOpen = surfaces.board
-  const roomPanelOpen = surfaces.panel !== null && surfaces.panel !== 'questBoard'
+  const roomPanel = surfaces.panel === 'questBoard' ? null : surfaces.panel
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
   const partyByAgent = usePartyByAgent(useParties(agents, questBoard.data))
   const conflicts = useConflicts(agents, (office.data?.sourceReady ?? false) && !replaying)
@@ -165,14 +166,14 @@ export function App(): React.JSX.Element {
         {...replayCanvas(replay, openHotspot)}
       />
       {boardOpen ? (
-        <Deferred>
+        <Deferred title="โหลดกระดานเควสต์ไม่ได้" onClose={close}>
           <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} />
         </Deferred>
       ) : null}
       <KeyHints />
       <ReceptionGuide agents={agents} locateRef={locateRef} hidden={boardOpen || replaying} />
       {replaying ? (
-        <Deferred>
+        <Deferred title="โหลดโหมดย้อนดูไม่ได้" closeLabel="กลับปัจจุบัน" onClose={replay.leave}>
           <ReplayOverlay replay={replay} />
         </Deferred>
       ) : null}
@@ -180,8 +181,8 @@ export function App(): React.JSX.Element {
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
       <ReplayEntryProvider value={{ date: replay.date, enter: replay.enter }}>
       <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
-      {roomPanelOpen ? (
-        <Deferred>
+      {roomPanel ? (
+        <Deferred title={`โหลด${hotspotById(roomPanel).label}ไม่ได้`} onClose={close}>
         <HotspotPanels
           open={surfaces.panel}
           office={office}
@@ -201,17 +202,17 @@ export function App(): React.JSX.Element {
       </QueueEntryProvider>
       </ReplayEntryProvider>
       {queue.state && surfaces.queue ? (
-        <Deferred>
+        <Deferred title="โหลดหน้าตอบทีละคนไม่ได้" extra={<p>โหลดแล้วกด <Kbd>a</Kbd> เพื่อเปิดอีกครั้ง</p>} onClose={queue.close}>
           <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
         </Deferred>
       ) : null}
       {selected && showQuickReply && !queueOpen && !replaying ? (
-        <Deferred>
+        <Deferred title="โหลดช่องตอบไม่ได้" onClose={() => pickAgent(null)}>
           <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
         </Deferred>
       ) : null}
       {selected && !showQuickReply && !queueOpen && !replaying ? (
-        <Deferred>
+        <Deferred title="โหลดแผงคำสั่งไม่ได้" onClose={() => pickAgent(null)}>
           <CommandPanel agent={selected} contextWindow={contextWindow} onHandoff={startHandoff} onClose={() => pickAgent(null)} />
         </Deferred>
       ) : null}
