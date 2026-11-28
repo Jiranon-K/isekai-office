@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { HandoffDraft } from '@shared/handoff'
-import { QuestBoard } from '@/board/QuestBoard'
-import { HotspotPanels } from '@/room-panels/HotspotPanels'
+import { Deferred } from '@/components/deferred'
 import { questBoardMark } from '@/room-panels/panel-data'
 import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
@@ -24,18 +23,15 @@ import { KeyHints } from '@/room-panels/KeyHints'
 import type { HotspotId } from '@/office/scene/hotspots'
 import { OfficeCanvas } from '@/office/OfficeCanvas'
 import type { AgentLocator } from '@/office/use-office-canvas'
-import { CommandPanel } from '@/agent/CommandPanel'
-import { QuickReply } from '@/agent/QuickReply'
-import { DecisionQueue } from '@/agent/DecisionQueue'
 import { QueueEntryProvider } from '@/agent/QueueEntryButton'
 import { useDecisionQueue } from '@/agent/use-decision-queue'
 import { waitingQueue } from '@/alerts/jump-logic'
 import { usePartyByAgent, useParties } from '@/party/use-parties'
 import { replayCanvas } from '@/replay/replay-canvas'
 import { ReplayEntryProvider } from '@/replay/ReplayEntry'
-import { ReplayOverlay } from '@/replay/ReplayOverlay'
 import { replaySurfaces, routeForReplay } from '@/replay/replay-surfaces'
 import { useReplay } from '@/replay/use-replay'
+import { CommandPanel, DecisionQueue, HotspotPanels, QuestBoard, QuickReply, ReplayOverlay } from './lazy-surfaces'
 
 const CLOCK_MS = 15_000
 
@@ -83,6 +79,7 @@ export function App(): React.JSX.Element {
   const [handoffDraft, setHandoffDraft] = useState<HandoffDraft | null>(null)
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
   const boardOpen = surfaces.board
+  const roomPanelOpen = surfaces.panel !== null && surfaces.panel !== 'questBoard'
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
   const partyByAgent = usePartyByAgent(useParties(agents, questBoard.data))
   const conflicts = useConflicts(agents, (office.data?.sourceReady ?? false) && !replaying)
@@ -167,38 +164,56 @@ export function App(): React.JSX.Element {
         locateRef={locateRef}
         {...replayCanvas(replay, openHotspot)}
       />
-      {boardOpen ? <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} /> : null}
+      {boardOpen ? (
+        <Deferred>
+          <QuestBoard board={questBoard} agents={agents} onSendToAgent={pickAgent} onClose={close} />
+        </Deferred>
+      ) : null}
       <KeyHints />
       <ReceptionGuide agents={agents} locateRef={locateRef} hidden={boardOpen || replaying} />
-      <ReplayOverlay replay={replay} />
+      {replaying ? (
+        <Deferred>
+          <ReplayOverlay replay={replay} />
+        </Deferred>
+      ) : null}
       <StatusChip office={office} onOpen={() => openHotspot('hearth')} />
       {boardOpen ? null : <ThemeDock theme={theme} onThemeChange={setTheme} alerts={alerts} />}
       <ReplayEntryProvider value={{ date: replay.date, enter: replay.enter }}>
       <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
-      <HotspotPanels
-        open={surfaces.panel}
-        office={office}
-        quiet={quiet}
-        board={questBoard}
-        conflicts={conflicts}
-        theme={theme}
-        handoffDraft={handoffDraft}
-        onThemeChange={setTheme}
-        onSelectAgent={pickAgent}
-        onHandoff={startHandoff}
-        onClearHandoff={clearHandoff}
-        onClose={close}
-      />
+      {roomPanelOpen ? (
+        <Deferred>
+        <HotspotPanels
+          open={surfaces.panel}
+          office={office}
+          quiet={quiet}
+          board={questBoard}
+          conflicts={conflicts}
+          theme={theme}
+          handoffDraft={handoffDraft}
+          onThemeChange={setTheme}
+          onSelectAgent={pickAgent}
+          onHandoff={startHandoff}
+          onClearHandoff={clearHandoff}
+          onClose={close}
+        />
+        </Deferred>
+      ) : null}
       </QueueEntryProvider>
       </ReplayEntryProvider>
       {queue.state && surfaces.queue ? (
-        <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
+        <Deferred>
+          <DecisionQueue state={queue.state} agents={agents} onSkip={queue.skip} onAnswered={queue.answered} onExpand={queue.expand} onClose={queue.close} />
+        </Deferred>
       ) : null}
       {selected && showQuickReply && !queueOpen && !replaying ? (
-        <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
+        <Deferred>
+          <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
+        </Deferred>
       ) : null}
       {selected && !showQuickReply && !queueOpen && !replaying ? (
-        <CommandPanel agent={selected} contextWindow={contextWindow} onHandoff={startHandoff} onClose={() => pickAgent(null)} />
+        <Deferred>
+          <CommandPanel agent={selected} contextWindow={contextWindow} onHandoff={startHandoff} onClose={() => pickAgent(null)} />
+        </Deferred>
       ) : null}
     </div>
   )

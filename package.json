@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run scripts/dev.ts",
     "dev:service": "scripts/dev.sh",
-    "build": "vite build",
+    "build": "vite build && bun run scripts/bundle-budget.ts",
     "start": "bun run server/main.ts",
     "demo": "bun run build && DEMO=1 PORT=4310 PUBLIC_PORT=4310 bun run server/main.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
