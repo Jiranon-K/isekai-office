@@ -6,6 +6,7 @@ import { AllowIcon, DenyIcon, TerminalIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { SessionGold } from '@/ledger/SessionGold'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
+import { ChangedFilesSection } from './ChangedFilesSection'
 import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
 import { HandoffButton, HandoffCopyFallback } from './HandoffButton'
@@ -123,8 +124,9 @@ export function CommandPanel({ agent, contextWindow, onHandoff, onClose }: Comma
     >
       <PanelHeader agent={agent} contextWindow={contextWindow} onHandoff={onHandoff} onClose={onClose} />
       <PanelTabs tab={tab} onChange={setTab} />
+      {tab === 'files' ? <ChangedFilesSection key={agent.id} agentId={agent.id} /> : null}
       {tab === 'orders' ? <OrdersSection agentId={agent.id} /> : null}
-      <div data-transcript-scroller="" data-off={tab === 'orders'} className="flex flex-1 flex-col gap-3 overflow-y-auto p-3 data-[off=true]:hidden">
+      <div data-transcript-scroller="" data-off={tab !== 'chat'} className="flex flex-1 flex-col gap-3 overflow-y-auto p-3 data-[off=true]:hidden">
         <Transcript key={agent.id} {...session} />
         <ScreenBlock session={session.data} agent={agent} />
       </div>
