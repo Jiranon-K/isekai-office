@@ -1,5 +1,5 @@
 import type { OfficeAgent } from '@shared/types'
-import { createNpcActors, markParties, markQuiet, syncActors, updateActors, type Actor } from './actors'
+import { createNpcActors, markConflicts, markParties, markQuiet, syncActors, updateActors, type Actor } from './actors'
 import type { Mode, World } from '@/lib/theme'
 import { backdropLayer, loadBackdrop } from '../draw/backdrop'
 import { countAgents } from '@/lib/agent-counts'
@@ -38,6 +38,7 @@ export type OfficeInput = {
   boardWaiting: number
   openHotspot: HotspotId | null
   partyByAgent: ReadonlyMap<string, Party>
+  conflictIds?: ReadonlySet<string>
   groupOf?: (agent: OfficeAgent) => GroupId
   snap?: boolean
 }
@@ -100,6 +101,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       boardWaiting: current.boardWaiting,
       peakLoad: peakLoad(current.agents.map((agent) => agent.contextTokens), current.contextWindow),
       sourceReady: current.sourceReady,
+      conflictCount: current.conflictIds?.size ?? 0,
     }
   }
 
@@ -189,6 +191,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
     syncActors(actors, next.sourceReady ? next.agents : [], grid, reducedQuery.matches || next.snap === true, next.contextWindow, next.groupOf)
     markQuiet(actors, next.quiet)
     markParties(actors, next.partyByAgent)
+    markConflicts(actors, next.conflictIds)
     requestFrame()
   }
 
