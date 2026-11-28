@@ -151,9 +151,14 @@ How the scan works:
 server/            Bun HTTP server, one process
   main.ts            routes and static files
   guard.ts           only local requests get in
+  commands/          what the browser sends to a session: command, spawn, read-only reply
+  orders/            standing orders: permission rules per session
+  templates/         quest templates
   archive/           session archive: scan, search, read one transcript
   feeds/             what the browser asks for: office, board, demo data
   sources/           where the data comes from: Orca, local transcripts, hook hints, tracker, GitLab
+  data-dir.ts        where plain files are kept
+  atomic-file.ts     safe file replace
 shared/types.ts    types used by both sides
 web/src/
   App.tsx            wires the room, the panels and the route together

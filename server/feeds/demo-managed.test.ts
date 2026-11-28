@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import type { OfficeSnapshot } from '@shared/types'
-import { handleSpawn } from '../spawn'
+import { handleSpawn } from '../commands/spawn'
 import { demoCommand, demoRepos, demoSession, demoSnapshot, demoSpawn, demoSubscribe, resetDemoState } from './demo'
 
 beforeEach(() => {

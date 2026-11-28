@@ -11,7 +11,7 @@ import type {
   SpawnResult
 } from '@shared/types'
 import { mergeToolRuns, sessionHistory } from './history'
-import { runJson } from '../run'
+import { runJson } from './run'
 import type { SessionSource } from './source'
 import { sessionContext } from './transcripts'
 

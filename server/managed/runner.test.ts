@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { OrcaRepo } from '@shared/types'
-import { readOnlyReply } from '../read-only'
+import { readOnlyReply } from '../commands/read-only'
 import { createLocalSource } from '../sources/local'
 import {
   appendScreenLines,

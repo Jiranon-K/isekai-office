@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { LoopStage } from '@shared/types'
-import { runText } from '../run'
+import { runText } from './run'
 
 const LOOP_STATE = process.env.LOOP_STATE_BIN ?? join(homedir(), 'loop', 'bin', 'loop-state')
 

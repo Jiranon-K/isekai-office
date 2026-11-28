@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { BUILT_IN_TEMPLATES, NO_FILE_REVISION, toTemplates, type QuestTemplate, type TemplateSnapshot } from '@shared/templates'
-import { dataDir } from './data-dir'
-import { REAL_FILE_OPERATIONS, replaceFile } from './atomic-file'
+import { dataDir } from '../data-dir'
+import { REAL_FILE_OPERATIONS, replaceFile } from '../atomic-file'
 
 export type TemplateReply = { status: number; body: TemplateSnapshot | { ok: boolean; error: string | null } }
 

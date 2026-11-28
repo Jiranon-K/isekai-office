@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
-import { isAllowedRequest } from './guard'
+import { isAllowedRequest } from '../guard'
 import { handleHook } from './hook'
-import { createHintStore } from './sources/hints'
+import { createHintStore } from './hints'
 
 const PORTS = { serverPort: 4300, publicPort: 4300 }
 
