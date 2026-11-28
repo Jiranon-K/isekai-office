@@ -7,6 +7,7 @@ export const MANAGED_TERMINAL_PREFIX = 'managed:'
 const MAX_SCREEN_LINES = 40
 const MAX_SCREEN_BYTES = 4 * 1024
 const MAX_ENTRIES = 200
+const MAX_LINE_BYTES = 64 * 1024
 
 export type ManagedProcess = {
   write(chunk: string): boolean
@@ -60,27 +61,56 @@ export function appendSessionEntry(entries: SessionEntry[], entry: SessionEntry)
   return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next
 }
 
+type LineAssembly = { pending: string; pendingBytes: number; skipping: boolean }
+
+function appendSegment(assembly: LineAssembly, segment: string): void {
+  if (assembly.skipping) {
+    return
+  }
+  assembly.pending += segment
+  assembly.pendingBytes += Buffer.byteLength(segment, 'utf8')
+  if (assembly.pendingBytes > MAX_LINE_BYTES) {
+    assembly.pending = ''
+    assembly.pendingBytes = 0
+    assembly.skipping = true
+  }
+}
+
+function finishLine(assembly: LineAssembly, onLine: (line: string) => void): void {
+  if (!assembly.skipping) {
+    onLine(assembly.pending)
+  }
+  assembly.pending = ''
+  assembly.pendingBytes = 0
+  assembly.skipping = false
+}
+
+function feedText(assembly: LineAssembly, text: string, onLine: (line: string) => void): void {
+  text.split('\n').forEach((segment, index) => {
+    if (index > 0) {
+      finishLine(assembly, onLine)
+    }
+    appendSegment(assembly, segment)
+  })
+}
+
 export async function consumeStreamLines(stream: ReadableStream<Uint8Array> | null, onLine: (line: string) => void): Promise<void> {
   if (!stream) {
     return
   }
   const reader = stream.getReader()
   const decoder = new TextDecoder()
-  let pending = ''
+  const assembly: LineAssembly = { pending: '', pendingBytes: 0, skipping: false }
   try {
     while (true) {
       const { value, done } = await reader.read()
       if (done) {
         break
       }
-      pending += decoder.decode(value, { stream: true })
-      const parts = pending.split('\n')
-      pending = parts.pop() ?? ''
-      for (const part of parts) {
-        onLine(part)
-      }
+      feedText(assembly, decoder.decode(value, { stream: true }), onLine)
     }
-    const tail = `${pending}${decoder.decode()}`.trim()
+    appendSegment(assembly, decoder.decode())
+    const tail = assembly.skipping ? '' : assembly.pending.trim()
     if (tail) {
       onLine(tail)
     }

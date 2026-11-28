@@ -217,6 +217,7 @@ if (!DEMO) {
   }
   process.on('SIGINT', cleanup)
   process.on('SIGTERM', cleanup)
+  process.on('exit', () => localManagedRunner?.dispose())
 }
 
 Bun.serve({ hostname: '127.0.0.1', port: PORT, idleTimeout: 0, fetch: route })

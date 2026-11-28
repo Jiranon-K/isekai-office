@@ -183,6 +183,51 @@ describe('createManagedRunner lifecycle', () => {
     expect(handles.slice(1).every((handle) => handle.killed)).toBe(true)
   })
 
+  test('concurrent spawns that race for the last slot never exceed the cap', async () => {
+    const runner = createManagedRunner({
+      maxSessions: 1,
+      allowedRepos: async () => {
+        await Bun.sleep(1)
+        return [{ id: '/work/app', name: 'app' }]
+      },
+      spawnProcess: () => createFakeProcess().process
+    })
+    const results = await Promise.all([1, 2, 3].map(() => runner.spawn({ repoId: '/work/app', name: 'race' })))
+    expect(results.filter((result) => result.ok)).toHaveLength(1)
+    expect(results.filter((result) => result.error === 'too_many_sessions').length).toBeGreaterThanOrEqual(1)
+    expect(runner.activeCount()).toBe(1)
+    runner.dispose()
+  })
+
+  test('a prompt during a pending permission is rejected and the session stays waiting', async () => {
+    const fake = createFakeProcess()
+    const runner = createManagedRunner({
+      allowedRepos: async () => [{ id: '/work/app', name: 'app' }],
+      createUuid: () => '00000009-0000-4000-8000-000000000009',
+      spawnProcess: () => fake.process
+    })
+    await runner.spawn({ repoId: '/work/app', name: 'pending' })
+    const agent = runner.listAgents()[0]!
+    fake.emitStdout(
+      JSON.stringify({
+        type: 'control_request',
+        request_id: 'perm-9',
+        request: { subtype: 'can_use_tool', tool_name: 'Bash', input: { command: 'bun test' } }
+      })
+    )
+    await Bun.sleep(10)
+    const writesBefore = fake.written.length
+    expect(await runner.sendCommand(agent.id, { agentId: agent.id, action: 'prompt', text: 'hurry' })).toEqual({
+      ok: false,
+      error: 'pending_decision'
+    })
+    expect(fake.written).toHaveLength(writesBefore)
+    expect(runner.listAgents()[0]?.state).toBe('waiting')
+    expect(await runner.sendCommand(agent.id, { agentId: agent.id, action: 'allow' })).toEqual({ ok: true, error: null })
+    expect(runner.listAgents()[0]?.state).toBe('working')
+    runner.dispose()
+  })
+
   test('local source merges managed and external sessions deduplicating by sessionId and respects disabled mode', async () => {
     const projectsDir = join(tempDir, 'projects')
     mkdirSync(join(projectsDir, 'p1'), { recursive: true })

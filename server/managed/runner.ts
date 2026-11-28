@@ -160,11 +160,11 @@ export function createManagedRunner(options: ManagedRunnerOptions = {}): Managed
   }
 
   async function spawn(request: SpawnRequest): Promise<SpawnResult> {
+    const repos = await allowedRepos()
     pruneExited()
     if (activeCount() >= cap) {
       return { ok: false, error: 'too_many_sessions' }
     }
-    const repos = await allowedRepos()
     const matched = repos.find((repo) => repo.id === request.repoId)
     if (!matched) {
       return { ok: false, error: 'invalid_repo' }
@@ -220,6 +220,9 @@ export function createManagedRunner(options: ManagedRunnerOptions = {}): Managed
       const text = command.text?.trim() ?? ''
       if (!text) {
         return { ok: false, error: 'empty_prompt' }
+      }
+      if (session.pendingRequestId) {
+        return { ok: false, error: 'pending_decision' }
       }
       if (!session.process.write(encodeUserPrompt(text))) {
         return { ok: false, error: 'write_failed' }
