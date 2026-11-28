@@ -15,6 +15,7 @@ import { restoreLog } from './feeds/office'
 import { demoOrdersFeeds } from './feeds/demo-orders'
 import { changeOrders, readOrders, realOrdersFeeds } from './orders'
 import { handleLedger } from './ledger/routes'
+import { handleConflicts } from './conflicts/routes'
 import { handleTemplates } from './templates-routes'
 
 const PORT = Number(process.env.PORT ?? 4300)
@@ -158,6 +159,10 @@ async function route(request: Request): Promise<Response> {
   const ledger = await handleLedger(url, { demo: DEMO, agents: () => feeds.snapshot().agents })
   if (ledger) {
     return ledger
+  }
+  const conflicts = await handleConflicts(request, { demo: DEMO, agents: () => feeds.snapshot().agents })
+  if (conflicts) {
+    return conflicts
   }
   if (url.pathname === '/api/board') {
     return json(await feeds.board(url.searchParams.has('refresh')))
