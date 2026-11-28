@@ -110,15 +110,16 @@ export function parsePorcelainStatus(stdout: string): { branch: string | null; e
 }
 
 function normalizeNumstatPath(rawPath: string): string {
-  const unquoted = stripQuotes(rawPath.trim())
-  if (unquoted.includes('{') && unquoted.includes(' => ')) {
-    return unquoted.replace(/\{[^{}]* => ([^{}]*)\}/g, '$1').replace(/\/+/g, '/').replace(/^\//, '')
+  const trimmed = rawPath.trim()
+  if (trimmed.includes('{') && trimmed.includes(' => ')) {
+    const expanded = trimmed.replace(/\{[^{}]* => ([^{}]*)\}/g, '$1').replace(/\/+/g, '/').replace(/^\//, '')
+    return stripQuotes(expanded)
   }
-  const arrowIndex = unquoted.indexOf(' => ')
+  const arrowIndex = trimmed.indexOf(' => ')
   if (arrowIndex !== -1) {
-    return stripQuotes(unquoted.slice(arrowIndex + 4))
+    return stripQuotes(trimmed.slice(arrowIndex + 4))
   }
-  return unquoted
+  return stripQuotes(trimmed)
 }
 
 function parseLineNumber(value: string): number {

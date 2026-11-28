@@ -78,9 +78,10 @@ describe('parseNumstat and buildAgentDiff', () => {
     })
   })
 
-  test('normalizes top-level rename paths in numstat', () => {
-    const counts = parseNumstat('7\t2\told.ts => new.ts\n')
+  test('normalizes top-level and quoted rename paths in numstat', () => {
+    const counts = parseNumstat('7\t2\told.ts => new.ts\n3\t1\t"old\\"a.ts" => "new\\"b.ts"\n')
     expect(counts.get('new.ts')).toEqual({ added: 7, removed: 2 })
+    expect(counts.get('new\\"b.ts')).toEqual({ added: 3, removed: 1 })
   })
 
   test('truncates file list at 100 files while keeping total line counts', () => {
