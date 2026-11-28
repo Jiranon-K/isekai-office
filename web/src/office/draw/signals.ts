@@ -9,6 +9,22 @@ export type Signals = {
   boardWaiting: number
   peakLoad: number | null
   sourceReady: boolean
+  conflictCount?: number
+}
+
+export type OrbConflictRing = {
+  radius: number
+  ringAlpha: number
+  glintAlpha: number
+}
+
+export function orbConflictRingState(orbRadius: number, seconds: number): OrbConflictRing {
+  const pulse = (Math.sin(seconds * 4) + 1) / 2
+  return {
+    radius: orbRadius + 4 + (pulse > 0.5 ? 1 : 0),
+    ringAlpha: 0.45 + 0.4 * pulse,
+    glintAlpha: 0.5 + 0.45 * pulse,
+  }
 }
 
 const DIGITS: readonly (readonly number[])[] = [
@@ -89,6 +105,41 @@ function drawEmbers(context: CanvasRenderingContext2D, palette: OfficePalette, f
   context.globalAlpha = 1
 }
 
+function drawPixelRing(
+  context: CanvasRenderingContext2D,
+  palette: OfficePalette,
+  color: 'alert-blocked' | 'alert-waiting',
+  centerX: number,
+  centerY: number,
+  radius: number,
+): void {
+  context.fillStyle = palette.color(color)
+  for (let dy = -radius; dy <= radius; dy += 1) {
+    for (let dx = -radius; dx <= radius; dx += 1) {
+      if (Math.abs(Math.hypot(dx, dy) - radius) <= 0.55) {
+        context.fillRect(centerX + dx, centerY + dy, 1, 1)
+      }
+    }
+  }
+}
+
+function drawOrbConflictRing(
+  context: CanvasRenderingContext2D,
+  palette: OfficePalette,
+  orb: WorldAnchors['orb'],
+  seconds: number,
+): void {
+  const ring = orbConflictRingState(orb.radius, seconds)
+  context.globalAlpha = ring.ringAlpha
+  drawPixelRing(context, palette, 'alert-blocked', orb.x, orb.y, ring.radius)
+  context.globalAlpha = ring.glintAlpha
+  const offset = ring.radius + 2
+  for (const [dx, dy] of [[offset, 0], [-offset, 0], [0, offset], [0, -offset]] as const) {
+    fill(context, palette, 'alert-waiting', orb.x + dx, orb.y + dy, 1, 1)
+  }
+  context.globalAlpha = 1
+}
+
 export function drawSignals(
   context: CanvasRenderingContext2D,
   palette: OfficePalette,
@@ -104,6 +155,9 @@ export function drawSignals(
   }
   if (signals.peakLoad !== null) {
     drawOrbTint(context, palette, anchors.orb, signals.peakLoad)
+  }
+  if ((signals.conflictCount ?? 0) > 0) {
+    drawOrbConflictRing(context, palette, anchors.orb, seconds)
   }
   if (signals.needsYou > 0) {
     drawCountBubble(context, palette, signals.needsYou, seconds)
