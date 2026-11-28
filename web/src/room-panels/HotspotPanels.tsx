@@ -5,11 +5,12 @@ import type { Theme } from '@/lib/theme'
 import { hotspotById } from '@/office/scene/hotspots'
 import { ArchivePanel } from './ArchivePanel'
 import { BarPanel } from './BarPanel'
+import { DoorPanel } from './DoorPanel'
 import { HearthTabs } from './HearthTabs'
 import { HotspotPopover, type PanelSide } from './HotspotPopover'
 import { OrbPanel } from './OrbPanel'
 import { RosterPanel } from './RosterPanel'
-import { DoorPanel } from './DoorPanel'
+import type { ConflictsState } from './use-conflicts'
 
 type PopoverPanelId = Exclude<PanelId, 'questBoard'>
 
@@ -18,6 +19,7 @@ type HotspotPanelsProps = {
   office: Loadable<OfficeSnapshot>
   quiet: ReadonlyMap<string, number>
   board: Loadable<BoardSnapshot>
+  conflicts: ConflictsState
   theme: Theme
   onThemeChange(theme: Theme): void
   onSelectAgent(agentId: string): void
@@ -42,7 +44,14 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <DoorPanel theme={props.theme} onThemeChange={props.onThemeChange} />
   }
   if (id === 'orb') {
-    return <OrbPanel agents={agents} contextWindow={props.office.data?.contextWindow ?? 0} onSelect={props.onSelectAgent} />
+    return (
+      <OrbPanel
+        agents={agents}
+        contextWindow={props.office.data?.contextWindow ?? 0}
+        conflicts={props.conflicts}
+        onSelect={props.onSelectAgent}
+      />
+    )
   }
   if (id === 'barShelf') {
     return <BarPanel agents={agents} board={props.board.data} onSelect={props.onSelectAgent} />
