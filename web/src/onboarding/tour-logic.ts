@@ -7,6 +7,7 @@ const DONE_VALUE = '1'
 const RECEPTION: HotspotId = 'reception'
 
 const AGENT_BODY = 'ตัวละครที่มีเครื่องหมาย ! คือเอเจนต์ที่รอคำตอบจากคุณ คลิกเพื่อตอบได้เลย'
+const NO_WAITING_BODY = 'ตอนนี้ยังไม่มีเอเจนต์รอคำตอบ เมื่อมี ! ขึ้นมา คลิกได้จากห้องนี้'
 const EMPTY_BODY = 'ยังไม่มีเอเจนต์ในห้อง เปิดเซสชัน Claude Code ในเทอร์มินัลเพื่อเริ่มงาน'
 const READ_ONLY_NOTE = 'โหมดอ่านอย่างเดียว ตอบจากห้องไม่ได้'
 const QUEST_BODY = 'กระดานเควสรวมงานที่รอคุณไว้ที่เดียว'
@@ -31,9 +32,16 @@ function firstNeedsYou(agents: readonly OfficeAgent[]): TourTarget {
   return agent ? { kind: 'agent', id: agent.id } : { kind: 'hotspot', id: RECEPTION }
 }
 
+function firstStepBody({ agents }: TourContext): string {
+  if (agents.length === 0) {
+    return EMPTY_BODY
+  }
+  return firstNeedsYou(agents).kind === 'agent' ? AGENT_BODY : NO_WAITING_BODY
+}
+
 const STEPS: readonly StepDefinition[] = [
   {
-    body: ({ agents }) => (agents.length === 0 ? EMPTY_BODY : AGENT_BODY),
+    body: firstStepBody,
     note: ({ readOnly }) => (readOnly ? READ_ONLY_NOTE : null),
     target: ({ agents }) => firstNeedsYou(agents),
   },

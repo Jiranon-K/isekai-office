@@ -1,4 +1,5 @@
 import { useState, type RefObject } from 'react'
+import { Popover as PopoverPrimitive } from 'radix-ui'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import type { AgentLocator } from '@/office/use-office-canvas'
@@ -21,7 +22,7 @@ export function ReceptionTour({ view, locateRef, onNext, onSkip }: ReceptionTour
       <PopoverAnchor virtualRef={anchor} />
       <PopoverContent
         side="bottom"
-        sideOffset={10}
+        sideOffset={14}
         collisionPadding={12}
         collisionBoundary={viewport}
         updatePositionStrategy="always"
@@ -29,6 +30,7 @@ export function ReceptionTour({ view, locateRef, onNext, onSkip }: ReceptionTour
         onOpenAutoFocus={(event) => event.preventDefault()}
         className="flex w-72 flex-col gap-3 text-small"
       >
+        <PopoverPrimitive.Arrow width={14} height={8} className="fill-popover" />
         <p>{view.body}</p>
         {view.note ? <p className="text-muted-foreground">{view.note}</p> : null}
         <div className="flex justify-end gap-2">

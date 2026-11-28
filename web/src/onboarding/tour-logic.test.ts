@@ -60,6 +60,15 @@ describe('tour steps', () => {
     expect(tourStep(0, { agents: [agent('a', 'done')], readOnly: false })?.target).toEqual({ kind: 'hotspot', id: 'reception' })
   })
 
+  test('step 1 text names the ! only when the target is a character that shows it', () => {
+    const waiting = tourStep(0, { agents: [agent('a', 'waiting')], readOnly: false })
+    const nobodyWaiting = tourStep(0, { agents: [agent('a', 'done')], readOnly: false })
+    expect(waiting?.target.kind).toBe('agent')
+    expect(waiting?.body).toBe('ตัวละครที่มีเครื่องหมาย ! คือเอเจนต์ที่รอคำตอบจากคุณ คลิกเพื่อตอบได้เลย')
+    expect(nobodyWaiting?.target).toEqual({ kind: 'hotspot', id: 'reception' })
+    expect(nobodyWaiting?.body).toBe('ตอนนี้ยังไม่มีเอเจนต์รอคำตอบ เมื่อมี ! ขึ้นมา คลิกได้จากห้องนี้')
+  })
+
   test('step 1 text is the agent sentence when agents exist', () => {
     const step = tourStep(0, { agents: [agent('a', 'waiting')], readOnly: false })
     expect(step?.body).toBe('ตัวละครที่มีเครื่องหมาย ! คือเอเจนต์ที่รอคำตอบจากคุณ คลิกเพื่อตอบได้เลย')

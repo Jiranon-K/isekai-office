@@ -40,23 +40,10 @@ function revealInScroller(rect: DOMRect): void {
 
 export function useTargetAnchor(target: TourTarget, locateRef: RefObject<AgentLocator | null>): RefObject<TargetAnchor> {
   const latest = useRef(target)
-  const settled = useRef<DOMRect | null>(null)
   const key = targetKey(target)
   useEffect(() => {
     latest.current = target
-    const settle = (): void => {
-      settled.current = targetRect(target, locateRef.current)
-    }
     revealInScroller(targetRect(target, locateRef.current))
-    settle()
-    window.addEventListener('scroll', settle, true)
-    window.addEventListener('resize', settle)
-    return () => {
-      window.removeEventListener('scroll', settle, true)
-      window.removeEventListener('resize', settle)
-      settled.current = null
-    }
   }, [key, locateRef])
-  const anchor = useRef<TargetAnchor>({ getBoundingClientRect: () => settled.current ?? targetRect(latest.current, locateRef.current) })
-  return anchor
+  return useRef<TargetAnchor>({ getBoundingClientRect: () => targetRect(latest.current, locateRef.current) })
 }
