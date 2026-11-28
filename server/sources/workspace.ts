@@ -1,5 +1,5 @@
 import type { BoardColumn, LoopStage, QuestCard, Sprint, SprintState } from '@shared/types'
-import { runText } from '../run'
+import { runText } from './run'
 
 const WORKSPACE_URL = (process.env.WORKSPACE_URL ?? '').replace(/\/+$/, '')
 const MCP_URL = `${WORKSPACE_URL}/api/mcp`

@@ -1,4 +1,4 @@
-import type { OrdersFeeds, OrdersView } from '../orders'
+import type { OrdersFeeds, OrdersView } from './orders'
 
 const DEMO_VIEW: OrdersView = {
   layers: [

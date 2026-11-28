@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os'
 import { join, parse } from 'node:path'
 import type { OrderChange } from '@shared/orders'
 import type { OfficeAgent } from '@shared/types'
-import { demoOrdersFeeds } from './feeds/demo-orders'
+import { demoOrdersFeeds } from './demo-orders'
 import { changeOrders, ordersFeedsFor, readOrders, realOrdersFeeds, type OrdersFeeds } from './orders'
-import { localSettingsPath } from './sources/permissions'
+import { localSettingsPath } from '../sources/permissions'
 
 function agentWith(worktree: string | null): OfficeAgent {
   return {

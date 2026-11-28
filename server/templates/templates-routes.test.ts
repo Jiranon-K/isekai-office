@@ -3,7 +3,7 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { BUILT_IN_TEMPLATES, NO_FILE_REVISION } from '@shared/templates'
-import { isAllowedRequest } from './guard'
+import { isAllowedRequest } from '../guard'
 import { handleTemplates } from './templates-routes'
 
 const PORT = 4300

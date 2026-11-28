@@ -2,7 +2,7 @@ import { homedir } from 'node:os'
 import type { OfficeAgent } from '@shared/types'
 import type { OrderChange, OrderResult, RuleLayer, StandingOrders } from '@shared/orders'
 import { isTooBroad, toRule } from '@shared/rules'
-import { changeLocalRule, isHomeOrRoot, readLayers } from './sources/permissions'
+import { changeLocalRule, isHomeOrRoot, readLayers } from '../sources/permissions'
 
 export type OrdersView = { layers: RuleLayer[]; writable: boolean }
 

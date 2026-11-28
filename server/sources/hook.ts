@@ -1,4 +1,4 @@
-import { hintChangeFrom, hintStore, parseHook, type HintStore } from './sources/hints'
+import { hintChangeFrom, hintStore, parseHook, type HintStore } from './hints'
 
 export type HookReply = { status: number; body: { ok: boolean; error?: string } }
 
