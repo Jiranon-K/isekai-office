@@ -9,8 +9,12 @@ import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import {
   applyTemplate,
   buildSpawnRequest,
+  describeReposError,
+  describeSpawnError,
   EMPTY_FIELDS,
+  EMPTY_REPOS_NOTE,
   fieldsFromDraft,
+  hasEmptyRepos,
   hasProblem,
   resolveRepoId,
   shouldConfirmReplace,
@@ -136,7 +140,7 @@ function SpawnFields({ handoffDraft, onClearHandoff }: SpawnFormProps): React.JS
     setStatus({ kind: 'sending' })
     const result = await sendSpawn(buildSpawnRequest(filled))
     if (!result.ok) {
-      setStatus({ kind: 'failed', reason: result.error ?? 'spawn_failed' })
+      setStatus({ kind: 'failed', reason: describeSpawnError(result.error) })
       return
     }
     appliedDraftRef.current = null
@@ -149,7 +153,10 @@ function SpawnFields({ handoffDraft, onClearHandoff }: SpawnFormProps): React.JS
   }
 
   if (repos.error) {
-    return <p role="alert" className="text-small text-destructive">อ่านรายชื่อ repo จาก Orca ไม่ได้</p>
+    return <p role="alert" className="text-small text-destructive">{describeReposError(repos.error)}</p>
+  }
+  if (hasEmptyRepos(repos.data, repos.loading, repos.error)) {
+    return <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">{EMPTY_REPOS_NOTE}</p>
   }
   return (
     <form className="flex flex-col gap-3" onSubmit={submit} noValidate>

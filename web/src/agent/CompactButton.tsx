@@ -3,6 +3,7 @@ import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { canSendCompact, COMPACT_TEXT, isOverLoad } from '@/alerts/load-logic'
+import { commandFailureText } from './command-error-logic'
 import { useCommand, type CommandStatus } from './use-command'
 
 type CompactButtonProps = { agent: OfficeAgent; contextWindow: number }
@@ -28,7 +29,7 @@ export function CompactButton({ agent, contextWindow }: CompactButtonProps): Rea
     <span className="flex shrink-0 items-center gap-1.5" title={allowed ? undefined : caps.command ? IDLE_ONLY_HINT : READ_ONLY_REASON}>
       {command.status.kind === 'failed' ? (
         <span role="alert" className="text-caption text-tint-red-fg">
-          ส่งไม่สำเร็จ ({command.status.reason})
+          {commandFailureText(command.status.reason)}
         </span>
       ) : null}
       <Button variant="outline" size="xs" disabled={!allowed || busy} onClick={() => void command.run('prompt', COMPACT_TEXT)}>

@@ -2,12 +2,16 @@ import { describe, expect, test } from 'bun:test'
 import type { HandoffDraft } from '@shared/handoff'
 import { PROMPT_MAX } from '@shared/spawn'
 import type { QuestTemplate } from '@shared/templates'
+import { READ_ONLY_REASON } from '@/lib/source-caps'
 import {
   applyTemplate,
   buildSpawnRequest,
+  describeReposError,
+  describeSpawnError,
   EMPTY_FIELDS,
   fieldsFromDraft,
   fillSpawnPrompt,
+  hasEmptyRepos,
   resolveRepoId,
   shouldConfirmReplace,
   spawnProblems,
@@ -128,6 +132,26 @@ describe('replacing a typed prompt', () => {
 
   test('a template text that was edited asks first', () => {
     expect(shouldConfirmReplace('filled and changed', 'filled')).toBe(true)
+  })
+})
+
+describe('spawn errors and empty repo state', () => {
+  test('maps known server error codes to Thai messages', () => {
+    expect(describeSpawnError('too_many_sessions')).toBe('เปิด session พร้อมกันครบ 4 ตัวแล้ว ปิดตัวเก่าก่อน')
+    expect(describeSpawnError('read_only_source')).toBe(READ_ONLY_REASON)
+    expect(describeSpawnError('repos_unavailable')).toBe('อ่านรายชื่อโฟลเดอร์โปรเจกต์ไม่ได้')
+    expect(describeSpawnError('server_unreachable')).toBe('ติดต่อ server ไม่ได้')
+    expect(describeSpawnError('custom_error')).toBe('custom_error')
+    expect(describeSpawnError(null)).toBe('spawn_failed')
+    expect(describeReposError('repos_unavailable')).toBe('อ่านรายชื่อโฟลเดอร์โปรเจกต์ไม่ได้')
+  })
+
+  test('flags empty repos only after loading finishes cleanly with zero items', () => {
+    expect(hasEmptyRepos([], false, null)).toBe(true)
+    expect(hasEmptyRepos([], true, null)).toBe(false)
+    expect(hasEmptyRepos([], false, 'repos_unavailable')).toBe(false)
+    expect(hasEmptyRepos(null, false, null)).toBe(false)
+    expect(hasEmptyRepos([{ id: 'r1', name: 'app' }], false, null)).toBe(false)
   })
 })
 

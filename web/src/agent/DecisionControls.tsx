@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Loadable } from '@/lib/api'
 import { choiceExcerpt } from './choice-logic'
+import { commandFailureText } from './command-error-logic'
 import { lastScreenLines } from './panel-logic'
 import type { CommandStatus } from './use-command'
 
@@ -30,7 +31,7 @@ export function Failure({ status }: { status: CommandStatus }): React.JSX.Elemen
   }
   return (
     <p role="alert" className="text-caption text-tint-red-fg">
-      ส่งไม่สำเร็จ ({status.reason}) ลองใหม่อีกครั้ง
+      {commandFailureText(status.reason)}
     </p>
   )
 }

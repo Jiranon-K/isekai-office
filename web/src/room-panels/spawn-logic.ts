@@ -2,12 +2,46 @@ import { matchRepoId, type HandoffDraft } from '@shared/handoff'
 import { cleanPrompt, isValidBaseBranch, isValidName, isValidPrompt } from '@shared/spawn'
 import { fillTemplate, templateValues, type QuestTemplate } from '@shared/templates'
 import type { OrcaRepo, SpawnRequest } from '@shared/types'
+import { READ_ONLY_REASON } from '@/lib/source-caps'
 
 export type SpawnFields = { repoId: string; name: string; baseBranch: string; prompt: string }
 
 export type SpawnProblems = { repo: boolean; name: boolean; baseBranch: boolean; prompt: boolean }
 
 export const EMPTY_FIELDS: SpawnFields = { repoId: '', name: '', baseBranch: '', prompt: '' }
+
+export const EMPTY_REPOS_NOTE = 'ยังไม่พบโฟลเดอร์โปรเจกต์ ตั้งค่า LOCAL_REPOS หรือเปิด Claude Code ในโปรเจกต์ก่อน'
+
+export function describeSpawnError(error: string | null): string {
+  if (error === 'too_many_sessions') {
+    return 'เปิด session พร้อมกันครบ 4 ตัวแล้ว ปิดตัวเก่าก่อน'
+  }
+  if (error === 'read_only_source') {
+    return READ_ONLY_REASON
+  }
+  if (error === 'repos_unavailable') {
+    return 'อ่านรายชื่อโฟลเดอร์โปรเจกต์ไม่ได้'
+  }
+  if (error === 'server_unreachable') {
+    return 'ติดต่อ server ไม่ได้'
+  }
+  return error ?? 'spawn_failed'
+}
+
+export function describeReposError(error: string | null): string {
+  if (error === 'repos_unavailable') {
+    return 'อ่านรายชื่อโฟลเดอร์โปรเจกต์ไม่ได้'
+  }
+  return error ?? 'อ่านรายชื่อโฟลเดอร์โปรเจกต์ไม่ได้'
+}
+
+export function hasEmptyRepos(
+  data: readonly OrcaRepo[] | null,
+  loading: boolean,
+  error: string | null
+): boolean {
+  return !loading && error === null && data !== null && data.length === 0
+}
 
 export function fieldsFromDraft(draft: HandoffDraft | null): SpawnFields {
   if (draft === null) {

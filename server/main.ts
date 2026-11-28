@@ -1,9 +1,12 @@
 import { join, normalize } from 'node:path'
-import type { OfficeAgent } from '@shared/types'
+import type { CommandRequest, CommandResult, OfficeAgent } from '@shared/types'
 import { toCommand } from './command'
 import { board } from './feeds/board'
 import { demoBoard, demoCommand, demoLog, demoRepos, demoSession, demoSnapshot, demoSpawn, demoSubscribe } from './feeds/demo'
 import { currentLog, currentSnapshot, subscribe } from './feeds/office'
+import { listLocalRepos } from './managed/repos'
+import { managedIdFromTerminal } from './managed/runner'
+import { localManagedRunner } from './sources/local'
 import { createWorktree, listRepos, sendCommand } from './sources/orca'
 import { activeSource } from './sources/select'
 import { handleSpawn } from './spawn'
@@ -26,9 +29,22 @@ const PORTS = { serverPort: PORT, publicPort: PUBLIC_PORT }
 const DIST = join(import.meta.dir, '..', 'dist')
 const DEV = process.argv.includes('--dev')
 const DEMO = process.env.DEMO === '1'
+async function liveCommand(terminal: string, request: CommandRequest): Promise<CommandResult> {
+  const managedId = managedIdFromTerminal(terminal)
+  if (managedId) {
+    if (!localManagedRunner) {
+      return { ok: false, error: 'read_only_source' }
+    }
+    return localManagedRunner.sendCommand(managedId, request)
+  }
+  return sendCommand(terminal, request)
+}
+
+const liveRepos = activeSource.id === 'local' ? () => listLocalRepos() : listRepos
+const liveSpawn = activeSource.id === 'local' && localManagedRunner ? localManagedRunner.spawn : createWorktree
 const feeds = DEMO
   ? { subscribe: demoSubscribe, snapshot: demoSnapshot, board: demoBoard, log: demoLog, session: demoSession, command: demoCommand, repos: demoRepos, spawn: demoSpawn }
-  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: activeSource.readSession, command: sendCommand, repos: listRepos, spawn: createWorktree }
+  : { subscribe, snapshot: currentSnapshot, board, log: async () => currentLog(), session: activeSource.readSession, command: liveCommand, repos: liveRepos, spawn: liveSpawn }
 const encoder = new TextEncoder()
 const MAX_HOOK_BYTES = 64 * 1024
 const ordersFeeds = DEMO ? demoOrdersFeeds : realOrdersFeeds
@@ -77,7 +93,8 @@ async function command(request: Request): Promise<Response> {
   }
   const terminal = terminalFor(parsed.agentId)
   if (!terminal) {
-    return json({ ok: false, error: 'no_terminal' }, 409)
+    const error = !DEMO && feeds.snapshot().source === 'local' ? 'read_only_source' : 'no_terminal'
+    return json({ ok: false, error }, 409)
   }
   return json(await feeds.command(terminal, parsed))
 }
@@ -209,6 +226,13 @@ async function route(request: Request): Promise<Response> {
 
 if (!DEMO) {
   await restoreLog()
+  const cleanup = (): void => {
+    localManagedRunner?.dispose()
+    process.exit(0)
+  }
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
+  process.on('exit', () => localManagedRunner?.dispose())
 }
 
 Bun.serve({ hostname: '127.0.0.1', port: PORT, idleTimeout: 0, fetch: route })

@@ -5,13 +5,13 @@ import { Badge } from '@/components/badge'
 import { AllowIcon, DenyIcon, TerminalIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { SessionGold } from '@/ledger/SessionGold'
-import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
+import { EXTERNAL_READ_ONLY_REASON, READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { ChangedFilesSection } from './ChangedFilesSection'
-import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
+import { CompactButton } from './CompactButton'
 import { HandoffButton, HandoffCopyFallback } from './HandoffButton'
-import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
 import { OrdersSection } from './OrdersSection'
+import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
 import { PanelTabs, type PanelTab } from './PanelTabs'
 import { Transcript } from './Transcript'
 import { useCommand } from './use-command'
@@ -133,7 +133,7 @@ export function CommandPanel({ agent, contextWindow, onHandoff, onClose }: Comma
       <footer className="flex flex-col gap-2 border-t p-3">
         {readonly ? (
           <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
-            {caps.command ? 'session นี้เป็นแบบ chat หรือไม่พบ terminal ที่เขียนได้ ส่งคำสั่งจากที่นี่ไม่ได้' : READ_ONLY_REASON}
+            {caps.command ? EXTERNAL_READ_ONLY_REASON : READ_ONLY_REASON}
           </p>
         ) : null}
         {needsDecision(agent.state) ? (

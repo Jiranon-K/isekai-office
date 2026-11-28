@@ -1,10 +1,10 @@
-import type { OfficeAgent } from '@shared/types'
 import { useMemo, useRef, useState } from 'react'
+import type { OfficeAgent } from '@shared/types'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent, PopoverHeader, PopoverTitle } from '@/components/ui/popover'
 import { isTyping } from '@/lib/keyboard'
-import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
+import { EXTERNAL_READ_ONLY_REASON, READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import type { AgentLocator } from '@/office/use-office-canvas'
 import { choiceForKey, parseChoices } from './choice-logic'
 import { ChoiceList, Decision, ScreenLines } from './DecisionControls'
@@ -97,7 +97,7 @@ export function QuickReply({ agent, locateRef, onExpand, onClose }: QuickReplyPr
         <ScreenLines session={session} choices={choices} />
         {agent.terminal === null || !caps.command ? (
           <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">
-            {caps.command ? 'session นี้ไม่มี terminal ที่เขียนได้ ตอบจากที่นี่ไม่ได้' : READ_ONLY_REASON}
+            {caps.command ? EXTERNAL_READ_ONLY_REASON : READ_ONLY_REASON}
           </p>
         ) : choices.length > 0 ? (
           <ChoiceList choices={choices} status={command.status} disabled={locked} onChoose={choose} onDeny={() => decide('deny')} />
