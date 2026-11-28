@@ -3,7 +3,7 @@ import type { Actor } from '../scene/actors'
 import { fill } from './draw'
 import { drawPlate } from './labels'
 import type { OfficePalette } from './palette'
-import { NO_REPO_LABEL, repoTagBox, repoTagColour, repoTagGap, repoTagLetter, type TagBox } from './repo-tag'
+import { NO_REPO_LABEL, namedRepo, repoTagBox, repoTagColour, repoTagGap, repoTagLetter, type TagBox } from './repo-tag'
 
 const LETTER_RATIO = 0.8
 
@@ -17,7 +17,7 @@ function drawLetter(context: CanvasRenderingContext2D, palette: OfficePalette, b
 
 function drawFullName(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, actor: Actor, box: TagBox): void {
   drawPlate(context, palette, view, {
-    text: actor.repo ?? NO_REPO_LABEL,
+    text: namedRepo(actor.repo) ?? NO_REPO_LABEL,
     roomX: actor.x,
     roomY: (box.top + box.size + repoTagGap(view) - view.offsetY) / view.scale,
     ratio: 1,

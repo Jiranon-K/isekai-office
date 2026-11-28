@@ -24,16 +24,25 @@ function hashName(name: string): number {
   return hash >>> 0
 }
 
+export function namedRepo(repo: string | null): string | null {
+  const trimmed = repo?.trim() ?? ''
+  return trimmed === '' ? null : trimmed
+}
+
 export function repoTagColour(repo: string | null): ColorName {
-  if (repo === null) {
+  const name = namedRepo(repo)
+  if (name === null) {
     return NO_REPO_COLOUR
   }
-  return TAG_COLOURS[hashName(repo) % TAG_COLOURS.length] ?? NO_REPO_COLOUR
+  return TAG_COLOURS[hashName(name) % TAG_COLOURS.length] ?? NO_REPO_COLOUR
 }
 
 export function repoTagLetter(repo: string | null): string {
-  const first = repo === null ? undefined : Array.from(repo.trim())[0]
-  return first === undefined ? '?' : first.toUpperCase()
+  const name = namedRepo(repo)
+  if (name === null) {
+    return '?'
+  }
+  return (Array.from(name)[0] ?? '?').toUpperCase()
 }
 
 export function repoTagGap(view: ViewMetrics): number {
