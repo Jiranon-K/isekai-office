@@ -9,6 +9,7 @@ import { drawActorPlate, drawManaBar, drawSign, drawStationLabels } from './labe
 import { ROOM_HEIGHT, ROOM_WIDTH } from '../scene/layout'
 import type { OfficePalette } from './palette'
 import { drawSignals, type Signals } from './signals'
+import { drawStateLabel } from './state-label'
 import {
   FACING_ROWS,
   FRAMES,
@@ -30,6 +31,8 @@ export type FrameInput = {
   layers: RoomLayers
   actors: Iterable<Actor>
   selectedId: string | null
+  hoveredAgentId: string | null
+  now: number
   ringedPartyKey: string | null
   seconds: number
   animate: boolean
@@ -162,6 +165,7 @@ export function renderFrame(input: FrameInput): void {
   for (const actor of sorted) {
     drawActorPlate(context, palette, view, actor, actor.id === input.selectedId)
     drawManaBar(context, palette, view, actor)
+    drawStateLabel(context, palette, view, actor, input.now, actor.id === input.hoveredAgentId)
   }
   drawHotspotLabels(context, palette, view, input.hotspots)
   drawEmptySigns(context, palette, view, input)

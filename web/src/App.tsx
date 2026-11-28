@@ -36,7 +36,7 @@ import { ReplayOverlay } from '@/replay/ReplayOverlay'
 import { replaySurfaces, routeForReplay } from '@/replay/replay-surfaces'
 import { useReplay } from '@/replay/use-replay'
 
-const CLOCK_MS = 30_000
+const CLOCK_MS = 15_000
 
 function useEscape(active: boolean, onEscape: () => void): void {
   useEffect(() => {
@@ -151,6 +151,7 @@ export function App(): React.JSX.Element {
         agents={agents}
         sourceReady={office.data?.sourceReady ?? false}
         contextWindow={contextWindow}
+        now={now}
         quiet={quiet}
         selectedId={selected?.id ?? null}
         onSelect={pickAgent}

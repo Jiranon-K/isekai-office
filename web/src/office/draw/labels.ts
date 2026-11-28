@@ -22,7 +22,7 @@ function plateFontSize(view: ViewMetrics, ratio: number): number {
   return Math.round(Math.min(Math.max(preferred, 9 * view.dpr * ratio), 14 * view.dpr * ratio))
 }
 
-function plateHeight(view: ViewMetrics): number {
+export function plateHeight(view: ViewMetrics): number {
   return Math.round(plateFontSize(view, 1) * 1.5)
 }
 
@@ -38,7 +38,7 @@ type Plate = {
 
 type PlateBox = { left: number; top: number; width: number; height: number }
 
-function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): PlateBox {
+export function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): PlateBox {
   const fontSize = plateFontSize(view, plate.ratio)
   context.font = `${plate.weight} ${fontSize}px ${palette.font}`
   context.textAlign = 'center'

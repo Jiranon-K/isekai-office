@@ -23,6 +23,7 @@ export type Actor = {
   groupId: GroupId | null
   spotIndex: number
   state: AgentState | null
+  stateSince: number | null
   mana: number | null
   quiet: boolean
   inConflict: boolean
@@ -58,6 +59,7 @@ function createActor(id: string, kind: Actor['kind'], label: string, look: Look,
     groupId: null,
     spotIndex: -1,
     state: null,
+    stateSince: null,
     mana: null,
     quiet: false,
     inConflict: false,
@@ -195,6 +197,7 @@ export function syncActors(
     actors.set(agent.id, actor)
     actor.label = agent.title
     actor.state = agent.state
+    actor.stateSince = agent.stateSince
     actor.mana = manaRatio(agent.contextTokens, contextWindow)
     const groupId = groupOf(agent)
     if (actor.groupId === groupId && !actor.leaving) {

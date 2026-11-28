@@ -1,6 +1,7 @@
-import type { AgentState, OfficeAgent } from '@shared/types'
+import type { OfficeAgent } from '@shared/types'
 import { useCallback } from 'react'
 import type { Mode, World } from '@/lib/theme'
+import { STATE_LABELS } from '@/lib/state-duration'
 import { HOTSPOTS, type Hotspot, type HotspotId } from './scene/hotspots'
 import type { GroupId } from './scene/stations'
 import type { Party } from '@/party/party-logic'
@@ -10,6 +11,7 @@ type OfficeCanvasProps = {
   agents: OfficeAgent[]
   sourceReady: boolean
   contextWindow: number
+  now: number
   quiet: ReadonlyMap<string, number>
   selectedId: string | null
   onSelect: (id: string | null) => void
@@ -24,13 +26,6 @@ type OfficeCanvasProps = {
   mode: Mode
   paused: boolean
   locateRef: React.RefObject<AgentLocator | null>
-}
-
-const STATE_LABELS: Record<AgentState, string> = {
-  working: 'กำลังทำงาน',
-  waiting: 'รอคำสั่ง',
-  blocked: 'ติดขัด',
-  done: 'เสร็จแล้ว',
 }
 
 const REVEALED_BUTTON =
