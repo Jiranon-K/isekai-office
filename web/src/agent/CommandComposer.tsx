@@ -7,6 +7,7 @@ import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import type { CommandStatus } from './use-command'
+import { commandFailureText } from './command-error-logic'
 import { shouldSubmitOnKey } from './panel-logic'
 import { TemplateMenu } from './TemplateMenu'
 import { agentTemplateValues, insertTemplate } from './template-insert-logic'
@@ -32,7 +33,7 @@ function StatusLine({ status }: { status: CommandStatus }): React.JSX.Element | 
     return <p role="status" className="text-caption text-tint-green-fg">ส่งคำสั่งแล้ว</p>
   }
   if (status.kind === 'failed') {
-    return <p role="alert" className="text-caption text-tint-red-fg">ส่งไม่สำเร็จ ({status.reason}) ลองใหม่อีกครั้ง</p>
+    return <p role="alert" className="text-caption text-tint-red-fg">{commandFailureText(status.reason)}</p>
   }
   return null
 }
