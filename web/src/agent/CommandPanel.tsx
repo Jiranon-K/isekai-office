@@ -1,3 +1,4 @@
+import type { HandoffDraft } from '@shared/handoff'
 import type { OfficeAgent, SessionDetail } from '@shared/types'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/badge'
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
 import { CompactButton } from './CompactButton'
 import { CommandComposer } from './CommandComposer'
+import { HandoffButton, HandoffCopyFallback } from './HandoffButton'
 import { formatContextLoad, lastScreenLines, needsDecision, STATE_LABELS } from './panel-logic'
 import { OrdersSection } from './OrdersSection'
 import { SessionGold } from '@/ledger/SessionGold'
@@ -14,7 +16,12 @@ import { Transcript } from './Transcript'
 import { useCommand } from './use-command'
 import { useSession } from './use-session'
 
-type CommandPanelProps = { agent: OfficeAgent; contextWindow: number; onClose(): void }
+type CommandPanelProps = {
+  agent: OfficeAgent
+  contextWindow: number
+  onHandoff(draft: HandoffDraft): void
+  onClose(): void
+}
 
 const SCREEN_LINES = 14
 
@@ -50,38 +57,48 @@ function DecisionButtons({ disabled, onAllow, onDeny }: { disabled: boolean; onA
   )
 }
 
-function PanelHeader({ agent, contextWindow, onClose }: CommandPanelProps): React.JSX.Element {
+function PanelHeader({ agent, contextWindow, onHandoff, onClose }: CommandPanelProps): React.JSX.Element {
+  const [fallbackPrompt, setFallbackPrompt] = useState<string | null>(null)
   const location = [agent.repo, agent.workspace].filter(Boolean).join(' / ')
   const contextLoad = formatContextLoad(agent.contextTokens, contextWindow)
+
+  useEffect(() => {
+    setFallbackPrompt(null)
+  }, [agent.id])
+
   return (
-    <header className="flex items-start gap-2 border-b p-3">
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 className="truncate text-body-strong">{agent.title}</h2>
-        {location ? <p className="truncate text-caption text-muted-foreground">{location}</p> : null}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant={needsDecision(agent.state) ? 'amber' : 'muted'}>{STATE_LABELS[agent.state]}</Badge>
-          {agent.tool ? (
-            <Badge variant="outline" className="font-mono">
-              {agent.tool}
-            </Badge>
-          ) : null}
-          {contextLoad ? (
-            <Badge variant="outline" className="font-mono" title="context ที่ session นี้ถืออยู่">
-              {contextLoad}
-            </Badge>
-          ) : null}
-          <SessionGold agent={agent} />
-          <CompactButton agent={agent} contextWindow={contextWindow} />
+    <header className="flex flex-col border-b p-3">
+      <div className="flex items-start gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h2 className="truncate text-body-strong">{agent.title}</h2>
+          {location ? <p className="truncate text-caption text-muted-foreground">{location}</p> : null}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={needsDecision(agent.state) ? 'amber' : 'muted'}>{STATE_LABELS[agent.state]}</Badge>
+            {agent.tool ? (
+              <Badge variant="outline" className="font-mono">
+                {agent.tool}
+              </Badge>
+            ) : null}
+            {contextLoad ? (
+              <Badge variant="outline" className="font-mono" title="context ที่ session นี้ถืออยู่">
+                {contextLoad}
+              </Badge>
+            ) : null}
+            <SessionGold agent={agent} />
+            <CompactButton agent={agent} contextWindow={contextWindow} />
+            <HandoffButton agent={agent} onHandoff={onHandoff} onManualCopy={setFallbackPrompt} />
+          </div>
         </div>
+        <Button variant="ghost" size="icon-sm" aria-label="ปิดแผงคำสั่ง" onClick={onClose}>
+          <XIcon />
+        </Button>
       </div>
-      <Button variant="ghost" size="icon-sm" aria-label="ปิดแผงคำสั่ง" onClick={onClose}>
-        <XIcon />
-      </Button>
+      {fallbackPrompt !== null ? <HandoffCopyFallback prompt={fallbackPrompt} onClose={() => setFallbackPrompt(null)} /> : null}
     </header>
   )
 }
 
-export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProps): React.JSX.Element {
+export function CommandPanel({ agent, contextWindow, onHandoff, onClose }: CommandPanelProps): React.JSX.Element {
   const session = useSession(agent)
   const command = useCommand(agent.id)
   const caps = useSourceCaps()
@@ -104,7 +121,7 @@ export function CommandPanel({ agent, contextWindow, onClose }: CommandPanelProp
       aria-label={`แผงคำสั่งของ ${agent.title}`}
       className="absolute top-3 right-3 bottom-3 z-overlay flex w-[380px] max-w-[calc(100%-1.5rem)] animate-peek-in flex-col rounded-lg border bg-card shadow-lg"
     >
-      <PanelHeader agent={agent} contextWindow={contextWindow} onClose={onClose} />
+      <PanelHeader agent={agent} contextWindow={contextWindow} onHandoff={onHandoff} onClose={onClose} />
       <PanelTabs tab={tab} onChange={setTab} />
       {tab === 'orders' ? <OrdersSection agentId={agent.id} /> : null}
       <div data-transcript-scroller="" data-off={tab === 'orders'} className="flex flex-1 flex-col gap-3 overflow-y-auto p-3 data-[off=true]:hidden">

@@ -1,12 +1,35 @@
-import type { SpawnRequest } from '@shared/types'
+import { matchRepoId, type HandoffDraft } from '@shared/handoff'
 import { cleanPrompt, isValidBaseBranch, isValidName, isValidPrompt } from '@shared/spawn'
 import { fillTemplate, templateValues, type QuestTemplate } from '@shared/templates'
+import type { OrcaRepo, SpawnRequest } from '@shared/types'
 
 export type SpawnFields = { repoId: string; name: string; baseBranch: string; prompt: string }
 
 export type SpawnProblems = { repo: boolean; name: boolean; baseBranch: boolean; prompt: boolean }
 
 export const EMPTY_FIELDS: SpawnFields = { repoId: '', name: '', baseBranch: '', prompt: '' }
+
+export function fieldsFromDraft(draft: HandoffDraft | null): SpawnFields {
+  if (draft === null) {
+    return EMPTY_FIELDS
+  }
+  return {
+    repoId: '',
+    name: draft.name,
+    baseBranch: draft.baseBranch,
+    prompt: draft.prompt
+  }
+}
+
+export function resolveRepoId(repos: readonly OrcaRepo[], selectedRepoId: string, draft: HandoffDraft | null): string {
+  if (selectedRepoId !== '') {
+    return selectedRepoId
+  }
+  if (draft !== null) {
+    return matchRepoId(repos, draft.repoName)
+  }
+  return repos[0]?.id ?? ''
+}
 
 export function isBarePrefix(name: string, template: QuestTemplate | null): boolean {
   return template !== null && template.namePrefix !== null && name === template.namePrefix

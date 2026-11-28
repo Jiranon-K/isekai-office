@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { HandoffDraft } from '@shared/handoff'
 import { QuestBoard } from '@/board/QuestBoard'
 import { HotspotPanels } from '@/room-panels/HotspotPanels'
 import { questBoardMark } from '@/room-panels/panel-data'
@@ -77,6 +78,7 @@ export function App(): React.JSX.Element {
   const contextWindow = office.data?.contextWindow ?? 0
   const selected = agents.find((agent) => agent.id === surfaces.liveAgentId) ?? null
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [handoffDraft, setHandoffDraft] = useState<HandoffDraft | null>(null)
   const showQuickReply = selected !== null && replyMode(selected, expandedId === selected.id) === 'quick'
   const boardOpen = surfaces.board
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
@@ -121,6 +123,12 @@ export function App(): React.JSX.Element {
   useJumpKey({ agents, currentId: route.agentId, boardOpen: boardOpen || queueOpen || replaying, onPick: pickAgent })
   const locateRef = useRef<AgentLocator | null>(null)
   const close = useCallback(() => setRoute(closePanel), [])
+  const startHandoff = useCallback((draft: HandoffDraft) => {
+    setHandoffDraft(draft)
+    setExpandedId(null)
+    setRoute((current) => openPanel(current, 'door'))
+  }, [])
+  const clearHandoff = useCallback(() => setHandoffDraft(null), [])
   const openHotspot = useCallback(
     (id: HotspotId) => {
       if (id === 'windows') {
@@ -167,8 +175,11 @@ export function App(): React.JSX.Element {
         quiet={quiet}
         board={questBoard}
         theme={theme}
+        handoffDraft={handoffDraft}
         onThemeChange={setTheme}
         onSelectAgent={pickAgent}
+        onHandoff={startHandoff}
+        onClearHandoff={clearHandoff}
         onClose={close}
       />
       </QueueEntryProvider>
@@ -179,7 +190,9 @@ export function App(): React.JSX.Element {
       {selected && showQuickReply && !queueOpen && !replaying ? (
         <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
       ) : null}
-      {selected && !showQuickReply && !queueOpen && !replaying ? <CommandPanel agent={selected} contextWindow={contextWindow} onClose={() => pickAgent(null)} /> : null}
+      {selected && !showQuickReply && !queueOpen && !replaying ? (
+        <CommandPanel agent={selected} contextWindow={contextWindow} onHandoff={startHandoff} onClose={() => pickAgent(null)} />
+      ) : null}
     </div>
   )
 }

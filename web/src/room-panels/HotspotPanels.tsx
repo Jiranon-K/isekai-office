@@ -1,3 +1,4 @@
+import type { HandoffDraft } from '@shared/handoff'
 import type { BoardSnapshot, OfficeSnapshot } from '@shared/types'
 import type { Loadable } from '@/lib/api'
 import type { PanelId } from '@/lib/route'
@@ -19,8 +20,11 @@ type HotspotPanelsProps = {
   quiet: ReadonlyMap<string, number>
   board: Loadable<BoardSnapshot>
   theme: Theme
+  handoffDraft: HandoffDraft | null
   onThemeChange(theme: Theme): void
   onSelectAgent(agentId: string): void
+  onHandoff(draft: HandoffDraft): void
+  onClearHandoff(): void
   onClose(): void
 }
 
@@ -39,10 +43,24 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
     return <RosterPanel office={props.office} board={props.board} quiet={props.quiet} onSelect={props.onSelectAgent} />
   }
   if (id === 'door') {
-    return <DoorPanel theme={props.theme} onThemeChange={props.onThemeChange} />
+    return (
+      <DoorPanel
+        theme={props.theme}
+        onThemeChange={props.onThemeChange}
+        handoffDraft={props.handoffDraft}
+        onClearHandoff={props.onClearHandoff}
+      />
+    )
   }
   if (id === 'orb') {
-    return <OrbPanel agents={agents} contextWindow={props.office.data?.contextWindow ?? 0} onSelect={props.onSelectAgent} />
+    return (
+      <OrbPanel
+        agents={agents}
+        contextWindow={props.office.data?.contextWindow ?? 0}
+        onSelect={props.onSelectAgent}
+        onHandoff={props.onHandoff}
+      />
+    )
   }
   if (id === 'barShelf') {
     return <BarPanel agents={agents} board={props.board.data} onSelect={props.onSelectAgent} />
