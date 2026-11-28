@@ -22,11 +22,11 @@ function plateFontSize(view: ViewMetrics, ratio: number): number {
   return Math.round(Math.min(Math.max(preferred, 9 * view.dpr * ratio), 14 * view.dpr * ratio))
 }
 
-function plateHeight(view: ViewMetrics): number {
+export function plateHeight(view: ViewMetrics): number {
   return Math.round(plateFontSize(view, 1) * 1.5)
 }
 
-type Plate = {
+export type Plate = {
   text: string
   roomX: number
   roomY: number
@@ -38,7 +38,7 @@ type Plate = {
 
 type PlateBox = { left: number; top: number; width: number; height: number }
 
-function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): PlateBox {
+export function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: Plate): PlateBox {
   const fontSize = plateFontSize(view, plate.ratio)
   context.font = `${plate.weight} ${fontSize}px ${palette.font}`
   context.textAlign = 'center'
@@ -139,13 +139,17 @@ const MANA_WIDTH_UNITS = 16
 const MANA_HEIGHT_UNITS = 1.6
 const MANA_GAP_UNITS = 0.6
 
+export function manaBarHeight(view: ViewMetrics): number {
+  return Math.max(Math.max(1, Math.round(view.scale * 0.5)) * 3, Math.round(view.scale * MANA_HEIGHT_UNITS))
+}
+
 export function drawManaBar(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, actor: Actor): void {
   if (actor.kind !== 'agent' || actor.mana === null) {
     return
   }
   const border = Math.max(1, Math.round(view.scale * 0.5))
   const width = Math.round(view.scale * MANA_WIDTH_UNITS)
-  const height = Math.max(border * 3, Math.round(view.scale * MANA_HEIGHT_UNITS))
+  const height = manaBarHeight(view)
   const point = toScreenPoint(view, actor.x, actor.y + 2)
   const left = Math.round(point.x - width / 2)
   const top = Math.round(point.y + plateHeight(view) + view.scale * MANA_GAP_UNITS)

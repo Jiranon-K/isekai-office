@@ -25,6 +25,7 @@ import { computeView, toRoomPoint, type ViewMetrics } from './view'
 import { getContext } from '../draw/draw'
 import type { Party } from '@/party/party-logic'
 import { ringedPartyKey } from '@/party/ring-logic'
+import { repoTagHitBottom } from '../draw/repo-tag'
 
 export type OfficeInput = {
   agents: readonly OfficeAgent[]
@@ -137,6 +138,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       layers,
       actors: actors.values(),
       selectedId: input.selectedId,
+      hoveredAgentId,
       ringedPartyKey: ringedPartyKey(actors.values(), hoveredAgentId, input.selectedId),
       seconds: now / 1000,
       animate,
@@ -209,7 +211,7 @@ export function createOfficeEngine(canvas: HTMLCanvasElement): OfficeEngine {
       const inside =
         actor.kind === 'agent' &&
         Math.abs(roomX - actor.x) <= AGENT_HALF_WIDTH &&
-        roomY <= actor.y &&
+        roomY <= repoTagHitBottom(view, actor) &&
         roomY >= actor.y - AGENT_HEIGHT
       if (inside && (!found || actor.y > found.y)) {
         found = actor
