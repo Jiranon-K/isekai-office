@@ -140,4 +140,25 @@ describe('handleConflicts and createConflictTracker', () => {
     })
     expect(tracker.cacheSize()).toBe(2)
   })
+
+  test('switches transcript file when the same agent id starts a new session while the old file remains on disk', async () => {
+    const worktreeOne = join(folder, 'wt-rotate-1')
+    const worktreeTwo = join(folder, 'wt-rotate-2')
+    writeTranscript(worktreeOne, 'session-1', [editLine(join(worktreeOne, 'src', 'first.ts'))])
+    writeTranscript(worktreeOne, 'session-2', [editLine(join(worktreeOne, 'src', 'second.ts'))])
+    writeTranscript(worktreeTwo, 'peer-session', [editLine(join(worktreeTwo, 'src', 'second.ts'))])
+
+    const tracker = createConflictTracker({ projectsDir, now: () => 7777 })
+    const orcaAgent = { ...makeAgent('orca-1', worktreeOne), session: 'session-1' }
+    const peerAgent = { ...makeAgent('orca-2', worktreeTwo), session: 'peer-session' }
+
+    const beforeSwitch = await tracker.conflictsFor([orcaAgent, peerAgent])
+    expect(beforeSwitch).toEqual({ conflicts: [], at: 7777 })
+
+    const afterSwitch = await tracker.conflictsFor([{ ...orcaAgent, session: 'session-2' }, peerAgent])
+    expect(afterSwitch).toEqual({
+      conflicts: [{ repo: 'web-app', path: 'src/second.ts', agentIds: ['orca-1', 'orca-2'], updatedAt: 5000 }],
+      at: 7777
+    })
+  })
 })

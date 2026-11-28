@@ -12,6 +12,7 @@ const DEFAULT_PROJECTS_DIR = join(homedir(), '.claude', 'projects')
 const TRANSCRIPT_SUFFIX = '.jsonl'
 
 type CachedSession = {
+  session: string
   filePath: string
   worktree: string | null
   stamp: string
@@ -91,8 +92,13 @@ export function createConflictTracker(options: ConflictTrackerOptions = {}): {
   }
 
   async function touchedForAgent(agent: OfficeAgent): Promise<AgentTouched> {
+    if (!agent.session) {
+      cache.delete(agent.id)
+      return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths: [] }
+    }
     const existing = cache.get(agent.id)
-    const filePath = await resolveTranscriptPath(agent, existing?.filePath ?? null, projectsDir)
+    const cachedPath = existing?.session === agent.session ? existing.filePath : null
+    const filePath = await resolveTranscriptPath(agent, cachedPath, projectsDir)
     if (!filePath) {
       cache.delete(agent.id)
       return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths: [] }
@@ -103,7 +109,7 @@ export function createConflictTracker(options: ConflictTrackerOptions = {}): {
       return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths: [] }
     }
     const stamp = `${info.mtimeMs}:${info.size}`
-    if (existing && existing.filePath === filePath && existing.worktree === agent.worktree && existing.stamp === stamp) {
+    if (existing && existing.session === agent.session && existing.filePath === filePath && existing.worktree === agent.worktree && existing.stamp === stamp) {
       return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths: existing.paths }
     }
     const tail = await readTail(filePath, info.size).catch(() => null)
@@ -111,7 +117,7 @@ export function createConflictTracker(options: ConflictTrackerOptions = {}): {
       return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths: [] }
     }
     const paths = extractTouchedPaths(tail.split('\n'), agent.worktree)
-    cache.set(agent.id, { filePath, worktree: agent.worktree, stamp, paths })
+    cache.set(agent.id, { session: agent.session, filePath, worktree: agent.worktree, stamp, paths })
     return { agentId: agent.id, repo: agent.repo, worktree: agent.worktree, state: agent.state, updatedAt: agent.updatedAt, paths }
   }
 
