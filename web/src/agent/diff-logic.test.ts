@@ -48,8 +48,18 @@ describe('classifyDiffState', () => {
 
   test('returns error on network failure or git failure', () => {
     expect(classifyDiffState(null, false, 'diff_unavailable')).toEqual({ kind: 'error' })
+    expect(classifyDiffState(makeDiff(), false, 'diff_unavailable')).toEqual({ kind: 'error' })
+    expect(classifyDiffState(makeDiff({ files: [] }), false, 'diff_unavailable')).toEqual({ kind: 'error' })
     expect(classifyDiffState(makeDiff({ files: [], error: 'git_unavailable' }), false, null)).toEqual({ kind: 'error' })
     expect(classifyDiffState(makeDiff({ files: [], error: 'not_a_repo' }), false, null)).toEqual({ kind: 'error' })
+  })
+
+  test('returns loading while retrying after a git error and keeps valid data during refresh', () => {
+    const failedDiff = makeDiff({ files: [], error: 'git_unavailable' })
+    expect(classifyDiffState(failedDiff, true, null)).toEqual({ kind: 'loading' })
+
+    const diff = makeDiff()
+    expect(classifyDiffState(diff, true, null)).toEqual({ kind: 'files', diff })
   })
 
   test('distinguishes no_worktree from generic errors', () => {

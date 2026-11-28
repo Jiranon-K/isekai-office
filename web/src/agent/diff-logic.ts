@@ -30,10 +30,10 @@ export function classifyDiffState(
   loading: boolean,
   fetchError: string | null
 ): DiffViewState {
-  if (data === null) {
-    if (fetchError !== null && !loading) {
-      return { kind: 'error' }
-    }
+  if (fetchError !== null && !loading) {
+    return { kind: 'error' }
+  }
+  if (data === null || (loading && data.error !== null)) {
     return { kind: 'loading' }
   }
   if (data.error === 'no_worktree') {

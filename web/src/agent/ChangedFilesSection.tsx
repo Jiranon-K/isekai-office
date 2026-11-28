@@ -91,12 +91,6 @@ export function ChangedFilesSection({ agentId }: { agentId: string }): React.JSX
   const refresh = useCallback(() => setRevision((count) => count + 1), [])
 
   useEffect(() => {
-    setData(null)
-    setError(null)
-    setLoading(true)
-  }, [agentId])
-
-  useEffect(() => {
     let active = true
     setLoading(true)
     setError(null)
@@ -112,6 +106,7 @@ export function ChangedFilesSection({ agentId }: { agentId: string }): React.JSX
         if (!active) {
           return
         }
+        setData(null)
         setError('diff_unavailable')
         setLoading(false)
       })
