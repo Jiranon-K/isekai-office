@@ -43,6 +43,7 @@ const POSTING: Record<string, Surface> = {
   'agent/use-orders.ts': { kind: 'agent' },
   'board/SendToClaude.tsx': { kind: 'board' },
   'party/PartyComposer.tsx': { kind: 'panel', id: 'reception' },
+  'room-panels/ArchiveSessionDetail.tsx': { kind: 'panel', id: 'archive' },
   'room-panels/SpawnForm.tsx': { kind: 'panel', id: 'door' },
   'room-panels/use-templates.ts': { kind: 'panel', id: 'door' }
 }

@@ -1,11 +1,13 @@
 import type { BoardSnapshot } from '@shared/types'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Loadable } from '@/lib/api'
+import { ArchiveSessionsView } from './ArchiveSessionsView'
 import { CardRows } from './CardRows'
 import { loopHistory } from './panel-data'
 import { PanelNote } from './SessionList'
 
-export function ArchivePanel({ board }: { board: Loadable<BoardSnapshot> }): React.JSX.Element {
+function LoopHistoryTab({ board }: { board: Loadable<BoardSnapshot> }): React.JSX.Element {
   if (!board.data) {
     return board.loading ? <Skeleton className="h-24 w-full" /> : <PanelNote>อ่าน board ไม่ได้ จึงยังไม่มีประวัติ Loop</PanelNote>
   }
@@ -14,4 +16,21 @@ export function ArchivePanel({ board }: { board: Loadable<BoardSnapshot> }): Rea
     return <PanelNote>ยังไม่มีงานที่ Loop รับไป</PanelNote>
   }
   return <CardRows cards={history} label="ประวัติงานใน Loop" />
+}
+
+export function ArchivePanel({ board }: { board: Loadable<BoardSnapshot> }): React.JSX.Element {
+  return (
+    <Tabs defaultValue="sessions" className="gap-3">
+      <TabsList aria-label="ชั้นหนังสือ" className="w-full">
+        <TabsTrigger value="sessions">เซสชันเก่า</TabsTrigger>
+        <TabsTrigger value="loop">ประวัติ Loop</TabsTrigger>
+      </TabsList>
+      <TabsContent value="sessions">
+        <ArchiveSessionsView />
+      </TabsContent>
+      <TabsContent value="loop">
+        <LoopHistoryTab board={board} />
+      </TabsContent>
+    </Tabs>
+  )
 }
