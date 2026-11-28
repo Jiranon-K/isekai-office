@@ -25,6 +25,7 @@ export type Actor = {
   state: AgentState | null
   mana: number | null
   quiet: boolean
+  inConflict: boolean
   partyKey: string | null
   partyColour: PartyColour | null
   npcMode: 'idle' | 'work'
@@ -59,6 +60,7 @@ function createActor(id: string, kind: Actor['kind'], label: string, look: Look,
     state: null,
     mana: null,
     quiet: false,
+    inConflict: false,
     partyKey: null,
     partyColour: null,
     npcMode: 'idle',
@@ -219,6 +221,12 @@ export function markParties(actors: Map<string, Actor>, partyByAgent: ReadonlyMa
     const party = actor.kind === 'agent' ? partyByAgent.get(actor.id) : undefined
     actor.partyKey = party?.key ?? null
     actor.partyColour = party?.colour ?? null
+  }
+}
+
+export function markConflicts(actors: Map<string, Actor>, conflictIds?: ReadonlySet<string>): void {
+  for (const actor of actors.values()) {
+    actor.inConflict = actor.kind === 'agent' && (conflictIds?.has(actor.id) ?? false)
   }
 }
 

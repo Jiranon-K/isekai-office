@@ -5,6 +5,7 @@ import { HotspotPanels } from '@/room-panels/HotspotPanels'
 import { questBoardMark } from '@/room-panels/panel-data'
 import { StatusChip } from '@/room-panels/StatusChip'
 import { ThemeDock } from '@/room-panels/ThemeDock'
+import { useConflicts } from '@/room-panels/use-conflicts'
 import { useRecordHidden } from '@/room-panels/use-last-hidden'
 import { useBoard, useOfficeFeed } from '@/lib/api'
 import { closePanel, mergeQuery, openPanel, parseRoute, selectAgent, togglePanel } from '@/lib/route'
@@ -83,6 +84,7 @@ export function App(): React.JSX.Element {
   const boardOpen = surfaces.board
   const boardWaiting = useMemo(() => questBoardMark(questBoard.data, agents), [questBoard.data, agents])
   const partyByAgent = usePartyByAgent(useParties(agents, questBoard.data))
+  const conflicts = useConflicts(agents, (office.data?.sourceReady ?? false) && !replaying)
   const acceptsPick = surfaces.acceptsPick
   const pickAgent = useCallback((agentId: string | null) => {
     if (!acceptsPick) {
@@ -156,6 +158,7 @@ export function App(): React.JSX.Element {
         openHotspot={route.open}
         boardWaiting={boardWaiting}
         partyByAgent={partyByAgent}
+        conflictIds={conflicts.agentIds}
         world={theme.world}
         mode={theme.mode}
         paused={boardOpen}
@@ -174,6 +177,7 @@ export function App(): React.JSX.Element {
         office={office}
         quiet={quiet}
         board={questBoard}
+        conflicts={conflicts}
         theme={theme}
         handoffDraft={handoffDraft}
         onThemeChange={setTheme}

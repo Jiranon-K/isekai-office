@@ -6,11 +6,12 @@ import type { Theme } from '@/lib/theme'
 import { hotspotById } from '@/office/scene/hotspots'
 import { ArchivePanel } from './ArchivePanel'
 import { BarPanel } from './BarPanel'
+import { DoorPanel } from './DoorPanel'
 import { HearthTabs } from './HearthTabs'
 import { HotspotPopover, type PanelSide } from './HotspotPopover'
 import { OrbPanel } from './OrbPanel'
 import { RosterPanel } from './RosterPanel'
-import { DoorPanel } from './DoorPanel'
+import type { ConflictsState } from './use-conflicts'
 
 type PopoverPanelId = Exclude<PanelId, 'questBoard'>
 
@@ -19,6 +20,7 @@ type HotspotPanelsProps = {
   office: Loadable<OfficeSnapshot>
   quiet: ReadonlyMap<string, number>
   board: Loadable<BoardSnapshot>
+  conflicts: ConflictsState
   theme: Theme
   handoffDraft: HandoffDraft | null
   onThemeChange(theme: Theme): void
@@ -57,6 +59,7 @@ function PanelBody({ id, ...props }: HotspotPanelsProps & { id: PopoverPanelId }
       <OrbPanel
         agents={agents}
         contextWindow={props.office.data?.contextWindow ?? 0}
+        conflicts={props.conflicts}
         onSelect={props.onSelectAgent}
         onHandoff={props.onHandoff}
       />

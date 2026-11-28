@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { OfficeAgent } from '@shared/types'
 import { createWalkGrid } from './layout'
-import { syncActors, createNpcActors } from './actors'
+import { createNpcActors, markConflicts, syncActors } from './actors'
 
 function agent(id: string, state: OfficeAgent['state'], tool: string | null): OfficeAgent {
   return {
@@ -42,5 +42,37 @@ describe('syncActors groupOf', () => {
     syncActors(actors, [agent('a', 'working', null)], grid, true, 1000, () => 'desk')
     syncActors(actors, [agent('a', 'working', null)], grid, true, 1000, () => 'forge')
     expect(actors.get('a')?.groupId).toBe('forge')
+  })
+})
+
+describe('markConflicts', () => {
+  const grid = createWalkGrid()
+
+  test('marks matching agents in conflict and clears others', () => {
+    const actors = createNpcActors()
+    syncActors(actors, [agent('a1', 'working', 'Edit'), agent('a2', 'working', 'Write'), agent('a3', 'done', null)], grid, true, 1000)
+    markConflicts(actors, new Set(['a1', 'a2']))
+    expect(actors.get('a1')?.inConflict).toBe(true)
+    expect(actors.get('a2')?.inConflict).toBe(true)
+    expect(actors.get('a3')?.inConflict).toBe(false)
+    markConflicts(actors, new Set(['a2']))
+    expect(actors.get('a1')?.inConflict).toBe(false)
+    expect(actors.get('a2')?.inConflict).toBe(true)
+  })
+
+  test('never marks NPC actors as in conflict', () => {
+    const actors = createNpcActors()
+    markConflicts(actors, new Set(['npc:bartender', 'npc:receptionist']))
+    expect(actors.get('npc:bartender')?.inConflict).toBe(false)
+    expect(actors.get('npc:receptionist')?.inConflict).toBe(false)
+  })
+
+  test('clears all conflict flags when conflictIds is omitted', () => {
+    const actors = createNpcActors()
+    syncActors(actors, [agent('a1', 'working', 'Edit')], grid, true, 1000)
+    markConflicts(actors, new Set(['a1']))
+    expect(actors.get('a1')?.inConflict).toBe(true)
+    markConflicts(actors)
+    expect(actors.get('a1')?.inConflict).toBe(false)
   })
 })
