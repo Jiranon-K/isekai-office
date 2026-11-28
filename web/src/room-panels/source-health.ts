@@ -14,3 +14,10 @@ export function sourceHealth(snapshot: OfficeSnapshot | null): SourceHealth {
   const name = SOURCE_NAMES[snapshot.source]
   return snapshot.sourceReady ? { label: name, ok: true } : { label: `${name} (ปิดอยู่)`, ok: false }
 }
+
+export function managedStatus(snapshot: OfficeSnapshot | null): string | null {
+  if (!snapshot || snapshot.managedCap === undefined) {
+    return null
+  }
+  return `คุมโดยห้อง ${snapshot.managedCount ?? 0}/${snapshot.managedCap}`
+}

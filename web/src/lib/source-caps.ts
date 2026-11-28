@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { SourceCaps } from '@shared/types'
 
 export const READ_ONLY_REASON = 'source นี้อ่านได้อย่างเดียว'
+export const EXTERNAL_READ_ONLY_REASON = 'session นี้เปิดจากข้างนอก ส่งคำสั่งจากที่นี่ไม่ได้'
 
 const ALL_CAPS: SourceCaps = { command: true, spawn: true, screen: true }
 

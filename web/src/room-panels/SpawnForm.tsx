@@ -5,7 +5,20 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendSpawn, useRepos } from '@/lib/api'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
-import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, hasProblem, shouldConfirmReplace, spawnProblems, withFilledPrompt, type SpawnFields } from './spawn-logic'
+import {
+  applyTemplate,
+  buildSpawnRequest,
+  describeReposError,
+  describeSpawnError,
+  EMPTY_FIELDS,
+  EMPTY_REPOS_NOTE,
+  hasEmptyRepos,
+  hasProblem,
+  shouldConfirmReplace,
+  spawnProblems,
+  withFilledPrompt,
+  type SpawnFields
+} from './spawn-logic'
 import { TemplatePicker } from './TemplatePicker'
 import { useTemplates } from './use-templates'
 
@@ -81,7 +94,7 @@ function SpawnFields(): React.JSX.Element {
     setStatus({ kind: 'sending' })
     const result = await sendSpawn(buildSpawnRequest(filled))
     if (!result.ok) {
-      setStatus({ kind: 'failed', reason: result.error ?? 'spawn_failed' })
+      setStatus({ kind: 'failed', reason: describeSpawnError(result.error) })
       return
     }
     setFields(EMPTY_FIELDS)
@@ -92,7 +105,10 @@ function SpawnFields(): React.JSX.Element {
   }
 
   if (repos.error) {
-    return <p role="alert" className="text-small text-destructive">อ่านรายชื่อ repo จาก Orca ไม่ได้</p>
+    return <p role="alert" className="text-small text-destructive">{describeReposError(repos.error)}</p>
+  }
+  if (hasEmptyRepos(repos.data, repos.loading, repos.error)) {
+    return <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">{EMPTY_REPOS_NOTE}</p>
   }
   return (
     <form className="flex flex-col gap-3" onSubmit={submit} noValidate>

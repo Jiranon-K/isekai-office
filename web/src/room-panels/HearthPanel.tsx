@@ -3,7 +3,7 @@ import { Badge } from '@/components/badge'
 import { useGuildLog, type Loadable } from '@/lib/api'
 import { ReplayEntry } from '@/replay/ReplayEntry'
 import { GuildLogSection } from './GuildLogSection'
-import { sourceHealth } from './source-health'
+import { managedStatus, sourceHealth } from './source-health'
 import { useLastHidden } from './use-last-hidden'
 
 type Health = { label: string; ok: boolean }
@@ -34,11 +34,22 @@ export function HearthStatus({ office, onSelect }: { office: Loadable<OfficeSnap
   const log = useGuildLog(true, office.data?.at ?? 0)
   const lastHidden = useLastHidden()
   const present = new Set((office.data?.agents ?? []).map((agent) => agent.id))
+  const managed = managedStatus(office.data)
   return (
     <>
       <dl className="flex flex-col gap-2">
         <HealthRow name="Server" health={serverHealth(office)} />
         <HealthRow name="แหล่งข้อมูล" health={sourceHealth(office.data)} />
+        {managed ? (
+          <div className="flex items-center justify-between gap-2">
+            <dt className="text-small">เซสชันในห้อง</dt>
+            <dd>
+              <Badge variant="outline" className="font-mono">
+                {managed}
+              </Badge>
+            </dd>
+          </div>
+        ) : null}
       </dl>
       {office.data?.error ? (
         <p role="alert" className="rounded-md bg-tint-red-bg p-2 font-mono text-caption break-words text-tint-red-fg">
