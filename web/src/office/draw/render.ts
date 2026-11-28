@@ -6,6 +6,7 @@ import { collectWorkers, drawAmbientFlames, drawBubble, drawStationEffects } fro
 import { drawHotspotLabels, drawHotspotMarkers, drawHotspotOutlines } from './hotspot-draw'
 import type { HotspotView } from '../scene/hotspots'
 import { drawActorPlate, drawManaBar, drawSign, drawStationLabels } from './labels'
+import { drawRepoTag } from './repo-tag-draw'
 import { ROOM_HEIGHT, ROOM_WIDTH } from '../scene/layout'
 import type { OfficePalette } from './palette'
 import { drawSignals, type Signals } from './signals'
@@ -168,6 +169,7 @@ export function renderFrame(input: FrameInput): void {
   for (const actor of sorted) {
     drawActorPlate(context, palette, view, actor, actor.id === input.selectedId)
     drawManaBar(context, palette, view, actor)
+    drawRepoTag(context, palette, view, actor, actor.id === input.hoveredAgentId)
     drawStateLabel(context, palette, view, actor, input.now, actor.id === input.hoveredAgentId)
   }
   drawHotspotLabels(context, palette, view, input.hotspots)
