@@ -1,7 +1,18 @@
 import { describe, expect, test } from 'bun:test'
+import type { HandoffDraft } from '@shared/handoff'
 import { PROMPT_MAX } from '@shared/spawn'
 import type { QuestTemplate } from '@shared/templates'
-import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, fillSpawnPrompt, shouldConfirmReplace, spawnProblems, withFilledPrompt } from './spawn-logic'
+import {
+  applyTemplate,
+  buildSpawnRequest,
+  EMPTY_FIELDS,
+  fieldsFromDraft,
+  fillSpawnPrompt,
+  resolveRepoId,
+  shouldConfirmReplace,
+  spawnProblems,
+  withFilledPrompt
+} from './spawn-logic'
 
 const FILLED = { ...EMPTY_FIELDS, repoId: 'r1', name: 'fix-login' }
 
@@ -117,5 +128,38 @@ describe('replacing a typed prompt', () => {
 
   test('a template text that was edited asks first', () => {
     expect(shouldConfirmReplace('filled and changed', 'filled')).toBe(true)
+  })
+})
+
+const DRAFT: HandoffDraft = {
+  sourceAgentId: 'a7',
+  sourceTitle: 'APP-9 empty states',
+  repoName: 'tavern-web',
+  name: 'handoff-app-9-empty-states',
+  baseBranch: 'main',
+  prompt: 'Handoff from: APP-9 empty states',
+  fallbackUsed: false
+}
+
+describe('handoff draft spawn fields', () => {
+  const repos = [
+    { id: 'r1', name: 'tavern-api' },
+    { id: 'r2', name: 'tavern-web' }
+  ]
+
+  test('maps a handoff draft into initial spawn fields and resets when null', () => {
+    expect(fieldsFromDraft(DRAFT)).toEqual({
+      repoId: '',
+      name: 'handoff-app-9-empty-states',
+      baseBranch: 'main',
+      prompt: 'Handoff from: APP-9 empty states'
+    })
+    expect(fieldsFromDraft(null)).toEqual(EMPTY_FIELDS)
+  })
+
+  test('resolves repoId from draft name until the user picks a repo explicitly', () => {
+    expect(resolveRepoId(repos, '', DRAFT)).toBe('r2')
+    expect(resolveRepoId(repos, 'r1', DRAFT)).toBe('r1')
+    expect(resolveRepoId(repos, '', null)).toBe('r1')
   })
 })

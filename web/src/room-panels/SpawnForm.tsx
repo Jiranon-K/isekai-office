@@ -1,15 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { HandoffDraft } from '@shared/handoff'
 import { NAME_RULE, PROMPT_MAX } from '@shared/spawn'
 import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { sendSpawn, useRepos } from '@/lib/api'
 import { READ_ONLY_REASON, useSourceCaps } from '@/lib/source-caps'
-import { applyTemplate, buildSpawnRequest, EMPTY_FIELDS, hasProblem, shouldConfirmReplace, spawnProblems, withFilledPrompt, type SpawnFields } from './spawn-logic'
+import {
+  applyTemplate,
+  buildSpawnRequest,
+  EMPTY_FIELDS,
+  fieldsFromDraft,
+  hasProblem,
+  resolveRepoId,
+  shouldConfirmReplace,
+  spawnProblems,
+  withFilledPrompt,
+  type SpawnFields
+} from './spawn-logic'
 import { TemplatePicker } from './TemplatePicker'
 import { useTemplates } from './use-templates'
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'failed'; reason: string }
+
+type SpawnFormProps = {
+  handoffDraft: HandoffDraft | null
+  onClearHandoff(): void
+}
 
 const FIELD_CLASS =
   'focus-ring h-9 w-full rounded-lg border border-input bg-popover px-3 text-body text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive'
@@ -26,6 +43,20 @@ function Field({ label, hint, children }: FieldProps): React.JSX.Element {
   )
 }
 
+function HandoffBanner({ draft, onClear }: { draft: HandoffDraft; onClear(): void }): React.JSX.Element {
+  return (
+    <div role="status" className="flex flex-col gap-1 rounded-md border bg-muted/60 px-2.5 py-2 text-small">
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate text-body-strong">รับช่วงต่อจาก {draft.sourceTitle}</span>
+        <Button type="button" variant="ghost" size="xs" onClick={onClear}>
+          ล้างค่า
+        </Button>
+      </div>
+      {draft.fallbackUsed ? <span className="text-caption text-muted-foreground">ดึงประวัติแชทไม่ได้ ใช้สรุปล่าสุดแทน</span> : null}
+    </div>
+  )
+}
+
 function statusLine(status: Status): React.JSX.Element | null {
   if (status.kind === 'sent') {
     return <p role="status" className="text-small">เรียกแล้ว รอสักครู่จะเดินเข้ามา</p>
@@ -36,16 +67,30 @@ function statusLine(status: Status): React.JSX.Element | null {
   return null
 }
 
-function SpawnFields(): React.JSX.Element {
+function SpawnFields({ handoffDraft, onClearHandoff }: SpawnFormProps): React.JSX.Element {
   const repos = useRepos()
   const templates = useTemplates()
+  const appliedDraftRef = useRef<HandoffDraft | null>(handoffDraft)
   const [templateId, setTemplateId] = useState('')
   const [lastFilled, setLastFilled] = useState('')
-  const [fields, setFields] = useState<SpawnFields>(EMPTY_FIELDS)
+  const [fields, setFields] = useState<SpawnFields>(() => fieldsFromDraft(handoffDraft))
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [touched, setTouched] = useState(false)
+
+  useEffect(() => {
+    if (handoffDraft === null || handoffDraft === appliedDraftRef.current) {
+      return
+    }
+    appliedDraftRef.current = handoffDraft
+    setFields(fieldsFromDraft(handoffDraft))
+    setTemplateId('')
+    setLastFilled('')
+    setTouched(false)
+    setStatus({ kind: 'idle' })
+  }, [handoffDraft])
+
   const list = repos.data ?? []
-  const repoId = fields.repoId || (list[0]?.id ?? '')
+  const repoId = resolveRepoId(list, fields.repoId, handoffDraft)
   const current = { ...fields, repoId }
   const template = templates.templates?.find((item) => item.id === templateId) ?? null
   const repoName = list.find((repo) => repo.id === repoId)?.name ?? ''
@@ -54,6 +99,16 @@ function SpawnFields(): React.JSX.Element {
   const sending = status.kind === 'sending'
   const change = (patch: Partial<SpawnFields>): void => {
     setFields({ ...current, ...patch })
+    setStatus({ kind: 'idle' })
+  }
+
+  function clearDraft(): void {
+    appliedDraftRef.current = null
+    onClearHandoff()
+    setFields(EMPTY_FIELDS)
+    setTemplateId('')
+    setLastFilled('')
+    setTouched(false)
     setStatus({ kind: 'idle' })
   }
 
@@ -84,6 +139,8 @@ function SpawnFields(): React.JSX.Element {
       setStatus({ kind: 'failed', reason: result.error ?? 'spawn_failed' })
       return
     }
+    appliedDraftRef.current = null
+    onClearHandoff()
     setFields(EMPTY_FIELDS)
     setTemplateId('')
     setLastFilled('')
@@ -96,6 +153,7 @@ function SpawnFields(): React.JSX.Element {
   }
   return (
     <form className="flex flex-col gap-3" onSubmit={submit} noValidate>
+      {handoffDraft ? <HandoffBanner draft={handoffDraft} onClear={clearDraft} /> : null}
       <Field label="Repo">
         <select
           className={FIELD_CLASS}
@@ -159,10 +217,10 @@ function SpawnFields(): React.JSX.Element {
   )
 }
 
-export function SpawnForm(): React.JSX.Element {
+export function SpawnForm({ handoffDraft, onClearHandoff }: SpawnFormProps): React.JSX.Element {
   const caps = useSourceCaps()
   if (!caps.spawn) {
     return <p role="note" className="rounded-md bg-muted p-2 text-small text-muted-foreground">{READ_ONLY_REASON}</p>
   }
-  return <SpawnFields />
+  return <SpawnFields handoffDraft={handoffDraft} onClearHandoff={onClearHandoff} />
 }
