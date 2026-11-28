@@ -183,7 +183,7 @@ Tests sit next to the file they test (`*.test.ts`).
 bun run check
 ```
 
-Runs typecheck, tests and the build.
+Runs typecheck, tests and the build. `bun run build` fails when the JavaScript loaded on first paint is over 145,000 bytes gzipped.
 
 ## Built with
 

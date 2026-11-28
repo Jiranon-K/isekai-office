@@ -17,5 +17,10 @@ export default defineConfig({
     strictPort: true,
     proxy: { '/api': `http://127.0.0.1:${process.env.SERVER_PORT ?? 4302}` }
   },
-  build: { outDir: '../dist', emptyOutDir: true }
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+    modulePreload: { polyfill: false },
+    rolldownOptions: { output: { codeSplitting: { groups: [{ name: 'room', tags: ['$initial'] }] } } }
+  }
 })

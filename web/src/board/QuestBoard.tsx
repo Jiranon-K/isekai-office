@@ -4,6 +4,7 @@ import { Spinner } from '@/components/spinner'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import type { Loadable } from '@/lib/api'
 import { useSourceCaps } from '@/lib/source-caps'
 import { BoardError } from './BoardError'
@@ -108,25 +109,27 @@ export function QuestBoard(props: QuestBoardProps): React.JSX.Element {
   const { board } = props
   const [query, setQuery] = useBoardQuery()
   return (
-    <main className="absolute inset-0 overflow-y-auto bg-background/95 px-3 pb-6 pt-3 sm:px-6">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-section-title">Quest Board</h2>
-          {board.data ? (
-            <span className="text-small text-muted-foreground">อัปเดตล่าสุด {formatUpdatedAt(board.data.at)}</span>
-          ) : null}
-          <BoardSearch value={query.search} onChange={(search) => setQuery({ ...query, search })} />
-          {board.data ? <BoardFilters filter={query.filter} options={filterOptions(board.data)} onChange={(filter) => setQuery({ ...query, filter })} /> : null}
-          <Button variant="outline" size="sm" className="ml-auto" onClick={board.refresh} disabled={board.loading} aria-label="โหลด Quest Board ใหม่">
-            {board.loading ? <Spinner /> : <RefreshIcon />}
-            รีเฟรช
-          </Button>
-          <Button variant="ghost" size="icon-sm" aria-label="ปิด Quest Board กลับไปที่ห้อง" onClick={props.onClose}>
-            <XIcon />
-          </Button>
+    <TooltipProvider>
+      <main className="absolute inset-0 overflow-y-auto bg-background/95 px-3 pb-6 pt-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-section-title">Quest Board</h2>
+            {board.data ? (
+              <span className="text-small text-muted-foreground">อัปเดตล่าสุด {formatUpdatedAt(board.data.at)}</span>
+            ) : null}
+            <BoardSearch value={query.search} onChange={(search) => setQuery({ ...query, search })} />
+            {board.data ? <BoardFilters filter={query.filter} options={filterOptions(board.data)} onChange={(filter) => setQuery({ ...query, filter })} /> : null}
+            <Button variant="outline" size="sm" className="ml-auto" onClick={board.refresh} disabled={board.loading} aria-label="โหลด Quest Board ใหม่">
+              {board.loading ? <Spinner /> : <RefreshIcon />}
+              รีเฟรช
+            </Button>
+            <Button variant="ghost" size="icon-sm" aria-label="ปิด Quest Board กลับไปที่ห้อง" onClick={props.onClose}>
+              <XIcon />
+            </Button>
+          </div>
+          <Content {...props} query={query} onTabChange={(tab) => setQuery({ ...query, tab })} />
         </div>
-        <Content {...props} query={query} onTabChange={(tab) => setQuery({ ...query, tab })} />
-      </div>
-    </main>
+      </main>
+    </TooltipProvider>
   )
 }
