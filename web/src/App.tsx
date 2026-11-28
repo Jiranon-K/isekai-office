@@ -182,7 +182,7 @@ export function App(): React.JSX.Element {
       <ReplayEntryProvider value={{ date: replay.date, enter: replay.enter }}>
       <QueueEntryProvider value={{ waiting: replaying ? 0 : waitingQueue(agents).length, open: openQueueFromPanel }}>
       {roomPanel ? (
-        <Deferred title={`โหลด${hotspotById(roomPanel).label}ไม่ได้`} onClose={close}>
+        <Deferred subject={roomPanel} title={`โหลด${hotspotById(roomPanel).label}ไม่ได้`} onClose={close}>
         <HotspotPanels
           open={surfaces.panel}
           office={office}
@@ -207,12 +207,12 @@ export function App(): React.JSX.Element {
         </Deferred>
       ) : null}
       {selected && showQuickReply && !queueOpen && !replaying ? (
-        <Deferred title="โหลดช่องตอบไม่ได้" onClose={() => pickAgent(null)}>
+        <Deferred subject={selected.id} title="โหลดช่องตอบไม่ได้" onClose={() => pickAgent(null)}>
           <QuickReply agent={selected} locateRef={locateRef} onExpand={() => setExpandedId(selected.id)} onClose={() => pickAgent(null)} />
         </Deferred>
       ) : null}
       {selected && !showQuickReply && !queueOpen && !replaying ? (
-        <Deferred title="โหลดแผงคำสั่งไม่ได้" onClose={() => pickAgent(null)}>
+        <Deferred subject={selected.id} title="โหลดแผงคำสั่งไม่ได้" onClose={() => pickAgent(null)}>
           <CommandPanel agent={selected} contextWindow={contextWindow} onHandoff={startHandoff} onClose={() => pickAgent(null)} />
         </Deferred>
       ) : null}

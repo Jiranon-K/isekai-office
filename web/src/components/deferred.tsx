@@ -2,7 +2,7 @@ import { Component, Suspense } from 'react'
 import { useEscapeLayer } from '@/components/escape-layer'
 import { LoadFailure, type LoadFailureProps } from '@/components/load-failure'
 
-type DeferredProps = LoadFailureProps & { children: React.ReactNode }
+type DeferredProps = LoadFailureProps & { subject?: string; children: React.ReactNode }
 
 class LoadBoundary extends Component<DeferredProps, { failed: boolean }> {
   state = { failed: false }
@@ -12,8 +12,8 @@ class LoadBoundary extends Component<DeferredProps, { failed: boolean }> {
   }
 
   render(): React.ReactNode {
-    const { children, ...failure } = this.props
-    return this.state.failed ? <LoadFailure {...failure} /> : children
+    const { children, subject, ...failure } = this.props
+    return this.state.failed ? <LoadFailure key={subject} {...failure} /> : children
   }
 }
 
@@ -22,10 +22,10 @@ function CancelWhileLoading({ onCancel }: { onCancel(): void }): null {
   return null
 }
 
-export function Deferred({ children, ...failure }: DeferredProps): React.JSX.Element {
+export function Deferred({ children, ...props }: DeferredProps): React.JSX.Element {
   return (
-    <LoadBoundary {...failure}>
-      <Suspense fallback={<CancelWhileLoading onCancel={failure.onClose} />}>{children}</Suspense>
+    <LoadBoundary {...props}>
+      <Suspense fallback={<CancelWhileLoading onCancel={props.onClose} />}>{children}</Suspense>
     </LoadBoundary>
   )
 }

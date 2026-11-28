@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useId, useLayoutEffect, useRef } from 'react'
 import { useEscapeLayer } from '@/components/escape-layer'
 import { AlertIcon, RefreshIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
@@ -15,16 +15,18 @@ function isTopCard(card: HTMLElement | null): boolean {
   return cards[cards.length - 1] === card
 }
 
-function useFocusWhileShown(target: React.RefObject<HTMLButtonElement | null>): void {
-  useEffect(() => {
+function useBorrowedFocus(card: React.RefObject<HTMLElement | null>, target: React.RefObject<HTMLElement | null>): void {
+  useLayoutEffect(() => {
     const previous = document.activeElement
+    const shownCard = card.current
     target.current?.focus()
     return () => {
-      if (previous instanceof HTMLElement && previous.isConnected) {
+      const stillHeld = shownCard?.contains(document.activeElement)
+      if (stillHeld && previous instanceof HTMLElement && previous.isConnected) {
         previous.focus()
       }
     }
-  }, [target])
+  }, [card, target])
 }
 
 export function LoadFailure({ title, closeLabel = 'ปิด', extra, onClose }: LoadFailureProps): React.JSX.Element {
@@ -32,7 +34,7 @@ export function LoadFailure({ title, closeLabel = 'ปิด', extra, onClose }:
   const detailId = useId()
   const card = useRef<HTMLDivElement>(null)
   const reload = useRef<HTMLButtonElement>(null)
-  useFocusWhileShown(reload)
+  useBorrowedFocus(card, reload)
   useEscapeLayer(onClose, () => isTopCard(card.current))
   return (
     <div className="pointer-events-none absolute inset-0 z-toast flex items-center justify-center p-3">
