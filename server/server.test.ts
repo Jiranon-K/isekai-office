@@ -172,7 +172,7 @@ async function freePort(): Promise<number> {
 
 async function startServer(home: string): Promise<RunningServer> {
   const port = await freePort()
-  const env = { ...process.env, PORT: String(port), PUBLIC_PORT: String(port), SESSION_SOURCE: 'local', HOME: home, USERPROFILE: home }
+  const env = { ...process.env, PORT: String(port), PUBLIC_PORT: String(port), SESSION_SOURCE: 'local', LOCAL_INTERACTIVE: '0', HOME: home, USERPROFILE: home }
   const child = Bun.spawn(['bun', MAIN_SCRIPT], { env, stdout: 'ignore', stderr: 'ignore' })
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const reply = await fetch(`http://127.0.0.1:${port}/api/nothing`).catch(() => null)

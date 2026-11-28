@@ -2,6 +2,7 @@ import { stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { OfficeAgent, SessionDetail } from '@shared/types'
+import { createManagedRunner, isLocalInteractiveEnabled, type ManagedRunner } from '../managed/runner'
 import { historyAt } from './history'
 import { baseNameOf, localFacts, titleFrom, type LocalFacts } from './local-facts'
 import { createRecentFiles, type RecentFile, type RecentFilesOptions } from './recent-files'
@@ -32,10 +33,30 @@ async function isUnchanged(file: RecentFile): Promise<boolean> {
   return info !== null && info.size === file.size && info.mtimeMs === file.modifiedAt
 }
 
-type LocalOptions = Omit<RecentFilesOptions, 'refreshMs'> & { refreshMs?: number; hints?: HintStore }
+type LocalOptions = Omit<RecentFilesOptions, 'refreshMs'> & {
+  refreshMs?: number
+  hints?: HintStore
+  managed?: ManagedRunner | null
+}
+
+function mergeManagedAndExternal(managedAgents: OfficeAgent[], externalAgents: OfficeAgent[]): OfficeAgent[] {
+  if (managedAgents.length === 0) {
+    return externalAgents
+  }
+  const managedSessionIds = new Set<string>()
+  for (const agent of managedAgents) {
+    managedSessionIds.add(agent.id)
+    if (agent.session) {
+      managedSessionIds.add(agent.session)
+    }
+  }
+  const externalOnly = externalAgents.filter((agent) => !managedSessionIds.has(agent.id) && (!agent.session || !managedSessionIds.has(agent.session)))
+  return [...managedAgents, ...externalOnly]
+}
 
 export function createLocalSource(options: LocalOptions): SessionSource {
   const hints = options.hints ?? hintStore
+  const managed = options.managed ?? null
   const recent = createRecentFiles({ refreshMs: REFRESH_MS, ...options })
   const cache = new Map<string, Snapshotted>()
   const titles = new Map<string, string>()
@@ -95,25 +116,41 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     forget(files)
     hints.prune((options.now ?? Date.now)() - options.recentMs)
     const agents = await Promise.all(files.map((file) => toAgent(file).catch(() => null)))
-    return agents.filter((agent) => agent !== null)
+    const external = agents.filter((agent) => agent !== null)
+    return managed ? mergeManagedAndExternal(managed.listAgents(), external) : external
   }
 
   async function readSession(id: string): Promise<SessionDetail> {
+    const managedSession = managed?.readSession(id) ?? null
+    if (managedSession) {
+      return managedSession
+    }
     const file = (await recent.list()).find((candidate) => candidate.id === id)
     const entries = file ? ((await historyAt(file.path)) ?? []) : []
     return { id, entries, screen: null }
   }
 
+  const interactive = managed !== null
   return {
     id: 'local',
-    caps: { command: false, spawn: false, screen: false },
+    caps: interactive ? { command: true, spawn: true, screen: true } : { command: false, spawn: false, screen: false },
     ready: async () => true,
     listAgents,
-    readSession
+    readSession,
+    ...(managed ? { managedStats: () => ({ count: managed.activeCount(), cap: managed.maxSessions() }) } : {})
   }
 }
 
+const localRecentMs = recentMsFrom(process.env.LOCAL_RECENT_MINUTES)
+
+export const localInteractiveEnabled = isLocalInteractiveEnabled(process.env.LOCAL_INTERACTIVE, Bun.which('claude') !== null)
+
+export const localManagedRunner: ManagedRunner | null = localInteractiveEnabled
+  ? createManagedRunner({ recentMs: localRecentMs })
+  : null
+
 export const localSource = createLocalSource({
   projectsDir: join(homedir(), '.claude', 'projects'),
-  recentMs: recentMsFrom(process.env.LOCAL_RECENT_MINUTES)
+  recentMs: localRecentMs,
+  managed: localManagedRunner
 })

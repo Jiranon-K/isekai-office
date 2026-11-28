@@ -27,6 +27,8 @@ export type OfficeSnapshot = {
   agents: OfficeAgent[]
   contextWindow: number
   quietAfterMs: number
+  managedCount?: number
+  managedCap?: number
   error: string | null
   at: number
 }

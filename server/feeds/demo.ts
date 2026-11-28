@@ -1,6 +1,7 @@
 import type {
   AgentState,
   BoardSnapshot,
+  CommandRequest,
   CommandResult,
   GuildLog,
   LogEvent,
@@ -9,11 +10,14 @@ import type {
   OfficeAgent,
   OfficeSnapshot,
   OrcaRepo,
+  SpawnRequest,
   SpawnResult,
   QuestCard,
   SessionDetail,
   SessionEntry
 } from '@shared/types'
+import { managedIdFromTerminal } from '../managed/runner'
+import { createDemoManagedStore } from './demo-managed'
 
 const MINUTE = 60_000
 const TASK_URL = 'https://workspace.example.com/tasks/'
@@ -52,9 +56,34 @@ function agentFrom([id, title, repo, state, tool, tokens, last]: AgentSeed, now:
   }
 }
 
+const DEMO_REPOS: OrcaRepo[] = [
+  { id: 'demo-repo-1', name: 'tavern-api' },
+  { id: 'demo-repo-2', name: 'tavern-web' }
+]
+const demoManaged = createDemoManagedStore(DEMO_REPOS)
+const demoListeners = new Set<(snapshot: OfficeSnapshot) => void>()
+
 function officeSnapshot(): OfficeSnapshot {
   const now = Date.now()
-  return { source: 'orca', caps: { command: true, spawn: true, screen: true }, sourceReady: true, agents: AGENT_SEEDS.map((seed) => agentFrom(seed, now)), contextWindow: 1_000_000, quietAfterMs: 10 * MINUTE, error: null, at: now }
+  return {
+    source: 'orca',
+    caps: { command: true, spawn: true, screen: true },
+    sourceReady: true,
+    agents: [...AGENT_SEEDS.map((seed) => agentFrom(seed, now)), ...demoManaged.agents()],
+    contextWindow: 1_000_000,
+    quietAfterMs: 10 * MINUTE,
+    managedCount: demoManaged.count(),
+    managedCap: demoManaged.cap(),
+    error: null,
+    at: now
+  }
+}
+
+function broadcastDemoSnapshot(): void {
+  const snapshot = officeSnapshot()
+  for (const listener of demoListeners) {
+    listener(snapshot)
+  }
 }
 
 type CardSeed = [key: string, title: string, column: QuestCard['column'], route: string, loop: string | null, extra?: Partial<QuestCard>]
@@ -163,12 +192,19 @@ function chat(now: number): SessionEntry[] {
 }
 
 export function demoSubscribe(listener: (snapshot: OfficeSnapshot) => void): () => void {
+  demoListeners.add(listener)
   listener(officeSnapshot())
-  return () => {}
+  return () => {
+    demoListeners.delete(listener)
+  }
 }
 
 export function demoSnapshot(): OfficeSnapshot {
   return officeSnapshot()
+}
+
+export function resetDemoState(): void {
+  demoManaged.reset()
 }
 
 const PIPELINE_FLIP_MS = 20_000
@@ -190,22 +226,34 @@ export async function demoBoard(): Promise<BoardSnapshot> {
 }
 
 export async function demoSession(id: string, agent: OfficeAgent | null): Promise<SessionDetail> {
+  const managed = demoManaged.readSession(id)
+  if (managed) {
+    return managed
+  }
   return { id, entries: chat(Date.now()), screen: agent?.terminal ? screenFor(id) : null }
 }
 
-export async function demoCommand(): Promise<CommandResult> {
+export async function demoCommand(terminal?: string, request?: CommandRequest): Promise<CommandResult> {
+  if (terminal && managedIdFromTerminal(terminal)) {
+    const result = demoManaged.command(terminal, request)
+    if (result.ok) {
+      broadcastDemoSnapshot()
+    }
+    return result
+  }
   return { ok: true, error: null }
 }
 
 export async function demoRepos(): Promise<OrcaRepo[]> {
-  return [
-    { id: 'demo-repo-1', name: 'tavern-api' },
-    { id: 'demo-repo-2', name: 'tavern-web' }
-  ]
+  return DEMO_REPOS
 }
 
-export async function demoSpawn(): Promise<SpawnResult> {
-  return { ok: true, error: null }
+export async function demoSpawn(request?: SpawnRequest): Promise<SpawnResult> {
+  const result = demoManaged.spawn(request)
+  if (result.ok) {
+    broadcastDemoSnapshot()
+  }
+  return result
 }
 
 type LogSeed = [minutesAgo: number, id: string, from: AgentState | null, to: AgentState | null]

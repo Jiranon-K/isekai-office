@@ -35,7 +35,15 @@ let polling = false
 let lastPayload = ''
 
 async function takeSnapshot(): Promise<OfficeSnapshot> {
-  const base = { source: source.id, caps: source.caps, contextWindow, quietAfterMs, at: Date.now() }
+  const managed = source.managedStats?.()
+  const base = {
+    source: source.id,
+    caps: source.caps,
+    contextWindow,
+    quietAfterMs,
+    ...(managed ? { managedCount: managed.count, managedCap: managed.cap } : {}),
+    at: Date.now()
+  }
   if (!(await source.ready())) {
     return { ...base, sourceReady: false, agents: [], error: null }
   }

@@ -6,4 +6,5 @@ export type SessionSource = {
   ready(): Promise<boolean>
   listAgents(): Promise<OfficeAgent[]>
   readSession(id: string, agent: OfficeAgent | null): Promise<SessionDetail>
+  managedStats?(): { count: number; cap: number }
 }

@@ -61,5 +61,7 @@ export async function handleSpawn(body: unknown, feeds: SpawnFeeds): Promise<Spa
   if (!request) {
     return BAD_REQUEST
   }
-  return { status: 200, result: await feeds.spawn(request) }
+  const result = await feeds.spawn(request)
+  const status = !result.ok && result.error === 'too_many_sessions' ? 429 : 200
+  return { status, result }
 }
