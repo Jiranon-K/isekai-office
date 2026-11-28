@@ -34,6 +34,7 @@ All screenshots use the built-in demo data.
 - **Chat history.** Open any agent to read its conversation, with tool calls folded into one line.
 - **Quest board.** An inbox of what waits for you, the stages of an agent loop, and a release checklist.
 - **Quest templates.** Saved first prompts for the door form, with `{{name}}`, `{{repo}}` and `{{branch}}` placeholders. They live in `<data dir>/templates.json` (`GET` and `PUT /api/templates`); three built-ins are used until you save a list.
+- **Session archive.** The bookshelves list past sessions, including ones that left the room. Search them, read a transcript, copy its first prompt, or save it as a quest template. See [Session archive](#session-archive).
 - **Four worlds**, each with a day and a night.
 
 ## Light on memory
@@ -119,12 +120,38 @@ and paste the `hooks` object it prints into `~/.claude/settings.json`, merging i
 
 With the hooks in place a permission prompt turns the character to `waiting`, answering it turns it back to `working`, and an idle notification leaves a finished session at the bar. Without them everything else still works; the room just never shows `waiting`.
 
+## Session archive
+
+The bookshelves have two tabs. `เซสชันเก่า` (the default) lists past Claude Code sessions from `~/.claude/projects`, newest first. `ประวัติ Loop` shows the quest board loop history. The archive reads the same folder with or without Orca, and in demo mode it serves five made-up sessions instead.
+
+- **Search.** Type in the search box or pick a repo. The search matches a title or repo name by case-insensitive substring. The repo filter is an exact match. Typing waits 200 ms before it asks the server.
+- **Active badge.** A session that is in the room now shows `อยู่ในห้อง`.
+- **Read-only transcript.** Opening a session shows its chat history with a `กลับ` button. It sends no commands.
+- **Copy first prompt.** `คัดลอกคำสั่งแรก` copies the first user message to the clipboard.
+- **Save as template.** `บันทึกเป็นแม่แบบ` adds the first prompt to the quest templates. The name is cut to 40 characters, ending in `…` when it is longer, and the prompt to 4,000. The list holds 30 templates; a full list shows `แม่แบบเต็มแล้ว`.
+
+| Route | Result |
+|---|---|
+| `GET /api/archive?q=&repo=&limit=` | `{ sessions, total, truncated }`. `limit` defaults to 30 and is clamped to 1..50. |
+| `GET /api/archive/:id` | `{ id, entries, screen: null }`. `400 bad_request` for a bad id, `404 session_not_found` for an unknown one. |
+
+The id is the transcript file name without `.jsonl`. It may hold `A-Z a-z 0-9 . _ -` and is at most 128 characters. The server looks the id up among the files it found, so a request cannot read a file outside `~/.claude/projects`.
+
+How the scan works:
+
+- **On request only.** Each request scans the folder. No timer runs and no database is used.
+- **Tail only.** A title and a repo come from the last 256 KB of each transcript.
+- **Bounded cache.** Those facts are cached for at most 200 transcripts, keyed by path, modified time and size. Past 200, the oldest entries are evicted and later searches read them again.
+- **Cheap list, full search.** Without `q` or `repo`, only the newest `limit` transcripts are read. With a filter, every transcript is read.
+- **No detail cache.** Opening a session reads its whole transcript each time.
+
 ## Project layout
 
 ```
 server/            Bun HTTP server, one process
   main.ts            routes and static files
   guard.ts           only local requests get in
+  archive/           session archive: scan, search, read one transcript
   feeds/             what the browser asks for: office, board, demo data
   sources/           where the data comes from: Orca, local transcripts, hook hints, tracker, GitLab
 shared/types.ts    types used by both sides

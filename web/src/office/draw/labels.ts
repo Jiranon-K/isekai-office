@@ -57,6 +57,40 @@ function drawPlate(context: CanvasRenderingContext2D, palette: OfficePalette, vi
 const PENNANT_WIDTH_UNITS = 3
 const PENNANT_HEIGHT_UNITS = 4
 const PENNANT_GAP_UNITS = 1
+const CONFLICT_WIDTH_UNITS = 3
+const CONFLICT_HEIGHT_UNITS = 4
+const CONFLICT_GAP_UNITS = 1
+
+export type ConflictPipLayout = {
+  border: number
+  left: number
+  top: number
+  width: number
+  height: number
+  barX: number
+  barY: number
+  barWidth: number
+  barHeight: number
+  dotY: number
+  dotHeight: number
+}
+
+export function conflictPipLayout(plate: PlateBox, scale: number): ConflictPipLayout {
+  const border = Math.max(1, Math.round(scale * 0.5))
+  const width = Math.max(5, Math.round(scale * CONFLICT_WIDTH_UNITS))
+  const height = Math.max(7, Math.round(scale * CONFLICT_HEIGHT_UNITS))
+  const left = plate.left + plate.width + Math.round(scale * CONFLICT_GAP_UNITS) + border
+  const top = plate.top + Math.round((plate.height - height) / 2)
+  const dotHeight = Math.max(1, Math.round(height / 6))
+  const padY = Math.max(1, Math.round(height / 7))
+  const gapY = Math.max(1, Math.round(height / 7))
+  const barHeight = Math.max(2, height - padY * 2 - gapY - dotHeight)
+  const barWidth = Math.min(dotHeight, Math.max(1, width - 2))
+  const barX = left + Math.floor((width - barWidth) / 2)
+  const barY = top + padY
+  const dotY = barY + barHeight + gapY
+  return { border, left, top, width, height, barX, barY, barWidth, barHeight, dotY, dotHeight }
+}
 
 function drawPennant(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: PlateBox, colour: PartyColour): void {
   const border = Math.max(1, Math.round(view.scale * 0.5))
@@ -66,6 +100,14 @@ function drawPennant(context: CanvasRenderingContext2D, palette: OfficePalette, 
   const top = plate.top + Math.round((plate.height - height) / 2)
   fill(context, palette, 'outline', left - border, top - border, width + border * 2, height + border * 2)
   fill(context, palette, colour, left, top, width, height)
+}
+
+function drawConflictPip(context: CanvasRenderingContext2D, palette: OfficePalette, view: ViewMetrics, plate: PlateBox): void {
+  const pip = conflictPipLayout(plate, view.scale)
+  fill(context, palette, 'outline', pip.left - pip.border, pip.top - pip.border, pip.width + pip.border * 2, pip.height + pip.border * 2)
+  fill(context, palette, 'alert-blocked', pip.left, pip.top, pip.width, pip.height)
+  fill(context, palette, 'bubble', pip.barX, pip.barY, pip.barWidth, pip.barHeight)
+  fill(context, palette, 'bubble', pip.barX, pip.dotY, pip.barWidth, pip.dotHeight)
 }
 
 export function drawActorPlate(
@@ -87,6 +129,9 @@ export function drawActorPlate(
   })
   if (actor.partyColour) {
     drawPennant(context, palette, view, plate, actor.partyColour)
+  }
+  if (actor.inConflict) {
+    drawConflictPip(context, palette, view, plate)
   }
 }
 

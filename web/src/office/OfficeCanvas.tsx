@@ -17,6 +17,7 @@ type OfficeCanvasProps = {
   openHotspot: HotspotId | null
   boardWaiting: number
   partyByAgent: ReadonlyMap<string, Party>
+  conflictIds?: ReadonlySet<string>
   groupOf?: (agent: OfficeAgent) => GroupId
   snap?: boolean
   world: World
@@ -34,6 +35,17 @@ const STATE_LABELS: Record<AgentState, string> = {
 
 const REVEALED_BUTTON =
   'focus-ring sr-only focus:not-sr-only focus:absolute focus:bottom-16 focus:left-3 focus:rounded-md focus:border focus:bg-card focus:px-3 focus:py-2 focus:text-small focus:text-foreground'
+
+export function agentButtonLabel(
+  agent: Pick<OfficeAgent, 'id' | 'title' | 'state'>,
+  conflictIds?: ReadonlySet<string>,
+): string {
+  const base = `${agent.title} (${STATE_LABELS[agent.state]})`
+  if (!conflictIds?.has(agent.id)) {
+    return base
+  }
+  return `${base} · ไฟล์ชนกัน`
+}
 
 function hotspotState(hotspot: Hotspot, openHotspot: HotspotId | null, mode: Mode): React.AriaAttributes {
   if (hotspot.action.kind === 'toggleMode') {
@@ -106,7 +118,7 @@ export function OfficeCanvas(props: OfficeCanvasProps): React.JSX.Element {
         {agents.map((agent) => (
           <li key={agent.id}>
             <button type="button" aria-pressed={agent.id === selectedId} onClick={() => onSelect(agent.id)} className={REVEALED_BUTTON}>
-              {agent.title} ({STATE_LABELS[agent.state]})
+              {agentButtonLabel(agent, props.conflictIds)}
             </button>
           </li>
         ))}

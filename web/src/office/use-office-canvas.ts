@@ -96,10 +96,10 @@ export function useOfficeCanvas(input: OfficeInput, { onSelect, onHotspot, locat
 
   useRevealKey(engineRef)
 
-  const { agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, groupOf, snap } = input
+  const { agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, conflictIds, groupOf, snap } = input
   useEffect(() => {
-    engineRef.current?.update({ agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, groupOf, snap })
-  }, [agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, groupOf, snap])
+    engineRef.current?.update({ agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, conflictIds, groupOf, snap })
+  }, [agents, sourceReady, contextWindow, quiet, selectedId, world, mode, paused, boardWaiting, openHotspot, partyByAgent, conflictIds, groupOf, snap])
 
   useEffect(() => {
     if (openHotspot && canvasRef.current) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { shouldPoll } from '@/alerts/pipeline-logic'
-import { publishSourceCaps } from './source-caps'
+import type { ConflictSnapshot } from '@shared/conflicts'
+import type { AgentDiff, DiffSummaryResponse } from '@shared/diff'
 import type { OrderChange, OrderResult, StandingOrders } from '@shared/orders'
 import type {
   BoardSnapshot,
@@ -13,6 +13,8 @@ import type {
   SpawnRequest,
   SpawnResult
 } from '@shared/types'
+import { shouldPoll } from '@/alerts/pipeline-logic'
+import { publishSourceCaps } from './source-caps'
 
 const BOARD_REFRESH_MS = 60_000
 
@@ -142,4 +144,32 @@ export async function sendOrderChange(change: OrderChange): Promise<OrderResult>
   } catch {
     return { ok: false, error: 'server_unreachable' }
   }
+}
+
+export async function fetchConflicts(): Promise<ConflictSnapshot> {
+  const response = await fetch('/api/conflicts')
+  if (!response.ok) {
+    throw new Error('conflicts_unavailable')
+  }
+  return response.json()
+}
+
+export async function fetchAgentDiff(agentId: string): Promise<AgentDiff> {
+  const response = await fetch(`/api/diff/${encodeURIComponent(agentId)}`)
+  if (!response.ok) {
+    throw new Error('diff_unavailable')
+  }
+  return response.json()
+}
+
+export async function fetchDiffSummaries(agentIds: readonly string[]): Promise<DiffSummaryResponse> {
+  if (agentIds.length === 0) {
+    return { summaries: [] }
+  }
+  const query = new URLSearchParams({ ids: agentIds.join(',') })
+  const response = await fetch(`/api/diff-summary?${query}`)
+  if (!response.ok) {
+    throw new Error('diff_summary_unavailable')
+  }
+  return response.json()
 }

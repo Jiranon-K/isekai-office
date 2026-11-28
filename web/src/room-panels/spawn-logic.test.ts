@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import type { HandoffDraft } from '@shared/handoff'
 import { PROMPT_MAX } from '@shared/spawn'
 import type { QuestTemplate } from '@shared/templates'
 import { READ_ONLY_REASON } from '@/lib/source-caps'
@@ -8,8 +9,10 @@ import {
   describeReposError,
   describeSpawnError,
   EMPTY_FIELDS,
+  fieldsFromDraft,
   fillSpawnPrompt,
   hasEmptyRepos,
+  resolveRepoId,
   shouldConfirmReplace,
   spawnProblems,
   withFilledPrompt
@@ -149,5 +152,38 @@ describe('spawn errors and empty repo state', () => {
     expect(hasEmptyRepos([], false, 'repos_unavailable')).toBe(false)
     expect(hasEmptyRepos(null, false, null)).toBe(false)
     expect(hasEmptyRepos([{ id: 'r1', name: 'app' }], false, null)).toBe(false)
+  })
+})
+
+const DRAFT: HandoffDraft = {
+  sourceAgentId: 'a7',
+  sourceTitle: 'APP-9 empty states',
+  repoName: 'tavern-web',
+  name: 'handoff-app-9-empty-states',
+  baseBranch: 'main',
+  prompt: 'Handoff from: APP-9 empty states',
+  fallbackUsed: false
+}
+
+describe('handoff draft spawn fields', () => {
+  const repos = [
+    { id: 'r1', name: 'tavern-api' },
+    { id: 'r2', name: 'tavern-web' }
+  ]
+
+  test('maps a handoff draft into initial spawn fields and resets when null', () => {
+    expect(fieldsFromDraft(DRAFT)).toEqual({
+      repoId: '',
+      name: 'handoff-app-9-empty-states',
+      baseBranch: 'main',
+      prompt: 'Handoff from: APP-9 empty states'
+    })
+    expect(fieldsFromDraft(null)).toEqual(EMPTY_FIELDS)
+  })
+
+  test('resolves repoId from draft name until the user picks a repo explicitly', () => {
+    expect(resolveRepoId(repos, '', DRAFT)).toBe('r2')
+    expect(resolveRepoId(repos, 'r1', DRAFT)).toBe('r1')
+    expect(resolveRepoId(repos, '', null)).toBe('r1')
   })
 })
