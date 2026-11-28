@@ -33,6 +33,7 @@ function agent(id: string, state: AgentState, updatedAt: number): OfficeAgent {
     lastMessage: null,
     updatedAt,
     activeAt: updatedAt,
+    stateSince: 0,
     terminal: 'term'
   }
 }

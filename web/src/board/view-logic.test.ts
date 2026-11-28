@@ -26,7 +26,7 @@ function cardWith(overrides: Partial<QuestCard> = {}): QuestCard {
 }
 
 function agentWith(state: AgentState): OfficeAgent {
-  return { id: 'agent-1', title: 'OPS-1', repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
+  return { id: 'agent-1', title: 'OPS-1', repo: null, workspace: null, worktree: null, session: null, contextTokens: null, state, tool: null, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0 }
 }
 
 function itemWith(reason: WaitReason | null, card: QuestCard = cardWith(), agent: OfficeAgent | null = null): BoardItem {

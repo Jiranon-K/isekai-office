@@ -14,7 +14,10 @@ export type OfficeAgent = {
   updatedAt: number
   activeAt: number
   terminal: string | null
+  stateSince: number
 }
+
+export type SourceAgent = Omit<OfficeAgent, 'stateSince'>
 
 export type SourceId = 'orca' | 'local'
 

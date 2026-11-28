@@ -23,6 +23,7 @@ function makeAgent(id: string, state: OfficeAgent['state'], updatedAt: number): 
     lastMessage: null,
     updatedAt,
     activeAt: updatedAt,
+    stateSince: 0,
     terminal: `term-${id}`
   }
 }

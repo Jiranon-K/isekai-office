@@ -20,6 +20,7 @@ function agent(id: string, state: AgentState, ageMs: number): OfficeAgent {
     lastMessage: null,
     updatedAt: 0,
     activeAt: NOW - ageMs,
+    stateSince: 0,
     terminal: null
   }
 }

@@ -3,7 +3,7 @@ import { reuseAgents } from './replay-stable'
 import type { ReplayAgent } from './replay-logic'
 
 function agent(overrides: Partial<ReplayAgent> = {}): ReplayAgent {
-  return { agentId: 'a', title: 'one', repo: 'web', state: 'working', station: 'forge', ...overrides }
+  return { agentId: 'a', title: 'one', repo: 'web', state: 'working', station: 'forge', stateSince: 0, ...overrides }
 }
 
 describe('reuseAgents', () => {

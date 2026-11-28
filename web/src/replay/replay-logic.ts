@@ -9,6 +9,7 @@ export type ReplayAgent = {
   repo: string | null
   state: AgentState
   station: StationId | null
+  stateSince: number
 }
 
 export type Span = { from: number; to: number }
@@ -70,7 +71,8 @@ function applyState(present: Map<string, ReplayAgent>, pending: PendingStations,
     title: event.title,
     repo: event.repo,
     state: event.to,
-    station: event.to === 'working' ? (previous?.station ?? early) : null
+    station: event.to === 'working' ? (previous?.station ?? early) : null,
+    stateSince: previous?.state === event.to ? previous.stateSince : event.at
   })
 }
 
@@ -265,6 +267,7 @@ export function toOfficeAgent(agent: ReplayAgent): OfficeAgent {
     lastMessage: null,
     updatedAt: 0,
     activeAt: 0,
+    stateSince: agent.stateSince,
     terminal: null
   }
 }

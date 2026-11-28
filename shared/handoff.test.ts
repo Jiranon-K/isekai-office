@@ -17,6 +17,7 @@ function makeAgent(overrides: Partial<OfficeAgent> = {}): OfficeAgent {
     lastMessage: 'Opened the merge request and all checks pass.',
     updatedAt: 1000,
     activeAt: 1000,
+    stateSince: 0,
     terminal: 'demo-a7',
     ...overrides
   }

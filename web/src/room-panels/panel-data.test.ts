@@ -3,7 +3,7 @@ import type { AgentState, BoardSnapshot, OfficeAgent, PipelineStatus, QuestCard 
 import { cardsToVerify, doneSessions, failedPipelineCount, loadRows, loopHistory, questBoardMark, rosterOrder, waitingCount } from './panel-data'
 
 function agentWith(id: string, state: AgentState, contextTokens: number | null = null, updatedAt = 0): OfficeAgent {
-  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens, state, tool: null, lastMessage: null, updatedAt, activeAt: updatedAt, terminal: null }
+  return { id, title: id, repo: null, workspace: null, worktree: null, session: null, contextTokens, state, tool: null, lastMessage: null, updatedAt, activeAt: updatedAt, terminal: null, stateSince: 0 }
 }
 
 function cardWith(id: string, loopStatus: string | null, column: QuestCard['column'] = 'doing'): QuestCard {

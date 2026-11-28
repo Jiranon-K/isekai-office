@@ -1,7 +1,7 @@
 import type {
   CommandRequest,
   CommandResult,
-  OfficeAgent,
+  SourceAgent,
   OrcaRepo,
   SessionDetail,
   SpawnRequest,
@@ -52,7 +52,7 @@ export type ManagedRunnerOptions = {
 export type ManagedRunner = {
   spawn(request: SpawnRequest): Promise<SpawnResult>
   sendCommand(managedId: string, command: CommandRequest): Promise<CommandResult>
-  listAgents(): OfficeAgent[]
+  listAgents(): SourceAgent[]
   readSession(id: string): SessionDetail | null
   activeCount(): number
   maxSessions(): number
@@ -260,7 +260,7 @@ export function createManagedRunner(options: ManagedRunnerOptions = {}): Managed
     return { ok: true, error: null }
   }
 
-  function listAgents(): OfficeAgent[] {
+  function listAgents(): SourceAgent[] {
     pruneExited()
     return [...sessions.values()].map(sessionToAgent)
   }

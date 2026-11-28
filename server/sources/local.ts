@@ -1,7 +1,7 @@
 import { stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { OfficeAgent, SessionDetail } from '@shared/types'
+import type { OfficeAgent, SessionDetail, SourceAgent } from '@shared/types'
 import { createManagedRunner, isLocalInteractiveEnabled, type ManagedRunner } from '../managed/runner'
 import { historyAt } from './history'
 import { baseNameOf, localFacts, titleFrom, type LocalFacts } from './local-facts'
@@ -39,7 +39,7 @@ type LocalOptions = Omit<RecentFilesOptions, 'refreshMs'> & {
   managed?: ManagedRunner | null
 }
 
-function mergeManagedAndExternal(managedAgents: OfficeAgent[], externalAgents: OfficeAgent[]): OfficeAgent[] {
+function mergeManagedAndExternal(managedAgents: SourceAgent[], externalAgents: SourceAgent[]): SourceAgent[] {
   if (managedAgents.length === 0) {
     return externalAgents
   }
@@ -90,7 +90,7 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     }
   }
 
-  async function toAgent(file: RecentFile): Promise<OfficeAgent> {
+  async function toAgent(file: RecentFile): Promise<SourceAgent> {
     const { facts, state: tailState, tool } = await analyse(file)
     const state = applyHint(tailState, hints.get(file.id), file.modifiedAt)
     const repo = facts.cwd ? baseNameOf(facts.cwd) : null
@@ -111,7 +111,7 @@ export function createLocalSource(options: LocalOptions): SessionSource {
     }
   }
 
-  async function listAgents(): Promise<OfficeAgent[]> {
+  async function listAgents(): Promise<SourceAgent[]> {
     const files = await recent.list()
     forget(files)
     hints.prune((options.now ?? Date.now)() - options.recentMs)

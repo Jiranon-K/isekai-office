@@ -5,7 +5,7 @@ import { dayMaxBytesFrom, keepDaysFrom } from './config'
 import { localDate, NO_STATIONS, stateEvents, stateOnly, stationEvents, watchEvent } from './events'
 
 function agentAt(id: string, state: AgentState, tool: string | null = null, repo: string | null = null): OfficeAgent {
-  return { id, title: `title ${id}`, repo, workspace: null, worktree: null, session: null, contextTokens: null, state, tool, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null }
+  return { id, title: `title ${id}`, repo, workspace: null, worktree: null, session: null, contextTokens: null, state, tool, lastMessage: null, updatedAt: 0, activeAt: 0, terminal: null, stateSince: 0 }
 }
 
 describe('stationEvents', () => {
